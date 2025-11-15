@@ -1,0 +1,28 @@
+# get token
+@token = {{login.response.body.data.accessToken}}
+
+# @name login
+
+POST http://localhost:3019/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin2@example.com",
+  "password": "ChangeMe123!"
+}   
+
+
+#####
+
+GET http://localhost:3019/api/organizations
+Authorization: Bearer {{token}}
+
+#####
+
+GET http://localhost:3019/api/departments
+Authorization: Bearer {{token}}
+
+#####
+
+GET http://localhost:3019/api/documents
+Authorization: Bearer {{token}}
