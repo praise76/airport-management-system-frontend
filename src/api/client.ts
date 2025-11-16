@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosInstance } from "axios";
+import axios, { type AxiosError, type AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/auth";
 
 export type ApiError = {
