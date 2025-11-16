@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
+    "start": "node .output/server/index.mjs",
     "serve": "vite preview",
     "test": "vitest run",
     "format": "biome format",
@@ -28,6 +29,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tailwindcss/vite": "^4.0.6",
     "@tanstack/match-sorter-utils": "^8.19.4",
+    "@tanstack/nitro-v2-vite-plugin": "^1.133.19",
     "@tanstack/react-devtools": "^0.7.0",
     "@tanstack/react-form": "^1.0.0",
     "@tanstack/react-query": "^5.66.5",
