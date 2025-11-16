@@ -10,7 +10,9 @@ export type ApiError = {
 
 function createApiClient(): AxiosInstance {
 	const instance = axios.create({
-		baseURL: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3019/api",
+		baseURL:
+			import.meta.env.VITE_API_BASE_URL ??
+			"https://airport-management-system-backend.onrender.com/api", // "http://localhost:3019/api",
 		timeout: 20_000,
 	});
 
