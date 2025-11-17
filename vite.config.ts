@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import { nitro } from 'nitro/vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -15,7 +14,6 @@ const config = defineConfig({
     }),
     tailwindcss(),
     tanstackStart(),
-    nitro(),
     viteReact({
       babel: {
         plugins: ['babel-plugin-react-compiler'],
