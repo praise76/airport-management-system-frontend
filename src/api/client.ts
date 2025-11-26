@@ -13,7 +13,7 @@ function createApiClient(): AxiosInstance {
 		baseURL:
 			import.meta.env.VITE_API_BASE_URL ??
 			"https://airport-management-system-backend.onrender.com/api", // "http://localhost:3019/api",
-		timeout: 20_000,
+		timeout: 25_000,
 	});
 
 	instance.interceptors.request.use((config) => {
