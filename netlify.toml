@@ -3,6 +3,10 @@
   publish = "dist/client"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["dist/server/**", "node_modules/**"]
+
 # Route all requests through the SSR function
 # Netlify will automatically serve static files if they exist
 [[redirects]]
