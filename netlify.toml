@@ -1,17 +1,11 @@
 [build]
   command = "vite build"
-  publish = "dist/client"
-  functions = "netlify/functions"
+  publish = "dist"
 
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["dist/server/**", "node_modules/**"]
-
-# Route all requests through the SSR function
-# Netlify will automatically serve static files if they exist
+# SPA fallback - serve index.html for all routes
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/server"
+  to = "/index.html"
   status = 200
 
 [dev]

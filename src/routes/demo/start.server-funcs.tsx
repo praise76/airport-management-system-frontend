@@ -1,66 +1,50 @@
-import fs from 'node:fs'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
 
-/*
-const loggingMiddleware = createMiddleware().server(
-  async ({ next, request }) => {
-    console.log("Request:", request.url);
-    return next();
+const TODOS_STORAGE_KEY = 'todos-demo'
+
+function readTodos() {
+  if (typeof window === 'undefined') {
+    return [
+      { id: 1, name: 'Get groceries' },
+      { id: 2, name: 'Buy a new phone' },
+    ]
   }
-);
-const loggedServerFunction = createServerFn({ method: "GET" }).middleware([
-  loggingMiddleware,
-]);
-*/
-
-const TODOS_FILE = 'todos.json'
-
-async function readTodos() {
-  return JSON.parse(
-    await fs.promises.readFile(TODOS_FILE, 'utf-8').catch(() =>
-      JSON.stringify(
-        [
-          { id: 1, name: 'Get groceries' },
-          { id: 2, name: 'Buy a new phone' },
-        ],
-        null,
-        2,
-      ),
-    ),
-  )
+  const stored = localStorage.getItem(TODOS_STORAGE_KEY)
+  if (stored) {
+    return JSON.parse(stored)
+  }
+  return [
+    { id: 1, name: 'Get groceries' },
+    { id: 2, name: 'Buy a new phone' },
+  ]
 }
 
-const getTodos = createServerFn({
-  method: 'GET',
-}).handler(async () => await readTodos())
-
-const addTodo = createServerFn({ method: 'POST' })
-  .inputValidator((d: string) => d)
-  .handler(async ({ data }) => {
-    const todos = await readTodos()
-    todos.push({ id: todos.length + 1, name: data })
-    await fs.promises.writeFile(TODOS_FILE, JSON.stringify(todos, null, 2))
-    return todos
-  })
+function saveTodos(todos: Array<{ id: number; name: string }>) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(todos))
+  }
+}
 
 export const Route = createFileRoute('/demo/start/server-funcs')({
   component: Home,
-  loader: async () => await getTodos(),
 })
 
 function Home() {
   const router = useRouter()
-  let todos = Route.useLoaderData()
-
+  const [todos, setTodos] = useState<Array<{ id: number; name: string }>>([])
   const [todo, setTodo] = useState('')
 
-  const submitTodo = useCallback(async () => {
-    todos = await addTodo({ data: todo })
+  useEffect(() => {
+    setTodos(readTodos())
+  }, [])
+
+  const submitTodo = useCallback(() => {
+    const newTodos = [...todos, { id: todos.length + 1, name: todo }]
+    setTodos(newTodos)
+    saveTodos(newTodos)
     setTodo('')
-    router.invalidate()
-  }, [addTodo, todo])
+  }, [todos, todo])
 
   return (
     <div

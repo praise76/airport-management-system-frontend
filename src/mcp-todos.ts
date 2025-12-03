@@ -1,16 +1,46 @@
-import fs from 'node:fs'
+const TODOS_STORAGE_KEY = 'mcp-todos'
 
-const todosPath = './mcp-todos.json'
-
-// In-memory todos storage
-const todos = fs.existsSync(todosPath)
-  ? JSON.parse(fs.readFileSync(todosPath, 'utf8'))
-  : [
+// Load todos from localStorage or use default
+function loadTodos(): Todo[] {
+  if (typeof window === 'undefined') {
+    return [
       {
         id: 1,
         title: 'Buy groceries',
       },
     ]
+  }
+  
+  const stored = localStorage.getItem(TODOS_STORAGE_KEY)
+  if (stored) {
+    try {
+      return JSON.parse(stored)
+    } catch {
+      return [
+        {
+          id: 1,
+          title: 'Buy groceries',
+        },
+      ]
+    }
+  }
+  return [
+    {
+      id: 1,
+      title: 'Buy groceries',
+    },
+  ]
+}
+
+// In-memory todos storage
+let todos = loadTodos()
+
+// Save todos to localStorage
+function saveTodos() {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(todos))
+  }
+}
 
 // Subscription callbacks per userID
 let subscribers: ((todos: Todo[]) => void)[] = []
@@ -28,7 +58,7 @@ export function getTodos(): Todo[] {
 // Add an item to the todos
 export function addTodo(title: string) {
   todos.push({ id: todos.length + 1, title })
-  fs.writeFileSync(todosPath, JSON.stringify(todos, null, 2))
+  saveTodos()
   notifySubscribers()
 }
 

@@ -3,7 +3,6 @@ import { createFileRoute } from '@tanstack/react-router'
 import { getPunkSongs } from '@/data/demo.punk-songs'
 
 export const Route = createFileRoute('/demo/start/ssr/spa-mode')({
-  ssr: false,
   component: RouteComponent,
 })
 
