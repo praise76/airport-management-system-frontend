@@ -1,19 +1,12 @@
 {
   "buildCommand": "pnpm build",
-  "outputDirectory": "dist/client",
+  "outputDirectory": "dist",
   "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/server"
+      "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "api/server.js": {
-      "includeFiles": "dist/server/**",
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  }
+  ]
 }
 
