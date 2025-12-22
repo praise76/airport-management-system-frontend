@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
   build: {
-    outDir: 'dist',
+    outDir: 'dist/client',
   },
   plugins: [
     devtools(),
