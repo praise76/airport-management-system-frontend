@@ -5,6 +5,9 @@ import {
 	assignHOD,
 	type CreateDepartmentRequest,
 	createDepartment,
+  updateDepartment,
+  deleteDepartment,
+  type UpdateDepartmentRequest,
 	getDepartmentTree,
 	type ListDepartmentsParams,
 	listDepartments,
@@ -67,6 +70,38 @@ export function useAssignHOD() {
 						? String((error as { message?: unknown }).message ?? "")
 						: "";
 			toast.error(message || "Failed to assign HOD");
+		},
+	});
+}
+
+export function useUpdateDepartment(id: string) {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (input: UpdateDepartmentRequest) => updateDepartment(id, input),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["departments"] });
+      queryClient.invalidateQueries({ queryKey: ["departments", "tree"] });
+			toast.success("Department updated successfully");
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to update department");
+		},
+	});
+}
+
+export function useDeleteDepartment() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: (id: string) => deleteDepartment(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["departments"] });
+      queryClient.invalidateQueries({ queryKey: ["departments", "tree"] });
+			toast.success("Department deleted successfully");
+		},
+		onError: (error: any) => {
+			toast.error(error.message || "Failed to delete department");
 		},
 	});
 }

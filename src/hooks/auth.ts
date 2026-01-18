@@ -44,4 +44,18 @@ export function useLogoutMutation() {
 	// 		toast.error(error.message || "Logout failed");
 	// 	},
 	// });
+	// });
+}
+
+export function useRegisterMutation() {
+  return useMutation({
+    mutationKey: ["auth", "register"],
+    mutationFn: (input: any) => AuthApi.register(input),
+    onSuccess: () => {
+      toast.success("Registration successful! Please login.");
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || "Registration failed");
+    },
+  });
 }

@@ -1,7 +1,8 @@
 export interface Organization {
 	id: string;
 	name: string;
-	industry: string;
+	code: string;
+	address: string;
 	createdAt?: string;
 	updatedAt?: string;
 }

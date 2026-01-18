@@ -59,3 +59,22 @@ export async function assignHOD(
 	const payload = (res.data?.data ?? res.data) as Department;
 	return payload;
 }
+export type UpdateDepartmentRequest = {
+	name?: string;
+	code?: string;
+  parentDepartmentId?: string | null;
+  isRegistry?: boolean;
+};
+
+export async function updateDepartment(
+	id: string,
+	input: UpdateDepartmentRequest,
+): Promise<Department> {
+	const res = await api.patch(`/departments/${id}`, input);
+	const payload = (res.data?.data ?? res.data) as Department;
+	return payload;
+}
+
+export async function deleteDepartment(id: string): Promise<void> {
+  await api.delete(`/departments/${id}`);
+}

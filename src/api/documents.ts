@@ -3,6 +3,11 @@ import type {
 	DocumentDirection,
 	DocumentListResponse,
 	DocumentWorkflowResponse,
+  Template, 
+  CreateTemplateRequest, 
+  PreviewTemplateRequest, 
+  GenerateDocumentRequest, 
+  BulkOperationRequest
 } from "@/types/document";
 import { api } from "./client";
 
@@ -99,4 +104,33 @@ export async function getDocumentWorkflow(
 	const res = await api.get(`/documents/${id}/workflow`);
 	const payload = (res.data?.data ?? res.data) as DocumentWorkflowResponse;
 	return payload;
+}
+
+// Templates
+
+export async function listTemplates(params?: { categoryId?: string; templateType?: string }): Promise<Template[]> {
+  const res = await api.get("/templates", { params });
+  return res.data;
+}
+
+export async function createTemplate(input: CreateTemplateRequest): Promise<Template> {
+  const res = await api.post("/templates", input);
+  return res.data;
+}
+
+export async function previewTemplate(id: string, input: PreviewTemplateRequest): Promise<void> {
+  await api.post(`/templates/${id}/preview`, input);
+}
+
+export async function generateDocument(input: GenerateDocumentRequest): Promise<void> {
+  await api.post("/templates/generate", input);
+}
+
+export async function listGeneratedDocuments(params?: { forUserId?: string; templateId?: string }): Promise<any> {
+    const res = await api.get("/templates/documents", { params });
+    return res.data;
+}
+
+export async function createBulkOperation(input: BulkOperationRequest): Promise<void> {
+  await api.post("/templates/bulk", input);
 }

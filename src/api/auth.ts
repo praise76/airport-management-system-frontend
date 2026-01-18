@@ -3,6 +3,7 @@ import type {
 	LoginRequest,
 	LoginResponse,
 	RefreshResponse,
+  RegisterRequest,
 } from "@/types/auth";
 import { api } from "./client";
 
@@ -20,4 +21,9 @@ export async function refresh(refreshToken: string): Promise<RefreshResponse> {
 
 export function logout(): void {
 	useAuthStore.getState().logout();
+}
+
+export async function register(input: RegisterRequest): Promise<void> {
+  const res = await api.post('/auth/register', input)
+  return res.data
 }

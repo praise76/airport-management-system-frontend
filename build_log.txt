@@ -1,0 +1,28 @@
+
+> airport-management-system@ build C:\Users\USER\Desktop\software-projects\Fresh\React JS\airport-management-system
+> vite build
+
+[36mvite v7.2.2 [32mbuilding client environment for production...[36m[39m
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+transforming...
+
+[@tanstack/devtools-vite] Removed devtools code from: /src/routes/__root.tsx
+
+[32mΓ£ô[39m 251 modules transformed.
+Γ£ù Build failed in 9.70s
+error during build:
+[vite]: Rollup failed to resolve import "date-fns" from "C:/Users/USER/Desktop/software-projects/Fresh/React JS/airport-management-system/src/routes/roster/index.tsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteLog (file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/vite@7.2.2_@types+node@22.1_83d344b74bf909c155edfe45e4a9dd41/node_modules/vite/dist/node/chunks/config.js:34254:57)
+    at file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/vite@7.2.2_@types+node@22.1_83d344b74bf909c155edfe45e4a9dd41/node_modules/vite/dist/node/chunks/config.js:34288:73
+    at onwarn (file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/@vitejs+plugin-react@5.1.1__59583256cf896e16c214b1aca6d2ff92/node_modules/@vitejs/plugin-react/dist/index.js:76:7)
+    at file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/vite@7.2.2_@types+node@22.1_83d344b74bf909c155edfe45e4a9dd41/node_modules/vite/dist/node/chunks/config.js:34288:28
+    at onRollupLog (file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/vite@7.2.2_@types+node@22.1_83d344b74bf909c155edfe45e4a9dd41/node_modules/vite/dist/node/chunks/config.js:34283:63)
+    at onLog (file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/vite@7.2.2_@types+node@22.1_83d344b74bf909c155edfe45e4a9dd41/node_modules/vite/dist/node/chunks/config.js:34086:4)
+    at file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/rollup@4.53.2/node_modules/rollup/dist/es/shared/node-entry.js:20947:32
+    at Object.logger [as onLog] (file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/rollup@4.53.2/node_modules/rollup/dist/es/shared/node-entry.js:22834:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/rollup@4.53.2/node_modules/rollup/dist/es/shared/node-entry.js:21578:26)
+    at file:///C:/Users/USER/Desktop/software-projects/Fresh/React%20JS/airport-management-system/node_modules/.pnpm/rollup@4.53.2/node_modules/rollup/dist/es/shared/node-entry.js:21536:26
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

@@ -37,3 +37,35 @@ export interface DocumentWorkflowEntry {
 export interface DocumentWorkflowResponse {
 	data: DocumentWorkflowEntry[];
 }
+
+export type Template = {
+  id: string
+  templateName: string
+  templateType: string
+  contentHtml: string
+  variableSchema: Array<{
+    name: string
+    type: string
+    required: boolean
+  }>
+}
+
+export type GenerateDocumentRequest = {
+  templateId: string
+  title: string
+  variables: Record<string, any>
+  forUserId?: string
+  generatePdf?: boolean
+}
+
+export type CreateTemplateRequest = Omit<Template, 'id'>
+
+export type PreviewTemplateRequest = {
+  variables: Record<string, any>
+}
+
+export type BulkOperationRequest = {
+  operationType: string
+  operationName: string
+  inputFileUrl: string
+}

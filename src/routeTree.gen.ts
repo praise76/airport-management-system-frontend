@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks/index'
 import { Route as StakeholdersIndexRouteImport } from './routes/stakeholders/index'
+import { Route as SelfServiceIndexRouteImport } from './routes/self-service/index'
 import { Route as SecurityIndexRouteImport } from './routes/security/index'
+import { Route as RosterIndexRouteImport } from './routes/roster/index'
 import { Route as RgmIndexRouteImport } from './routes/rgm/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
@@ -21,6 +24,7 @@ import { Route as MessagesIndexRouteImport } from './routes/messages/index'
 import { Route as InspectionsIndexRouteImport } from './routes/inspections/index'
 import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
 import { Route as DepartmentsIndexRouteImport } from './routes/departments/index'
+import { Route as ContractorsIndexRouteImport } from './routes/contractors/index'
 import { Route as CertificationsIndexRouteImport } from './routes/certifications/index'
 import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -60,6 +64,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsersIndexRoute = UsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -70,9 +79,19 @@ const StakeholdersIndexRoute = StakeholdersIndexRouteImport.update({
   path: '/stakeholders/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SelfServiceIndexRoute = SelfServiceIndexRouteImport.update({
+  id: '/self-service/',
+  path: '/self-service/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SecurityIndexRoute = SecurityIndexRouteImport.update({
   id: '/security/',
   path: '/security/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterIndexRoute = RosterIndexRouteImport.update({
+  id: '/roster/',
+  path: '/roster/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RgmIndexRoute = RgmIndexRouteImport.update({
@@ -108,6 +127,11 @@ const DocumentsIndexRoute = DocumentsIndexRouteImport.update({
 const DepartmentsIndexRoute = DepartmentsIndexRouteImport.update({
   id: '/departments/',
   path: '/departments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractorsIndexRoute = ContractorsIndexRouteImport.update({
+  id: '/contractors/',
+  path: '/contractors/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CertificationsIndexRoute = CertificationsIndexRouteImport.update({
@@ -267,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
+  '/contractors': typeof ContractorsIndexRoute
   '/departments': typeof DepartmentsIndexRoute
   '/documents': typeof DocumentsIndexRoute
   '/inspections': typeof InspectionsIndexRoute
@@ -274,9 +299,12 @@ export interface FileRoutesByFullPath {
   '/organizations': typeof OrganizationsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/rgm': typeof RgmIndexRoute
+  '/roster': typeof RosterIndexRoute
   '/security': typeof SecurityIndexRoute
+  '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/users': typeof UsersIndexRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -309,6 +337,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
+  '/contractors': typeof ContractorsIndexRoute
   '/departments': typeof DepartmentsIndexRoute
   '/documents': typeof DocumentsIndexRoute
   '/inspections': typeof InspectionsIndexRoute
@@ -316,9 +345,12 @@ export interface FileRoutesByTo {
   '/organizations': typeof OrganizationsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/rgm': typeof RgmIndexRoute
+  '/roster': typeof RosterIndexRoute
   '/security': typeof SecurityIndexRoute
+  '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/users': typeof UsersIndexRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -352,6 +384,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/attendance/': typeof AttendanceIndexRoute
   '/certifications/': typeof CertificationsIndexRoute
+  '/contractors/': typeof ContractorsIndexRoute
   '/departments/': typeof DepartmentsIndexRoute
   '/documents/': typeof DocumentsIndexRoute
   '/inspections/': typeof InspectionsIndexRoute
@@ -359,9 +392,12 @@ export interface FileRoutesById {
   '/organizations/': typeof OrganizationsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/rgm/': typeof RgmIndexRoute
+  '/roster/': typeof RosterIndexRoute
   '/security/': typeof SecurityIndexRoute
+  '/self-service/': typeof SelfServiceIndexRoute
   '/stakeholders/': typeof StakeholdersIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/users/': typeof UsersIndexRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -396,6 +432,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/attendance'
     | '/certifications'
+    | '/contractors'
     | '/departments'
     | '/documents'
     | '/inspections'
@@ -403,9 +440,12 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/reports'
     | '/rgm'
+    | '/roster'
     | '/security'
+    | '/self-service'
     | '/stakeholders'
     | '/tasks'
+    | '/users'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -438,6 +478,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/attendance'
     | '/certifications'
+    | '/contractors'
     | '/departments'
     | '/documents'
     | '/inspections'
@@ -445,9 +486,12 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/reports'
     | '/rgm'
+    | '/roster'
     | '/security'
+    | '/self-service'
     | '/stakeholders'
     | '/tasks'
+    | '/users'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -480,6 +524,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/attendance/'
     | '/certifications/'
+    | '/contractors/'
     | '/departments/'
     | '/documents/'
     | '/inspections/'
@@ -487,9 +532,12 @@ export interface FileRouteTypes {
     | '/organizations/'
     | '/reports/'
     | '/rgm/'
+    | '/roster/'
     | '/security/'
+    | '/self-service/'
     | '/stakeholders/'
     | '/tasks/'
+    | '/users/'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -523,6 +571,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AttendanceIndexRoute: typeof AttendanceIndexRoute
   CertificationsIndexRoute: typeof CertificationsIndexRoute
+  ContractorsIndexRoute: typeof ContractorsIndexRoute
   DepartmentsIndexRoute: typeof DepartmentsIndexRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
   InspectionsIndexRoute: typeof InspectionsIndexRoute
@@ -530,9 +579,12 @@ export interface RootRouteChildren {
   OrganizationsIndexRoute: typeof OrganizationsIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
   RgmIndexRoute: typeof RgmIndexRoute
+  RosterIndexRoute: typeof RosterIndexRoute
   SecurityIndexRoute: typeof SecurityIndexRoute
+  SelfServiceIndexRoute: typeof SelfServiceIndexRoute
   StakeholdersIndexRoute: typeof StakeholdersIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  UsersIndexRoute: typeof UsersIndexRoute
   DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTanchatRoute: typeof DemoApiTanchatRoute
@@ -565,6 +617,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/users/': {
+      id: '/users/'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks/': {
       id: '/tasks/'
       path: '/tasks'
@@ -579,11 +638,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholdersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/self-service/': {
+      id: '/self-service/'
+      path: '/self-service'
+      fullPath: '/self-service'
+      preLoaderRoute: typeof SelfServiceIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/security/': {
       id: '/security/'
       path: '/security'
       fullPath: '/security'
       preLoaderRoute: typeof SecurityIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster/': {
+      id: '/roster/'
+      path: '/roster'
+      fullPath: '/roster'
+      preLoaderRoute: typeof RosterIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rgm/': {
@@ -633,6 +706,13 @@ declare module '@tanstack/react-router' {
       path: '/departments'
       fullPath: '/departments'
       preLoaderRoute: typeof DepartmentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contractors/': {
+      id: '/contractors/'
+      path: '/contractors'
+      fullPath: '/contractors'
+      preLoaderRoute: typeof ContractorsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/certifications/': {
@@ -861,6 +941,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AttendanceIndexRoute: AttendanceIndexRoute,
   CertificationsIndexRoute: CertificationsIndexRoute,
+  ContractorsIndexRoute: ContractorsIndexRoute,
   DepartmentsIndexRoute: DepartmentsIndexRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,
   InspectionsIndexRoute: InspectionsIndexRoute,
@@ -868,9 +949,12 @@ const rootRouteChildren: RootRouteChildren = {
   OrganizationsIndexRoute: OrganizationsIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
   RgmIndexRoute: RgmIndexRoute,
+  RosterIndexRoute: RosterIndexRoute,
   SecurityIndexRoute: SecurityIndexRoute,
+  SelfServiceIndexRoute: SelfServiceIndexRoute,
   StakeholdersIndexRoute: StakeholdersIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
+  UsersIndexRoute: UsersIndexRoute,
   DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTanchatRoute: DemoApiTanchatRoute,

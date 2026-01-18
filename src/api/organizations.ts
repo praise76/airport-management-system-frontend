@@ -25,12 +25,14 @@ export async function getOrganization(id: string): Promise<Organization> {
 
 export type CreateOrganizationRequest = {
 	name: string;
-	industry: string;
+	code: string;
+	address: string;
 };
 
 export type UpdateOrganizationRequest = {
 	name?: string;
-	industry?: string;
+	code?: string;
+	address?: string;
 };
 
 export async function createOrganization(
