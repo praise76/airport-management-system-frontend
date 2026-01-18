@@ -8,17 +8,18 @@ export async function getGeofenceZones(): Promise<GeofenceZone[]> {
 
 export async function getGeofenceZone(id: string): Promise<GeofenceZone> {
   const res = await api.get(`/geofence/zones/${id}`);
-  return res.data.data;
+  // console.log('getGeofenceZone', res.data);
+  return res.data;
 }
 
 export async function createGeofenceZone(input: GeofenceZoneInput): Promise<GeofenceZone> {
   const res = await api.post("/geofence/zones", input);
-  return res.data.data;
+  return res.data;
 }
 
 export async function updateGeofenceZone(id: string, input: GeofenceZoneUpdate): Promise<GeofenceZone> {
   const res = await api.patch(`/geofence/zones/${id}`, input);
-  return res.data.data;
+  return res.data;
 }
 
 export async function deleteGeofenceZone(id: string): Promise<void> {

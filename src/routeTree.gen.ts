@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
+import { Route as TerminalsIndexRouteImport } from './routes/terminals/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks/index'
 import { Route as StakeholdersIndexRouteImport } from './routes/stakeholders/index'
 import { Route as SelfServiceIndexRouteImport } from './routes/self-service/index'
@@ -19,9 +20,11 @@ import { Route as SecurityIndexRouteImport } from './routes/security/index'
 import { Route as RosterIndexRouteImport } from './routes/roster/index'
 import { Route as RgmIndexRouteImport } from './routes/rgm/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
+import { Route as PositionsIndexRouteImport } from './routes/positions/index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
 import { Route as MessagesIndexRouteImport } from './routes/messages/index'
 import { Route as InspectionsIndexRouteImport } from './routes/inspections/index'
+import { Route as GeofenceIndexRouteImport } from './routes/geofence/index'
 import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
 import { Route as DepartmentsIndexRouteImport } from './routes/departments/index'
 import { Route as ContractorsIndexRouteImport } from './routes/contractors/index'
@@ -69,6 +72,11 @@ const UsersIndexRoute = UsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TerminalsIndexRoute = TerminalsIndexRouteImport.update({
+  id: '/terminals/',
+  path: '/terminals/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
@@ -104,6 +112,11 @@ const ReportsIndexRoute = ReportsIndexRouteImport.update({
   path: '/reports/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PositionsIndexRoute = PositionsIndexRouteImport.update({
+  id: '/positions/',
+  path: '/positions/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
   id: '/organizations/',
   path: '/organizations/',
@@ -117,6 +130,11 @@ const MessagesIndexRoute = MessagesIndexRouteImport.update({
 const InspectionsIndexRoute = InspectionsIndexRouteImport.update({
   id: '/inspections/',
   path: '/inspections/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GeofenceIndexRoute = GeofenceIndexRouteImport.update({
+  id: '/geofence/',
+  path: '/geofence/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsIndexRoute = DocumentsIndexRouteImport.update({
@@ -294,9 +312,11 @@ export interface FileRoutesByFullPath {
   '/contractors': typeof ContractorsIndexRoute
   '/departments': typeof DepartmentsIndexRoute
   '/documents': typeof DocumentsIndexRoute
+  '/geofence': typeof GeofenceIndexRoute
   '/inspections': typeof InspectionsIndexRoute
   '/messages': typeof MessagesIndexRoute
   '/organizations': typeof OrganizationsIndexRoute
+  '/positions': typeof PositionsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/rgm': typeof RgmIndexRoute
   '/roster': typeof RosterIndexRoute
@@ -304,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/terminals': typeof TerminalsIndexRoute
   '/users': typeof UsersIndexRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -340,9 +361,11 @@ export interface FileRoutesByTo {
   '/contractors': typeof ContractorsIndexRoute
   '/departments': typeof DepartmentsIndexRoute
   '/documents': typeof DocumentsIndexRoute
+  '/geofence': typeof GeofenceIndexRoute
   '/inspections': typeof InspectionsIndexRoute
   '/messages': typeof MessagesIndexRoute
   '/organizations': typeof OrganizationsIndexRoute
+  '/positions': typeof PositionsIndexRoute
   '/reports': typeof ReportsIndexRoute
   '/rgm': typeof RgmIndexRoute
   '/roster': typeof RosterIndexRoute
@@ -350,6 +373,7 @@ export interface FileRoutesByTo {
   '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
   '/tasks': typeof TasksIndexRoute
+  '/terminals': typeof TerminalsIndexRoute
   '/users': typeof UsersIndexRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -387,9 +411,11 @@ export interface FileRoutesById {
   '/contractors/': typeof ContractorsIndexRoute
   '/departments/': typeof DepartmentsIndexRoute
   '/documents/': typeof DocumentsIndexRoute
+  '/geofence/': typeof GeofenceIndexRoute
   '/inspections/': typeof InspectionsIndexRoute
   '/messages/': typeof MessagesIndexRoute
   '/organizations/': typeof OrganizationsIndexRoute
+  '/positions/': typeof PositionsIndexRoute
   '/reports/': typeof ReportsIndexRoute
   '/rgm/': typeof RgmIndexRoute
   '/roster/': typeof RosterIndexRoute
@@ -397,6 +423,7 @@ export interface FileRoutesById {
   '/self-service/': typeof SelfServiceIndexRoute
   '/stakeholders/': typeof StakeholdersIndexRoute
   '/tasks/': typeof TasksIndexRoute
+  '/terminals/': typeof TerminalsIndexRoute
   '/users/': typeof UsersIndexRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -435,9 +462,11 @@ export interface FileRouteTypes {
     | '/contractors'
     | '/departments'
     | '/documents'
+    | '/geofence'
     | '/inspections'
     | '/messages'
     | '/organizations'
+    | '/positions'
     | '/reports'
     | '/rgm'
     | '/roster'
@@ -445,6 +474,7 @@ export interface FileRouteTypes {
     | '/self-service'
     | '/stakeholders'
     | '/tasks'
+    | '/terminals'
     | '/users'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
@@ -481,9 +511,11 @@ export interface FileRouteTypes {
     | '/contractors'
     | '/departments'
     | '/documents'
+    | '/geofence'
     | '/inspections'
     | '/messages'
     | '/organizations'
+    | '/positions'
     | '/reports'
     | '/rgm'
     | '/roster'
@@ -491,6 +523,7 @@ export interface FileRouteTypes {
     | '/self-service'
     | '/stakeholders'
     | '/tasks'
+    | '/terminals'
     | '/users'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
@@ -527,9 +560,11 @@ export interface FileRouteTypes {
     | '/contractors/'
     | '/departments/'
     | '/documents/'
+    | '/geofence/'
     | '/inspections/'
     | '/messages/'
     | '/organizations/'
+    | '/positions/'
     | '/reports/'
     | '/rgm/'
     | '/roster/'
@@ -537,6 +572,7 @@ export interface FileRouteTypes {
     | '/self-service/'
     | '/stakeholders/'
     | '/tasks/'
+    | '/terminals/'
     | '/users/'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
@@ -574,9 +610,11 @@ export interface RootRouteChildren {
   ContractorsIndexRoute: typeof ContractorsIndexRoute
   DepartmentsIndexRoute: typeof DepartmentsIndexRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
+  GeofenceIndexRoute: typeof GeofenceIndexRoute
   InspectionsIndexRoute: typeof InspectionsIndexRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
   OrganizationsIndexRoute: typeof OrganizationsIndexRoute
+  PositionsIndexRoute: typeof PositionsIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
   RgmIndexRoute: typeof RgmIndexRoute
   RosterIndexRoute: typeof RosterIndexRoute
@@ -584,6 +622,7 @@ export interface RootRouteChildren {
   SelfServiceIndexRoute: typeof SelfServiceIndexRoute
   StakeholdersIndexRoute: typeof StakeholdersIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
+  TerminalsIndexRoute: typeof TerminalsIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
@@ -622,6 +661,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminals/': {
+      id: '/terminals/'
+      path: '/terminals'
+      fullPath: '/terminals'
+      preLoaderRoute: typeof TerminalsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks/': {
@@ -673,6 +719,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/positions/': {
+      id: '/positions/'
+      path: '/positions'
+      fullPath: '/positions'
+      preLoaderRoute: typeof PositionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organizations/': {
       id: '/organizations/'
       path: '/organizations'
@@ -692,6 +745,13 @@ declare module '@tanstack/react-router' {
       path: '/inspections'
       fullPath: '/inspections'
       preLoaderRoute: typeof InspectionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/geofence/': {
+      id: '/geofence/'
+      path: '/geofence'
+      fullPath: '/geofence'
+      preLoaderRoute: typeof GeofenceIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents/': {
@@ -944,9 +1004,11 @@ const rootRouteChildren: RootRouteChildren = {
   ContractorsIndexRoute: ContractorsIndexRoute,
   DepartmentsIndexRoute: DepartmentsIndexRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,
+  GeofenceIndexRoute: GeofenceIndexRoute,
   InspectionsIndexRoute: InspectionsIndexRoute,
   MessagesIndexRoute: MessagesIndexRoute,
   OrganizationsIndexRoute: OrganizationsIndexRoute,
+  PositionsIndexRoute: PositionsIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,
   RgmIndexRoute: RgmIndexRoute,
   RosterIndexRoute: RosterIndexRoute,
@@ -954,6 +1016,7 @@ const rootRouteChildren: RootRouteChildren = {
   SelfServiceIndexRoute: SelfServiceIndexRoute,
   StakeholdersIndexRoute: StakeholdersIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
+  TerminalsIndexRoute: TerminalsIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,

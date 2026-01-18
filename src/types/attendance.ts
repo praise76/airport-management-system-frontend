@@ -60,13 +60,28 @@ export interface AttendanceRecord {
   updatedAt: string
 }
 
-export interface AttendanceSummary {
+export interface ActiveSession {
+  id: string
+  startedAt: string
+  zoneName?: string
+}
+
+export interface AttendanceLog {
+  id: string
+  eventType: 'auto_in' | 'manual_in' | 'auto_out' | 'manual_out'
+  createdAt: string
+  zoneName?: string
+}
+
+export interface DailyAttendance {
   date: string
-  totalEmployees: number
-  checkedIn: number
-  checkedOut: number
-  absent: number
-  onLeave: number
+  activeSession: ActiveSession | null
+  logs: AttendanceLog[]
+}
+
+export interface AttendanceSummary {
+  activeUsers: number
+  checkedInToday: number
 }
 
 export interface Paginated<T> {

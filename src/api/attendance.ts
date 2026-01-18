@@ -2,6 +2,7 @@ import { api } from './client'
 import type {
   AttendanceRecord,
   AttendanceSummary,
+  DailyAttendance,
   GeofenceZone,
   Paginated,
 } from '@/types/attendance'
@@ -26,9 +27,9 @@ export async function getAttendanceRecord(id: string): Promise<AttendanceRecord>
   return res.data
 }
 
-export async function getMyAttendanceToday(): Promise<AttendanceRecord | null> {
+export async function getMyAttendanceToday(): Promise<DailyAttendance> {
   const res = await api.get('/attendance/me/today')
-  return res.data
+  return res.data.data
 }
 
 export async function getAttendanceSummary(date?: string): Promise<AttendanceSummary> {

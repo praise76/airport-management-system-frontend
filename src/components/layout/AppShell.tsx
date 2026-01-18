@@ -36,6 +36,9 @@ const primaryNav: NavItem[] = [
 	{ label: "Inspections", to: "/inspections" },
 	{ label: "Stakeholders", to: "/stakeholders" },
 	{ label: "Reports", to: "/reports" },
+	{ label: "Terminals", to: "/terminals" },
+	{ label: "Positions", to: "/positions" },
+	{ label: "Geofence", to: "/geofence" },
 	{ label: "RGM", to: "/rgm", roles: ["RGM"] },
 	{ label: "Security", to: "/security", roles: ["ACOS"] },
 	{ label: "Admin", to: "/admin", roles: ["SUPER_ADMIN"] },
@@ -69,7 +72,7 @@ export function AppShell(props: AppShellProps) {
 	}, [user?.roles]);
 
 	return (
-		<div className="grid grid-rows-[auto_1fr] grid-cols-[280px_1fr] lg:grid-cols-[280px_1fr] min-h-dvh bg-(--color-bg) text-(--color-text)">
+		<div className="grid grid-rows-[auto_1fr] grid-cols-1 lg:grid-cols-[280px_1fr] min-h-dvh bg-(--color-bg) text-(--color-text)">
 			{/* Top header */}
 			<header className="col-span-full flex items-center gap-3 px-4 py-3 border-b border-[color-mix(in_oklab,var(--color-text)_10%,transparent)] bg-(--color-surface) sticky top-0 z-30">
 				<button
@@ -137,7 +140,7 @@ export function AppShell(props: AppShellProps) {
 									>
 										<div className="font-medium">{o.name}</div>
 										<div className="text-xs opacity-70">
-											{o.industry ? o.industry : o.id}
+											{o.name ? o.name : o.id}
 										</div>
 									</button>
 								))}
@@ -202,7 +205,7 @@ export function AppShell(props: AppShellProps) {
 			</aside>
 
 			{/* Main content */}
-			<main className="row-start-2 col-start-2 min-w-0 p-4 lg:p-6">
+			<main className="row-start-2 col-start-1 lg:col-start-2 min-w-0 p-4 lg:p-6">
 				{props.children ?? <Outlet />}
 			</main>
 		</div>

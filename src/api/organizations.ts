@@ -13,13 +13,14 @@ export async function listOrganizations(
 	params: ListOrganizationsParams = {},
 ): Promise<OrganizationListResponse> {
 	const res = await api.get("/organizations", { params });
+	// console.log('listOrganizations', res.data);
 	const payload = res.data as OrganizationListResponse;
 	return payload;
 }
 
 export async function getOrganization(id: string): Promise<Organization> {
 	const res = await api.get(`/organizations/${id}`);
-	const payload = (res.data?.data ?? res.data) as Organization;
+	const payload = (res.data) as Organization;
 	return payload;
 }
 
@@ -39,7 +40,7 @@ export async function createOrganization(
 	input: CreateOrganizationRequest,
 ): Promise<Organization> {
 	const res = await api.post("/organizations", input);
-	const payload = (res.data?.data ?? res.data) as Organization;
+	const payload = (res.data) as Organization;
 	return payload;
 }
 
@@ -48,6 +49,6 @@ export async function updateOrganization(
 	input: UpdateOrganizationRequest,
 ): Promise<Organization> {
 	const res = await api.patch(`/organizations/${id}`, input);
-	const payload = (res.data?.data ?? res.data) as Organization;
+	const payload = (res.data) as Organization;
 	return payload;
 }
