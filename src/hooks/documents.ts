@@ -9,11 +9,18 @@ export function useDocuments(params?: DocsApi.ListDocumentsParams) {
   });
 }
 
+// Helper to validate document ID format (should be a UUID or similar, not 'new' or other placeholder values)
+function isValidDocumentId(id: string): boolean {
+  if (!id || id === "new" || id === "undefined" || id === "null") return false;
+  // Basic UUID-like validation (can be adjusted based on actual ID format)
+  return id.length > 5 && !id.includes(" ");
+}
+
 export function useDocumentWorkflow(id: string) {
   return useQuery({
     queryKey: ["documents", id, "workflow"],
     queryFn: () => DocsApi.getDocumentWorkflow(id),
-    enabled: !!id,
+    enabled: isValidDocumentId(id),
   });
 }
 

@@ -1,5 +1,7 @@
 import type {
 	Department,
+	DepartmentFormData,
+	DepartmentLevel,
 	DepartmentListResponse,
 	DepartmentTreeNode,
 } from "@/types/department";
@@ -11,6 +13,7 @@ export type ListDepartmentsParams = {
 	search?: string;
 	organizationId?: string;
 	parentDepartmentId?: string;
+	departmentLevel?: DepartmentLevel;
 };
 
 export async function listDepartments(
@@ -31,22 +34,55 @@ export async function getDepartmentTree(
 	return payload;
 }
 
+export async function getDepartment(id: string): Promise<Department> {
+	const res = await api.get(`/departments/${id}`);
+	const payload = (res.data?.data ?? res.data) as Department;
+	return payload;
+}
+
 export type CreateDepartmentRequest = {
 	name: string;
 	code: string;
 	organizationId: string;
+	departmentLevel: DepartmentLevel;
 	parentDepartmentId?: string | null;
+	headUserId?: string | null;
+	locationDetails?: string | null;
+	airportCode?: string | null;
+	terminalCodes?: string | null;
+	description?: string | null;
+	isRegistry?: boolean;
+};
+
+export type UpdateDepartmentRequest = {
+	name?: string;
+	code?: string;
+	parentDepartmentId?: string | null;
+	headUserId?: string | null;
+	locationDetails?: string | null;
+	airportCode?: string | null;
+	terminalCodes?: string | null;
+	description?: string | null;
 	isRegistry?: boolean;
 };
 
 export type AssignHODRequest = {
-	userId: string;
+	headUserId: string;
 };
 
 export async function createDepartment(
 	input: CreateDepartmentRequest,
 ): Promise<Department> {
 	const res = await api.post("/departments", input);
+	const payload = (res.data?.data ?? res.data) as Department;
+	return payload;
+}
+
+export async function updateDepartment(
+	id: string,
+	input: UpdateDepartmentRequest,
+): Promise<Department> {
+	const res = await api.patch(`/departments/${id}`, input);
 	const payload = (res.data?.data ?? res.data) as Department;
 	return payload;
 }
@@ -59,22 +95,29 @@ export async function assignHOD(
 	const payload = (res.data?.data ?? res.data) as Department;
 	return payload;
 }
-export type UpdateDepartmentRequest = {
-	name?: string;
-	code?: string;
-  parentDepartmentId?: string | null;
-  isRegistry?: boolean;
-};
-
-export async function updateDepartment(
-	id: string,
-	input: UpdateDepartmentRequest,
-): Promise<Department> {
-	const res = await api.patch(`/departments/${id}`, input);
-	const payload = (res.data?.data ?? res.data) as Department;
-	return payload;
-}
 
 export async function deleteDepartment(id: string): Promise<void> {
-  await api.delete(`/departments/${id}`);
+	await api.delete(`/departments/${id}`);
+}
+
+// Helper to prepare form data for API request
+export function prepareCreateRequest(
+	formData: DepartmentFormData,
+	organizationId: string,
+): CreateDepartmentRequest {
+	return {
+		name: formData.name,
+		code: formData.code,
+		organizationId,
+		departmentLevel: formData.departmentLevel,
+		parentDepartmentId: formData.parentDepartmentId || null,
+		headUserId: formData.headUserId || null,
+		locationDetails: formData.locationDetails || null,
+		airportCode: formData.airportCode || null,
+		terminalCodes: formData.terminalCodes?.length
+			? JSON.stringify(formData.terminalCodes)
+			: null,
+		description: formData.description || null,
+		isRegistry: formData.isRegistry || false,
+	};
 }

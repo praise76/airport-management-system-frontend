@@ -9,7 +9,7 @@ import type {
   VendorRatingInput,
   RegulatorySubmission,
   RegulatorySubmissionInput,
-} from "@/types/stakeholder";
+} from "@/types/stakeholder-legacy";
 
 // Airlines
 export async function getAirlines(): Promise<Airline[]> {

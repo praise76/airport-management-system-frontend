@@ -31,8 +31,19 @@ import { Route as ContractorsIndexRouteImport } from './routes/contractors/index
 import { Route as CertificationsIndexRouteImport } from './routes/certifications/index'
 import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
+import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
+import { Route as StakeholderRegisterRouteImport } from './routes/stakeholder/register'
+import { Route as StakeholderPermitsRouteImport } from './routes/stakeholder/permits'
+import { Route as StakeholderLoginRouteImport } from './routes/stakeholder/login'
+import { Route as StakeholderInvoicesRouteImport } from './routes/stakeholder/invoices'
+import { Route as StakeholderFlightsRouteImport } from './routes/stakeholder/flights'
+import { Route as StakeholderDashboardRouteImport } from './routes/stakeholder/dashboard'
+import { Route as StakeholderActivitiesRouteImport } from './routes/stakeholder/activities'
+import { Route as RosterMyShiftsRouteImport } from './routes/roster/my-shifts'
 import { Route as OrganizationsNewRouteImport } from './routes/organizations/new'
 import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
+import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoTanchatRouteImport } from './routes/demo/tanchat'
@@ -52,6 +63,8 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiTanchatRouteImport } from './routes/demo/api.tanchat'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as DemoApiMcpTodosRouteImport } from './routes/demo/api.mcp-todos'
+import { Route as AdminRosterPlannerRouteImport } from './routes/admin/roster/planner'
+import { Route as AdminAttendanceRegistryRouteImport } from './routes/admin/attendance/registry'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
@@ -167,6 +180,58 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StakeholdersStakeholderIdRoute =
+  StakeholdersStakeholderIdRouteImport.update({
+    id: '/stakeholders/$stakeholderId',
+    path: '/stakeholders/$stakeholderId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const StakeholderRegistrationSuccessRoute =
+  StakeholderRegistrationSuccessRouteImport.update({
+    id: '/stakeholder/registration-success',
+    path: '/stakeholder/registration-success',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const StakeholderRegisterRoute = StakeholderRegisterRouteImport.update({
+  id: '/stakeholder/register',
+  path: '/stakeholder/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderPermitsRoute = StakeholderPermitsRouteImport.update({
+  id: '/stakeholder/permits',
+  path: '/stakeholder/permits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderLoginRoute = StakeholderLoginRouteImport.update({
+  id: '/stakeholder/login',
+  path: '/stakeholder/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderInvoicesRoute = StakeholderInvoicesRouteImport.update({
+  id: '/stakeholder/invoices',
+  path: '/stakeholder/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderFlightsRoute = StakeholderFlightsRouteImport.update({
+  id: '/stakeholder/flights',
+  path: '/stakeholder/flights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderDashboardRoute = StakeholderDashboardRouteImport.update({
+  id: '/stakeholder/dashboard',
+  path: '/stakeholder/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderActivitiesRoute = StakeholderActivitiesRouteImport.update({
+  id: '/stakeholder/activities',
+  path: '/stakeholder/activities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterMyShiftsRoute = RosterMyShiftsRouteImport.update({
+  id: '/roster/my-shifts',
+  path: '/roster/my-shifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationsNewRoute = OrganizationsNewRouteImport.update({
   id: '/organizations/new',
   path: '/organizations/new',
@@ -175,6 +240,11 @@ const OrganizationsNewRoute = OrganizationsNewRouteImport.update({
 const OrganizationsOrgIdRoute = OrganizationsOrgIdRouteImport.update({
   id: '/organizations/$orgId',
   path: '/organizations/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentsNewRoute = DocumentsNewRouteImport.update({
+  id: '/documents/new',
+  path: '/documents/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsDocIdRoute = DocumentsDocIdRouteImport.update({
@@ -272,6 +342,16 @@ const DemoApiMcpTodosRoute = DemoApiMcpTodosRouteImport.update({
   path: '/demo/api/mcp-todos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRosterPlannerRoute = AdminRosterPlannerRouteImport.update({
+  id: '/admin/roster/planner',
+  path: '/admin/roster/planner',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAttendanceRegistryRoute = AdminAttendanceRegistryRouteImport.update({
+  id: '/admin/attendance/registry',
+  path: '/admin/attendance/registry',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   id: '/demo/start/ssr/',
   path: '/demo/start/ssr/',
@@ -304,8 +384,19 @@ export interface FileRoutesByFullPath {
   '/demo/tanchat': typeof DemoTanchatRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
+  '/documents/new': typeof DocumentsNewRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
+  '/roster/my-shifts': typeof RosterMyShiftsRoute
+  '/stakeholder/activities': typeof StakeholderActivitiesRoute
+  '/stakeholder/dashboard': typeof StakeholderDashboardRoute
+  '/stakeholder/flights': typeof StakeholderFlightsRoute
+  '/stakeholder/invoices': typeof StakeholderInvoicesRoute
+  '/stakeholder/login': typeof StakeholderLoginRoute
+  '/stakeholder/permits': typeof StakeholderPermitsRoute
+  '/stakeholder/register': typeof StakeholderRegisterRoute
+  '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
@@ -326,6 +417,8 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksIndexRoute
   '/terminals': typeof TerminalsIndexRoute
   '/users': typeof UsersIndexRoute
+  '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
+  '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -353,8 +446,19 @@ export interface FileRoutesByTo {
   '/demo/tanchat': typeof DemoTanchatRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
+  '/documents/new': typeof DocumentsNewRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
+  '/roster/my-shifts': typeof RosterMyShiftsRoute
+  '/stakeholder/activities': typeof StakeholderActivitiesRoute
+  '/stakeholder/dashboard': typeof StakeholderDashboardRoute
+  '/stakeholder/flights': typeof StakeholderFlightsRoute
+  '/stakeholder/invoices': typeof StakeholderInvoicesRoute
+  '/stakeholder/login': typeof StakeholderLoginRoute
+  '/stakeholder/permits': typeof StakeholderPermitsRoute
+  '/stakeholder/register': typeof StakeholderRegisterRoute
+  '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
@@ -375,6 +479,8 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksIndexRoute
   '/terminals': typeof TerminalsIndexRoute
   '/users': typeof UsersIndexRoute
+  '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
+  '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -403,8 +509,19 @@ export interface FileRoutesById {
   '/demo/tanchat': typeof DemoTanchatRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
+  '/documents/new': typeof DocumentsNewRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
+  '/roster/my-shifts': typeof RosterMyShiftsRoute
+  '/stakeholder/activities': typeof StakeholderActivitiesRoute
+  '/stakeholder/dashboard': typeof StakeholderDashboardRoute
+  '/stakeholder/flights': typeof StakeholderFlightsRoute
+  '/stakeholder/invoices': typeof StakeholderInvoicesRoute
+  '/stakeholder/login': typeof StakeholderLoginRoute
+  '/stakeholder/permits': typeof StakeholderPermitsRoute
+  '/stakeholder/register': typeof StakeholderRegisterRoute
+  '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/admin/': typeof AdminIndexRoute
   '/attendance/': typeof AttendanceIndexRoute
   '/certifications/': typeof CertificationsIndexRoute
@@ -425,6 +542,8 @@ export interface FileRoutesById {
   '/tasks/': typeof TasksIndexRoute
   '/terminals/': typeof TerminalsIndexRoute
   '/users/': typeof UsersIndexRoute
+  '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
+  '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -454,8 +573,19 @@ export interface FileRouteTypes {
     | '/demo/tanchat'
     | '/demo/tanstack-query'
     | '/documents/$docId'
+    | '/documents/new'
     | '/organizations/$orgId'
     | '/organizations/new'
+    | '/roster/my-shifts'
+    | '/stakeholder/activities'
+    | '/stakeholder/dashboard'
+    | '/stakeholder/flights'
+    | '/stakeholder/invoices'
+    | '/stakeholder/login'
+    | '/stakeholder/permits'
+    | '/stakeholder/register'
+    | '/stakeholder/registration-success'
+    | '/stakeholders/$stakeholderId'
     | '/admin'
     | '/attendance'
     | '/certifications'
@@ -476,6 +606,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/terminals'
     | '/users'
+    | '/admin/attendance/registry'
+    | '/admin/roster/planner'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -503,8 +635,19 @@ export interface FileRouteTypes {
     | '/demo/tanchat'
     | '/demo/tanstack-query'
     | '/documents/$docId'
+    | '/documents/new'
     | '/organizations/$orgId'
     | '/organizations/new'
+    | '/roster/my-shifts'
+    | '/stakeholder/activities'
+    | '/stakeholder/dashboard'
+    | '/stakeholder/flights'
+    | '/stakeholder/invoices'
+    | '/stakeholder/login'
+    | '/stakeholder/permits'
+    | '/stakeholder/register'
+    | '/stakeholder/registration-success'
+    | '/stakeholders/$stakeholderId'
     | '/admin'
     | '/attendance'
     | '/certifications'
@@ -525,6 +668,8 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/terminals'
     | '/users'
+    | '/admin/attendance/registry'
+    | '/admin/roster/planner'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -552,8 +697,19 @@ export interface FileRouteTypes {
     | '/demo/tanchat'
     | '/demo/tanstack-query'
     | '/documents/$docId'
+    | '/documents/new'
     | '/organizations/$orgId'
     | '/organizations/new'
+    | '/roster/my-shifts'
+    | '/stakeholder/activities'
+    | '/stakeholder/dashboard'
+    | '/stakeholder/flights'
+    | '/stakeholder/invoices'
+    | '/stakeholder/login'
+    | '/stakeholder/permits'
+    | '/stakeholder/register'
+    | '/stakeholder/registration-success'
+    | '/stakeholders/$stakeholderId'
     | '/admin/'
     | '/attendance/'
     | '/certifications/'
@@ -574,6 +730,8 @@ export interface FileRouteTypes {
     | '/tasks/'
     | '/terminals/'
     | '/users/'
+    | '/admin/attendance/registry'
+    | '/admin/roster/planner'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -602,8 +760,19 @@ export interface RootRouteChildren {
   DemoTanchatRoute: typeof DemoTanchatRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   DocumentsDocIdRoute: typeof DocumentsDocIdRoute
+  DocumentsNewRoute: typeof DocumentsNewRoute
   OrganizationsOrgIdRoute: typeof OrganizationsOrgIdRouteWithChildren
   OrganizationsNewRoute: typeof OrganizationsNewRoute
+  RosterMyShiftsRoute: typeof RosterMyShiftsRoute
+  StakeholderActivitiesRoute: typeof StakeholderActivitiesRoute
+  StakeholderDashboardRoute: typeof StakeholderDashboardRoute
+  StakeholderFlightsRoute: typeof StakeholderFlightsRoute
+  StakeholderInvoicesRoute: typeof StakeholderInvoicesRoute
+  StakeholderLoginRoute: typeof StakeholderLoginRoute
+  StakeholderPermitsRoute: typeof StakeholderPermitsRoute
+  StakeholderRegisterRoute: typeof StakeholderRegisterRoute
+  StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
+  StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AttendanceIndexRoute: typeof AttendanceIndexRoute
   CertificationsIndexRoute: typeof CertificationsIndexRoute
@@ -624,6 +793,8 @@ export interface RootRouteChildren {
   TasksIndexRoute: typeof TasksIndexRoute
   TerminalsIndexRoute: typeof TerminalsIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
+  AdminAttendanceRegistryRoute: typeof AdminAttendanceRegistryRoute
+  AdminRosterPlannerRoute: typeof AdminRosterPlannerRoute
   DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTanchatRoute: typeof DemoApiTanchatRoute
@@ -796,6 +967,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholders/$stakeholderId': {
+      id: '/stakeholders/$stakeholderId'
+      path: '/stakeholders/$stakeholderId'
+      fullPath: '/stakeholders/$stakeholderId'
+      preLoaderRoute: typeof StakeholdersStakeholderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/registration-success': {
+      id: '/stakeholder/registration-success'
+      path: '/stakeholder/registration-success'
+      fullPath: '/stakeholder/registration-success'
+      preLoaderRoute: typeof StakeholderRegistrationSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/register': {
+      id: '/stakeholder/register'
+      path: '/stakeholder/register'
+      fullPath: '/stakeholder/register'
+      preLoaderRoute: typeof StakeholderRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/permits': {
+      id: '/stakeholder/permits'
+      path: '/stakeholder/permits'
+      fullPath: '/stakeholder/permits'
+      preLoaderRoute: typeof StakeholderPermitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/login': {
+      id: '/stakeholder/login'
+      path: '/stakeholder/login'
+      fullPath: '/stakeholder/login'
+      preLoaderRoute: typeof StakeholderLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/invoices': {
+      id: '/stakeholder/invoices'
+      path: '/stakeholder/invoices'
+      fullPath: '/stakeholder/invoices'
+      preLoaderRoute: typeof StakeholderInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/flights': {
+      id: '/stakeholder/flights'
+      path: '/stakeholder/flights'
+      fullPath: '/stakeholder/flights'
+      preLoaderRoute: typeof StakeholderFlightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/dashboard': {
+      id: '/stakeholder/dashboard'
+      path: '/stakeholder/dashboard'
+      fullPath: '/stakeholder/dashboard'
+      preLoaderRoute: typeof StakeholderDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/activities': {
+      id: '/stakeholder/activities'
+      path: '/stakeholder/activities'
+      fullPath: '/stakeholder/activities'
+      preLoaderRoute: typeof StakeholderActivitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster/my-shifts': {
+      id: '/roster/my-shifts'
+      path: '/roster/my-shifts'
+      fullPath: '/roster/my-shifts'
+      preLoaderRoute: typeof RosterMyShiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organizations/new': {
       id: '/organizations/new'
       path: '/organizations/new'
@@ -808,6 +1049,13 @@ declare module '@tanstack/react-router' {
       path: '/organizations/$orgId'
       fullPath: '/organizations/$orgId'
       preLoaderRoute: typeof OrganizationsOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documents/new': {
+      id: '/documents/new'
+      path: '/documents/new'
+      fullPath: '/documents/new'
+      preLoaderRoute: typeof DocumentsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents/$docId': {
@@ -943,6 +1191,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiMcpTodosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/roster/planner': {
+      id: '/admin/roster/planner'
+      path: '/admin/roster/planner'
+      fullPath: '/admin/roster/planner'
+      preLoaderRoute: typeof AdminRosterPlannerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/attendance/registry': {
+      id: '/admin/attendance/registry'
+      path: '/admin/attendance/registry'
+      fullPath: '/admin/attendance/registry'
+      preLoaderRoute: typeof AdminAttendanceRegistryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/start/ssr/': {
       id: '/demo/start/ssr/'
       path: '/demo/start/ssr'
@@ -996,8 +1258,19 @@ const rootRouteChildren: RootRouteChildren = {
   DemoTanchatRoute: DemoTanchatRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   DocumentsDocIdRoute: DocumentsDocIdRoute,
+  DocumentsNewRoute: DocumentsNewRoute,
   OrganizationsOrgIdRoute: OrganizationsOrgIdRouteWithChildren,
   OrganizationsNewRoute: OrganizationsNewRoute,
+  RosterMyShiftsRoute: RosterMyShiftsRoute,
+  StakeholderActivitiesRoute: StakeholderActivitiesRoute,
+  StakeholderDashboardRoute: StakeholderDashboardRoute,
+  StakeholderFlightsRoute: StakeholderFlightsRoute,
+  StakeholderInvoicesRoute: StakeholderInvoicesRoute,
+  StakeholderLoginRoute: StakeholderLoginRoute,
+  StakeholderPermitsRoute: StakeholderPermitsRoute,
+  StakeholderRegisterRoute: StakeholderRegisterRoute,
+  StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
+  StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   AttendanceIndexRoute: AttendanceIndexRoute,
   CertificationsIndexRoute: CertificationsIndexRoute,
@@ -1018,6 +1291,8 @@ const rootRouteChildren: RootRouteChildren = {
   TasksIndexRoute: TasksIndexRoute,
   TerminalsIndexRoute: TerminalsIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
+  AdminAttendanceRegistryRoute: AdminAttendanceRegistryRoute,
+  AdminRosterPlannerRoute: AdminRosterPlannerRoute,
   DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTanchatRoute: DemoApiTanchatRoute,

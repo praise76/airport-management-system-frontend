@@ -15,6 +15,10 @@ export const Route = createFileRoute("/documents/$docId")({
 
 function DocumentWorkflowPage() {
   const { docId } = Route.useParams();
+  
+  // Validate document ID format (shouldn't be 'new' or other placeholder values)
+  const isValidDocId = docId && docId !== "new" && docId !== "undefined" && docId !== "null" && docId.length > 5;
+  
   const {
     data,
     isLoading,
@@ -23,7 +27,22 @@ function DocumentWorkflowPage() {
   } = useQuery({
     queryKey: ["document", docId, "workflow"],
     queryFn: () => getDocumentWorkflow(docId),
+    enabled: isValidDocId,
   });
+
+  // Handle invalid document ID
+  if (!isValidDocId) {
+    return (
+      <div className="py-12 text-center">
+        <div className="text-lg font-medium text-muted-foreground">
+          Invalid Document ID
+        </div>
+        <div className="mt-2 text-sm text-muted-foreground">
+          Please select a valid document to view its workflow history.
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

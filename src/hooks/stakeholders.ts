@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as StakeholdersApi from "@/api/stakeholders";
-import type { AirlineInput, VendorInput, VendorRatingInput, RegulatorySubmissionInput } from "@/types/stakeholder";
+import type { AirlineInput, VendorInput, VendorRatingInput, RegulatorySubmissionInput } from "@/types/stakeholder-legacy";
 import { toast } from "sonner";
 
 // Airlines

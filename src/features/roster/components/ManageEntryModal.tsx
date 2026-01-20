@@ -1,0 +1,162 @@
+
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAddRosterEntry, useUpdateRosterEntry, useDeleteRosterEntry } from "../api";
+import { RosterEntry, ShiftType } from "../types";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+interface ManageEntryModalProps {
+  rosterId: string;
+  userId: string;
+  date: Date;
+  existingEntry?: RosterEntry;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ManageEntryModal({ rosterId, userId, date, existingEntry, open, onOpenChange }: ManageEntryModalProps) {
+  const [shift, setShift] = useState<ShiftType>("morning");
+  const [startTime, setStartTime] = useState("08:00");
+  const [endTime, setEndTime] = useState("16:00");
+  const [position, setPosition] = useState("");
+  const [location, setLocation] = useState("");
+
+  const addMutation = useAddRosterEntry();
+  const updateMutation = useUpdateRosterEntry();
+  const deleteMutation = useDeleteRosterEntry();
+
+  useEffect(() => {
+    if (existingEntry) {
+      setShift(existingEntry.shift);
+      setStartTime(existingEntry.shiftStartTime.slice(0, 5));
+      setEndTime(existingEntry.shiftEndTime.slice(0, 5));
+      setPosition(existingEntry.dutyPosition || "");
+      setLocation(existingEntry.dutyLocation || "");
+    } else {
+        // Defaults
+        setShift("morning");
+        setStartTime("08:00");
+        setEndTime("16:00");
+        setPosition("");
+        setLocation("");
+    }
+  }, [existingEntry, open]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const entryData = {
+      userId,
+      dutyDate: format(date, "yyyy-MM-dd"), // Ensure correct format
+      shift,
+      shiftStartTime: startTime,
+      shiftEndTime: endTime,
+      dutyPosition: position,
+      dutyLocation: location,
+      status: 'scheduled' as const,
+    };
+
+    if (existingEntry) {
+      updateMutation.mutate(
+        { rosterId, entryId: existingEntry.id, updates: entryData },
+        {
+          onSuccess: () => {
+             toast.success("Shift updated");
+             onOpenChange(false);
+          },
+          onError: () => toast.error("Failed to update shift"),
+        }
+      );
+    } else {
+      addMutation.mutate(
+        { rosterId, entry: entryData },
+        {
+          onSuccess: () => {
+             toast.success("Shift added");
+             onOpenChange(false);
+          },
+          onError: () => toast.error("Failed to add shift"),
+        }
+      );
+    }
+  };
+
+  const handleDelete = () => {
+     if (!existingEntry) return;
+     if (confirm("Are you sure you want to remove this shift?")) {
+         deleteMutation.mutate(
+             { rosterId, entryId: existingEntry.id },
+             {
+                 onSuccess: () => {
+                     toast.success("Shift removed");
+                     onOpenChange(false);
+                 }
+             }
+         );
+     }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{existingEntry ? "Edit Shift" : "Add Shift"}</DialogTitle>
+          <DialogDescription>
+            {format(date, "EEEE, MMM d, yyyy")}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Shift Type</Label>
+            <Select value={shift} onValueChange={(val) => setShift(val as ShiftType)}>
+               <SelectTrigger>
+                  <SelectValue />
+               </SelectTrigger>
+               <SelectContent>
+                  <SelectItem value="morning">Morning</SelectItem>
+                  <SelectItem value="afternoon">Afternoon</SelectItem>
+                  <SelectItem value="night">Night</SelectItem>
+               </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
+             </div>
+             <div className="space-y-2">
+                <Label>End Time</Label>
+                <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} required />
+             </div>
+          </div>
+          <div className="space-y-2">
+             <Label>Position</Label>
+             <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="e.g. Supervisor" />
+          </div>
+          <div className="space-y-2">
+             <Label>Location</Label>
+             <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Gate 1" />
+          </div>
+
+          <DialogFooter className="fle sm:justify-between">
+            {existingEntry && (
+                <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+                    Delete
+                </Button>
+            )}
+             <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                <Button type="submit" disabled={addMutation.isPending || updateMutation.isPending}>
+                    {existingEntry ? "Save Changes" : "Add Shift"}
+                </Button>
+             </div>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

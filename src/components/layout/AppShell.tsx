@@ -26,10 +26,12 @@ type OrganizationOption = {
 
 const primaryNav: NavItem[] = [
 	{ label: "Dashboard", to: "/" },
+	{ label: "My Schedule", to: "/roster/my-shifts" },
 	{ label: "Organizations", to: "/organizations" },
 	{ label: "Departments", to: "/departments" },
 	{ label: "Documents", to: "/documents" },
 	{ label: "Attendance", to: "/attendance" },
+	{ label: "Attendance Registry", to: "/admin/attendance/registry", roles: ["SUPER_ADMIN"] },
 	{ label: "Certifications", to: "/certifications" },
 	{ label: "Messages", to: "/messages" },
 	{ label: "Tasks", to: "/tasks" },
@@ -39,6 +41,7 @@ const primaryNav: NavItem[] = [
 	{ label: "Terminals", to: "/terminals" },
 	{ label: "Positions", to: "/positions" },
 	{ label: "Geofence", to: "/geofence" },
+	{ label: "Roster Planner", to: "/admin/roster/planner", roles: ["SUPER_ADMIN"] },
 	{ label: "RGM", to: "/rgm", roles: ["RGM"] },
 	{ label: "Security", to: "/security", roles: ["ACOS"] },
 	{ label: "Admin", to: "/admin", roles: ["SUPER_ADMIN"] },
