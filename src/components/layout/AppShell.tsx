@@ -67,12 +67,18 @@ export function AppShell(props: AppShellProps) {
 	}, [organizations, selectedOrgId]);
 
 	const visibleNav = useMemo(() => {
-		const roles = user?.roles ?? [];
+		// Normalize user roles:
+		// 1. Support both 'role' (singular, from backend) and 'roles' (array)
+		// 2. Normalize to uppercase to match primaryNav (e.g. "super_admin" -> "SUPER_ADMIN")
+		let userRoles: string[] = [];
+		if (user?.role) userRoles.push(user.role.toUpperCase());
+		if (user?.roles) userRoles = [...userRoles, ...user.roles.map(r => r.toUpperCase())];
+		
 		return primaryNav.filter((n) => {
 			if (!n.roles || n.roles.length === 0) return true;
-			return n.roles.some((r) => roles.includes(r));
+			return n.roles.some((r) => userRoles.includes(r));
 		});
-	}, [user?.roles]);
+	}, [user]);
 
 	return (
 		<div className="grid grid-rows-[auto_1fr] grid-cols-1 lg:grid-cols-[280px_1fr] min-h-dvh bg-(--color-bg) text-(--color-text)">
@@ -199,6 +205,7 @@ export function AppShell(props: AppShellProps) {
 								className:
 									"bg-[color-mix(in_oklab,var(--color-primary)_25%,transparent)] text-[var(--color-primary)]",
 							}}
+                            activeOptions={{ exact: item.to === '/' || item.to === '/admin' }}
 							className="block px-3 py-2 rounded-md text-sm hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
 						>
 							{item.label}

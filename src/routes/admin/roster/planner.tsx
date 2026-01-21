@@ -124,7 +124,7 @@ function RosterPlannerPage() {
 
        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {rostersLoading && <p>Loading rosters...</p>}
-          {rosters?.map((roster) => (
+          {(Array.isArray(rosters) ? rosters : (rosters as any)?.data || []).map((roster: any) => (
              <div 
                 key={roster.id} 
                 className="border p-4 rounded-xl hover:border-primary/50 cursor-pointer transition-colors bg-card"
@@ -155,7 +155,7 @@ function RosterPlannerPage() {
                 </div>
              </div>
           ))}
-          {!rostersLoading && rosters?.length === 0 && (
+          {!rostersLoading && (Array.isArray(rosters) ? rosters : (rosters as any)?.data || []).length === 0 && (
               <div className="col-span-full text-center py-10 border border-dashed rounded-xl">
                  <p className="text-muted-foreground">No rosters found. Create one to get started.</p>
               </div>

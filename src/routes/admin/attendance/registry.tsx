@@ -61,10 +61,10 @@ function AttendanceRegistryPage() {
                {isLoading && (
                   <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr>
                )}
-               {!isLoading && records?.length === 0 && (
+               {!isLoading && (Array.isArray(records) ? records : (records as any)?.data || []).length === 0 && (
                   <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No records found for this date.</td></tr>
                )}
-               {records?.map((record: any) => {
+               {(Array.isArray(records) ? records : (records as any)?.data || []).map((record: any) => {
                   const rosterEntry = record.rosterEntry || record; 
                   const user = record.user || rosterEntry.user;
                   const isLate = rosterEntry.lateMinutes > 0;
