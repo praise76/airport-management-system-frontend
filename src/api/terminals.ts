@@ -12,7 +12,16 @@ export async function getTerminal(id: string): Promise<Terminal> {
 }
 
 export async function createTerminal(input: TerminalInput): Promise<Terminal> {
-  const res = await api.post("/terminals", input);
+  const payload = {
+    ...input,
+    terminalName: input.name,
+    terminalCode: input.code,
+    terminalType: input.type,
+    airportCode: input.airportCode,
+    // Keep original keys if backend supports them optionally or ignores them, 
+    // but ensuring the required ones are present with correct keys.
+  };
+  const res = await api.post("/terminals", payload);
   return res.data.data;
 }
 

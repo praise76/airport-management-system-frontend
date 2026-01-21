@@ -16,6 +16,7 @@ export interface TerminalInput {
   organizationId: string;
   code: string;
   name: string;
+  airportCode: string; // Required by backend
   description?: string;
   location?: string;
   type?: "domestic" | "international" | "cargo" | "general_aviation";

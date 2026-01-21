@@ -3,6 +3,7 @@ import { getAccessToken } from '@/utils/auth'
 import { useTerminals, useTerminalStats, useCreateTerminal, useUpdateTerminal, useDeleteTerminal } from '@/hooks/terminals'
 import type { Terminal, TerminalInput, TerminalUpdate } from '@/types/terminal'
 import { useState } from 'react'
+import { useAuthStore } from '@/stores/auth'
 
 export const Route = createFileRoute('/terminals/')({
   beforeLoad: () => {
@@ -286,10 +287,12 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
 
 function CreateTerminalModal({ onClose }: { onClose: () => void }) {
   const createTerminal = useCreateTerminal()
+  const user = useAuthStore((s) => s.user)
   const [form, setForm] = useState<Partial<TerminalInput>>({
     name: '',
     code: '',
-    organizationId: '',
+    organizationId: user?.organizationId || '',
+    airportCode: '', // initialize airport code
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -319,16 +322,29 @@ function CreateTerminalModal({ onClose }: { onClose: () => void }) {
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Code</label>
-            <input
-              value={form.code}
-              onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-              placeholder="e.g., T1"
-              maxLength={5}
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+                <label className="block text-sm font-medium mb-1">Code</label>
+                <input
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                placeholder="e.g., T1"
+                maxLength={5}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                required
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-medium mb-1">Airport Code</label>
+                <input
+                value={form.airportCode || ''}
+                onChange={(e) => setForm({ ...form, airportCode: e.target.value.toUpperCase() })}
+                placeholder="e.g., LOS"
+                maxLength={3}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                required
+                />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Type</label>
@@ -336,6 +352,7 @@ function CreateTerminalModal({ onClose }: { onClose: () => void }) {
               value={form.type || ''}
               onChange={(e) => setForm({ ...form, type: e.target.value as any })}
               className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+              required
             >
               <option value="">Select type...</option>
               <option value="domestic">Domestic</option>
