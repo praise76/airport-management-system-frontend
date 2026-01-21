@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { getAccessToken } from '@/utils/auth'
 import { useTerminals, useTerminalStats, useCreateTerminal, useUpdateTerminal, useDeleteTerminal } from '@/hooks/terminals'
-import type { Terminal, TerminalInput, TerminalUpdate } from '@/types/terminal'
+import type { Terminal, TerminalInput, TerminalUpdate, TerminalType } from '@/types/terminal'
 import { useState } from 'react'
 import { useAuthStore } from '@/stores/auth'
 
@@ -18,6 +18,9 @@ const typeColors: Record<string, string> = {
   international: 'bg-purple-500/20 text-purple-400',
   cargo: 'bg-orange-500/20 text-orange-400',
   general_aviation: 'bg-green-500/20 text-green-400',
+  vip: 'bg-yellow-500/20 text-yellow-400',
+  mixed: 'bg-pink-500/20 text-pink-400',
+  seasonal: 'bg-teal-500/20 text-teal-400',
 }
 
 function Page() {
@@ -48,11 +51,11 @@ function Page() {
 
       {/* Terminal Grid */}
       {isLoading ? (
-        <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
+        <div className="bg-(--color-surface) rounded-xl border border-[var(--color-border)] p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
           Loading terminals...
         </div>
       ) : terminals.length === 0 ? (
-        <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
+        <div className="bg-(--color-surface) rounded-xl border border-[var(--color-border)] p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
           No terminals registered. Add your first terminal!
         </div>
       ) : (
@@ -82,15 +85,15 @@ function TerminalCard({ terminal, onClick }: { terminal: Terminal; onClick: () =
   return (
     <div
       onClick={onClick}
-      className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-5 cursor-pointer hover:border-[var(--color-primary)] transition"
+      className="bg-(--color-surface) rounded-xl border border-(--color-border) p-5 cursor-pointer hover:border-(--color-primary) transition"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center">
-            <span className="text-xl font-bold text-[var(--color-primary)]">{terminal.code}</span>
+          <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+            <span className="text-xl font-bold text-primary">{terminal.airportCode}</span>
           </div>
           <div>
-            <h3 className="font-semibold">{terminal.name}</h3>
+            <h3 className="font-semibold">{terminal.terminalName}</h3>
             {terminal.location && (
               <p className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
                 {terminal.location}
@@ -99,15 +102,15 @@ function TerminalCard({ terminal, onClick }: { terminal: Terminal; onClick: () =
           </div>
         </div>
         <span className={`px-2 py-1 rounded text-xs font-medium ${
-          terminal.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+          terminal.isOperational ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
         }`}>
-          {terminal.isActive ? 'Active' : 'Inactive'}
+          {terminal.isOperational ? 'Active' : 'Inactive'}
         </span>
       </div>
       
-      {terminal.type && (
-        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${typeColors[terminal.type] || 'bg-gray-500/20 text-gray-400'}`}>
-          {terminal.type.replace('_', ' ')}
+      {terminal.terminalType && (
+        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${typeColors[terminal.terminalType] || 'bg-gray-500/20 text-gray-400'}`}>
+          {terminal.terminalType.replace('_', ' ')}
         </span>
       )}
       
@@ -126,11 +129,14 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
   const deleteTerminal = useDeleteTerminal()
   const [isEditing, setIsEditing] = useState(false)
   const [form, setForm] = useState<TerminalUpdate>({
-    name: terminal.name,
-    code: terminal.code,
+    terminalName: terminal.terminalName,
+    terminalCode: terminal.terminalCode,
+    terminalType: terminal.terminalType,
+    airportCode: terminal.airportCode,
     description: terminal.description || '',
     location: terminal.location || '',
-    isActive: terminal.isActive,
+    isOperational: terminal.isOperational,
+    operatorType: terminal.operatorType,
   })
 
   const handleSave = () => {
@@ -152,9 +158,9 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
         <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--color-primary)]/20 flex items-center justify-center">
-              <span className="font-bold text-[var(--color-primary)]">{terminal.code}</span>
+              <span className="font-bold text-[var(--color-primary)]">{terminal.terminalCode}</span>
             </div>
-            <h2 className="font-semibold">{terminal.name}</h2>
+            <h2 className="font-semibold">{terminal.terminalName}</h2>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={handleDelete} className="p-2 hover:bg-red-500/10 text-red-400 rounded">
@@ -170,7 +176,7 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
           {/* Stats */}
           {stats && (
             <div className="grid grid-cols-2 gap-3">
@@ -199,18 +205,44 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
               <div>
                 <label className="block text-sm font-medium mb-1">Name</label>
                 <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  value={form.terminalName}
+                  onChange={(e) => setForm({ ...form, terminalName: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Code</label>
+                    <input
+                      value={form.terminalCode}
+                      onChange={(e) => setForm({ ...form, terminalCode: e.target.value.toUpperCase() })}
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Airport</label>
+                    <input
+                      value={form.airportCode}
+                      onChange={(e) => setForm({ ...form, airportCode: e.target.value.toUpperCase() })}
+                      className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                    />
+                  </div>
+              </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Code</label>
-                <input
-                  value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                <label className="block text-sm font-medium mb-1">Type</label>
+                <select
+                  value={form.terminalType}
+                  onChange={(e) => setForm({ ...form, terminalType: e.target.value as any })}
                   className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
-                />
+                >
+                  <option value="domestic">Domestic</option>
+                  <option value="international">International</option>
+                  <option value="cargo">Cargo</option>
+                  <option value="general_aviation">General Aviation</option>
+                  <option value="vip">VIP</option>
+                  <option value="seasonal">Seasonal</option>
+                  <option value="mixed">Mixed</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Location</label>
@@ -232,10 +264,10 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
                 <input
                   type="checkbox"
                   id="isActive"
-                  checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  checked={form.isOperational}
+                  onChange={(e) => setForm({ ...form, isOperational: e.target.checked })}
                 />
-                <label htmlFor="isActive" className="text-sm">Active</label>
+                <label htmlFor="isActive" className="text-sm">Operational</label>
               </div>
               <div className="flex gap-2">
                 <button
@@ -258,11 +290,19 @@ function TerminalDetailModal({ terminal, onClose }: { terminal: Terminal; onClos
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Type</span>
-                  <p className="font-medium capitalize">{terminal.type?.replace('_', ' ') || '-'}</p>
+                  <p className="font-medium capitalize">{terminal.terminalType?.replace('_', ' ') || '-'}</p>
                 </div>
                 <div>
                   <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Location</span>
                   <p className="font-medium">{terminal.location || '-'}</p>
+                </div>
+                <div>
+                    <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Operator</span>
+                    <p className="font-medium capitalize">{terminal.operatorName || terminal.operatorType}</p>
+                </div>
+                 <div>
+                    <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Airport</span>
+                    <p className="font-medium">{terminal.airportCode}</p>
                 </div>
               </div>
               {terminal.description && (
@@ -289,10 +329,14 @@ function CreateTerminalModal({ onClose }: { onClose: () => void }) {
   const createTerminal = useCreateTerminal()
   const user = useAuthStore((s) => s.user)
   const [form, setForm] = useState<Partial<TerminalInput>>({
-    name: '',
-    code: '',
+    terminalName: '',
+    terminalCode: '',
+    airportCode: '', 
+    terminalType: 'domestic',
+    operatorType: 'faan',
+    isOperational: true,
+    isSeasonal: false,
     organizationId: user?.organizationId || '',
-    airportCode: '', // initialize airport code
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -315,8 +359,8 @@ function CreateTerminalModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="block text-sm font-medium mb-1">Terminal Name</label>
             <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              value={form.terminalName}
+              onChange={(e) => setForm({ ...form, terminalName: e.target.value })}
               placeholder="e.g., Terminal 1"
               className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
               required
@@ -326,8 +370,8 @@ function CreateTerminalModal({ onClose }: { onClose: () => void }) {
             <div>
                 <label className="block text-sm font-medium mb-1">Code</label>
                 <input
-                value={form.code}
-                onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                value={form.terminalCode}
+                onChange={(e) => setForm({ ...form, terminalCode: e.target.value.toUpperCase() })}
                 placeholder="e.g., T1"
                 maxLength={5}
                 className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
@@ -349,16 +393,18 @@ function CreateTerminalModal({ onClose }: { onClose: () => void }) {
           <div>
             <label className="block text-sm font-medium mb-1">Type</label>
             <select
-              value={form.type || ''}
-              onChange={(e) => setForm({ ...form, type: e.target.value as any })}
+              value={form.terminalType || 'domestic'}
+              onChange={(e) => setForm({ ...form, terminalType: e.target.value as TerminalType })}
               className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
               required
             >
-              <option value="">Select type...</option>
               <option value="domestic">Domestic</option>
               <option value="international">International</option>
               <option value="cargo">Cargo</option>
               <option value="general_aviation">General Aviation</option>
+              <option value="vip">VIP</option>
+              <option value="seasonal">Seasonal</option>
+              <option value="mixed">Mixed</option>
             </select>
           </div>
           <div>
