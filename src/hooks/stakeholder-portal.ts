@@ -327,6 +327,48 @@ export function useRejectStakeholderPermit(stakeholderOrgId: string) {
 }
 
 // ============================================
+// GLOBAL PERMITS (Admin Queue)
+// ============================================
+
+import type { GlobalPermitListParams } from "@/types/stakeholder-portal";
+import { useAuthStore } from "@/stores/auth";
+
+export function useGlobalPermits(params: GlobalPermitListParams = {}) {
+	return useQuery({
+		queryKey: ["global-permits", params],
+		queryFn: () => StakeholderPortalApi.listGlobalPermits(params),
+	});
+}
+
+export function useApproveGlobalPermit() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (permitId: string) =>
+			StakeholderPortalApi.approveGlobalPermit(permitId),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["global-permits"] });
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs"] });
+			toast.success("Permit approved successfully");
+		},
+		onError: (err: any) => toast.error(err.message || "Failed to approve permit"),
+	});
+}
+
+export function useRejectGlobalPermit() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ permitId, reason }: { permitId: string; reason: string }) =>
+			StakeholderPortalApi.rejectGlobalPermit(permitId, reason),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["global-permits"] });
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs"] });
+			toast.success("Permit rejected");
+		},
+		onError: (err: any) => toast.error(err.message || "Failed to reject permit"),
+	});
+}
+
+// ============================================
 // STAKEHOLDER FLIGHTS
 // ============================================
 
@@ -453,9 +495,28 @@ export function useStakeholderLogin() {
 		mutationFn: (input: StakeholderAuthLoginInput) =>
 			StakeholderPortalApi.stakeholderLogin(input),
 		onSuccess: (data) => {
-			localStorage.setItem("stakeholder_token", data.token);
+			console.log("data", data);
+			// Save to specific storage keys for persistence specific to stakeholder handling if needed
+			localStorage.setItem("stakeholder_token", data.accessToken);
 			localStorage.setItem("stakeholder_user", JSON.stringify(data.user));
-			localStorage.setItem("stakeholder_org", JSON.stringify(data.organization));
+			if (data.organization) {
+				localStorage.setItem("stakeholder_org", JSON.stringify(data.organization));
+			}
+
+			// Sync with main AuthStore so the UI (Dashboard) knows we are logged in
+			useAuthStore.getState().login({
+				accessToken: data.accessToken,
+				refreshToken: data.refreshToken,
+				user: {
+					id: data.user.id,
+					name: `${data.user.firstName} ${data.user.lastName}`,
+					email: data.user.email,
+					role: data.user.role,
+					organizationId: data.organization?.id || data.user.stakeholderOrganizationId,
+					type: (data.user as any).type || "stakeholder",
+				},
+			});
+
 			toast.success("Login successful");
 		},
 		onError: (err: any) => toast.error(err.message || "Login failed"),

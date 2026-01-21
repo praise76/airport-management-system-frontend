@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/auth";
+import { refreshStakeholderToken } from "@/api/stakeholder-portal";
 
 export type ApiError = {
 	status: number;
@@ -106,8 +107,19 @@ async function refreshToken(): Promise<{
 	accessToken: string;
 	refreshToken: string;
 }> {
-	const refreshToken = useAuthStore.getState().refreshToken;
+	const state = useAuthStore.getState();
+	const refreshToken = state.refreshToken;
 	if (!refreshToken) throw new Error("No refresh token");
+
+	// Check if stakeholder
+	if (state.user?.type === "stakeholder") {
+		const res = await refreshStakeholderToken(refreshToken);
+		return {
+			accessToken: res.accessToken,
+			refreshToken: res.refreshToken,
+		};
+	}
+
 	const res = await axios.post(
 		(import.meta.env.VITE_API_BASE_URL ?? "/api") + "/auth/refresh",
 		{ refreshToken },

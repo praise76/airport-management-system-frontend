@@ -15,11 +15,27 @@ export interface Roster {
   notes?: string;
 }
 
+// ... (existing code)
+
+export interface ShiftDefinition {
+  id: string;
+  name: string; // "Morning A"
+  startTime: string; // "06:00"
+  endTime: string; // "14:00"
+  unitId?: string;
+  organizationId: string;
+  color?: string; // Optional UI color
+}
+
 export interface RosterEntry {
   id: string;
   userId: string;
   rosterId: string;
   dutyDate: string; // YYYY-MM-DD
+
+  // Shift config
+  shiftDefinitionId?: string;
+  shiftDefinition?: ShiftDefinition;
 
   // Planned
   shift: ShiftType;

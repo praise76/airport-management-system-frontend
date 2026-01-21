@@ -199,3 +199,56 @@ export const useReviewSwap = () => { // Supervisor
     },
   });
 };
+// --- Shift Definitions ---
+import { ShiftDefinition } from "../types";
+
+export const useGetShiftDefinitions = (filters?: { unitId?: string }) => {
+  return useQuery({
+    queryKey: ["shift-definitions", filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters?.unitId) params.append("unitId", filters.unitId);
+      
+      const { data } = await api.get<ShiftDefinition[]>(`/roster/shifts?${params.toString()}`);
+      return data;
+    },
+  });
+};
+
+export const useCreateShiftDefinition = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (shift: Partial<ShiftDefinition>) => {
+      const { data } = await api.post<ShiftDefinition>("/roster/shifts", shift);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-definitions"] });
+    },
+  });
+};
+
+export const useUpdateShiftDefinition = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<ShiftDefinition> }) => {
+      const { data } = await api.patch<ShiftDefinition>(`/roster/shifts/${id}`, updates);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-definitions"] });
+    },
+  });
+};
+
+export const useDeleteShiftDefinition = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/roster/shifts/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-definitions"] });
+    },
+  });
+};

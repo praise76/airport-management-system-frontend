@@ -31,6 +31,8 @@ import { Route as ContractorsIndexRouteImport } from './routes/contractors/index
 import { Route as CertificationsIndexRouteImport } from './routes/certifications/index'
 import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as StakeholdersVerificationRouteImport } from './routes/stakeholders/verification'
+import { Route as StakeholdersPermitsRouteImport } from './routes/stakeholders/permits'
 import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
 import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
 import { Route as StakeholderRegisterRouteImport } from './routes/stakeholder/register'
@@ -63,6 +65,7 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiTanchatRouteImport } from './routes/demo/api.tanchat'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as DemoApiMcpTodosRouteImport } from './routes/demo/api.mcp-todos'
+import { Route as AdminStakeholdersVerificationRouteImport } from './routes/admin/stakeholders/verification'
 import { Route as AdminRosterPlannerRouteImport } from './routes/admin/roster/planner'
 import { Route as AdminAttendanceRegistryRouteImport } from './routes/admin/attendance/registry'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
@@ -178,6 +181,17 @@ const AttendanceIndexRoute = AttendanceIndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholdersVerificationRoute =
+  StakeholdersVerificationRouteImport.update({
+    id: '/stakeholders/verification',
+    path: '/stakeholders/verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const StakeholdersPermitsRoute = StakeholdersPermitsRouteImport.update({
+  id: '/stakeholders/permits',
+  path: '/stakeholders/permits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholdersStakeholderIdRoute =
@@ -342,6 +356,12 @@ const DemoApiMcpTodosRoute = DemoApiMcpTodosRouteImport.update({
   path: '/demo/api/mcp-todos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStakeholdersVerificationRoute =
+  AdminStakeholdersVerificationRouteImport.update({
+    id: '/admin/stakeholders/verification',
+    path: '/admin/stakeholders/verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminRosterPlannerRoute = AdminRosterPlannerRouteImport.update({
   id: '/admin/roster/planner',
   path: '/admin/roster/planner',
@@ -397,6 +417,8 @@ export interface FileRoutesByFullPath {
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
+  '/stakeholders/permits': typeof StakeholdersPermitsRoute
+  '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
@@ -419,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/users': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
+  '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -459,6 +482,8 @@ export interface FileRoutesByTo {
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
+  '/stakeholders/permits': typeof StakeholdersPermitsRoute
+  '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
@@ -481,6 +506,7 @@ export interface FileRoutesByTo {
   '/users': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
+  '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -522,6 +548,8 @@ export interface FileRoutesById {
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
+  '/stakeholders/permits': typeof StakeholdersPermitsRoute
+  '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/admin/': typeof AdminIndexRoute
   '/attendance/': typeof AttendanceIndexRoute
   '/certifications/': typeof CertificationsIndexRoute
@@ -544,6 +572,7 @@ export interface FileRoutesById {
   '/users/': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
+  '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tanchat': typeof DemoApiTanchatRoute
@@ -586,6 +615,8 @@ export interface FileRouteTypes {
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholders/$stakeholderId'
+    | '/stakeholders/permits'
+    | '/stakeholders/verification'
     | '/admin'
     | '/attendance'
     | '/certifications'
@@ -608,6 +639,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/admin/attendance/registry'
     | '/admin/roster/planner'
+    | '/admin/stakeholders/verification'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -648,6 +680,8 @@ export interface FileRouteTypes {
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholders/$stakeholderId'
+    | '/stakeholders/permits'
+    | '/stakeholders/verification'
     | '/admin'
     | '/attendance'
     | '/certifications'
@@ -670,6 +704,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/admin/attendance/registry'
     | '/admin/roster/planner'
+    | '/admin/stakeholders/verification'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -710,6 +745,8 @@ export interface FileRouteTypes {
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholders/$stakeholderId'
+    | '/stakeholders/permits'
+    | '/stakeholders/verification'
     | '/admin/'
     | '/attendance/'
     | '/certifications/'
@@ -732,6 +769,7 @@ export interface FileRouteTypes {
     | '/users/'
     | '/admin/attendance/registry'
     | '/admin/roster/planner'
+    | '/admin/stakeholders/verification'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
     | '/demo/api/tanchat'
@@ -773,6 +811,8 @@ export interface RootRouteChildren {
   StakeholderRegisterRoute: typeof StakeholderRegisterRoute
   StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
   StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
+  StakeholdersPermitsRoute: typeof StakeholdersPermitsRoute
+  StakeholdersVerificationRoute: typeof StakeholdersVerificationRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AttendanceIndexRoute: typeof AttendanceIndexRoute
   CertificationsIndexRoute: typeof CertificationsIndexRoute
@@ -795,6 +835,7 @@ export interface RootRouteChildren {
   UsersIndexRoute: typeof UsersIndexRoute
   AdminAttendanceRegistryRoute: typeof AdminAttendanceRegistryRoute
   AdminRosterPlannerRoute: typeof AdminRosterPlannerRoute
+  AdminStakeholdersVerificationRoute: typeof AdminStakeholdersVerificationRoute
   DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoApiTanchatRoute: typeof DemoApiTanchatRoute
@@ -965,6 +1006,20 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/verification': {
+      id: '/stakeholders/verification'
+      path: '/stakeholders/verification'
+      fullPath: '/stakeholders/verification'
+      preLoaderRoute: typeof StakeholdersVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/permits': {
+      id: '/stakeholders/permits'
+      path: '/stakeholders/permits'
+      fullPath: '/stakeholders/permits'
+      preLoaderRoute: typeof StakeholdersPermitsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholders/$stakeholderId': {
@@ -1191,6 +1246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiMcpTodosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/stakeholders/verification': {
+      id: '/admin/stakeholders/verification'
+      path: '/admin/stakeholders/verification'
+      fullPath: '/admin/stakeholders/verification'
+      preLoaderRoute: typeof AdminStakeholdersVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/roster/planner': {
       id: '/admin/roster/planner'
       path: '/admin/roster/planner'
@@ -1271,6 +1333,8 @@ const rootRouteChildren: RootRouteChildren = {
   StakeholderRegisterRoute: StakeholderRegisterRoute,
   StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
   StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
+  StakeholdersPermitsRoute: StakeholdersPermitsRoute,
+  StakeholdersVerificationRoute: StakeholdersVerificationRoute,
   AdminIndexRoute: AdminIndexRoute,
   AttendanceIndexRoute: AttendanceIndexRoute,
   CertificationsIndexRoute: CertificationsIndexRoute,
@@ -1293,6 +1357,7 @@ const rootRouteChildren: RootRouteChildren = {
   UsersIndexRoute: UsersIndexRoute,
   AdminAttendanceRegistryRoute: AdminAttendanceRegistryRoute,
   AdminRosterPlannerRoute: AdminRosterPlannerRoute,
+  AdminStakeholdersVerificationRoute: AdminStakeholdersVerificationRoute,
   DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoApiTanchatRoute: DemoApiTanchatRoute,

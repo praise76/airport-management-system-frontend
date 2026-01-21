@@ -257,6 +257,37 @@ export interface StakeholderPermit {
 	createdAt: string;
 }
 
+// Extended permit type for global admin queue (includes org info)
+export interface GlobalPermit extends StakeholderPermit {
+	organizationName: string;
+	stakeholderType: StakeholderType;
+}
+
+export type PermitType =
+	| "permanent_staff"
+	| "temporary"
+	| "visitor"
+	| "vehicle"
+	| "crew";
+
+export interface GlobalPermitListParams {
+	status?: PermitStatus;
+	permitType?: PermitType;
+	search?: string;
+	page?: number;
+	limit?: number;
+}
+
+export interface GlobalPermitListResponse {
+	items: GlobalPermit[];
+	pagination: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	};
+}
+
 // ============================================
 // FLIGHT SCHEDULES (Airline-specific)
 // ============================================
@@ -397,9 +428,10 @@ export interface StakeholderAuthLoginInput {
 }
 
 export interface StakeholderAuthLoginResponse {
-	token: string;
+	accessToken: string;
+	refreshToken: string;
 	user: StakeholderUser;
-	organization: StakeholderOrganization;
+	organization?: StakeholderOrganization; // Might not be returned if not needed, rely on user.stakeholderOrganizationId
 }
 
 export interface StakeholderRegistrationInput {

@@ -33,7 +33,7 @@ function LoginPage() {
 	});
 
 	async function onSubmit(values: FormValues) {
-		console.log("values", values);
+		// console.log("values", values);
 		await mutateAsync(values);
 		navigate({ to: "/" });
 	}

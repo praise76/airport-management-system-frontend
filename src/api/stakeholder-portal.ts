@@ -18,6 +18,8 @@ import type {
 	StakeholderAuthLoginResponse,
 	StakeholderRegistrationInput,
 	StakeholderStats,
+	GlobalPermitListParams,
+	GlobalPermitListResponse,
 } from "@/types/stakeholder-portal";
 
 // ============================================
@@ -246,6 +248,53 @@ export async function rejectStakeholderPermit(
 }
 
 // ============================================
+// GLOBAL PERMITS (Admin Queue)
+// ============================================
+
+/**
+ * List all permits across all stakeholder organizations.
+ * Used by admin to view and process permit applications.
+ */
+export async function listGlobalPermits(
+	params: GlobalPermitListParams = {},
+): Promise<GlobalPermitListResponse> {
+	const res = await api.get("/stakeholder-orgs/permits", { params });
+	const responseData = res.data.data ?? res.data;
+	return {
+		items: responseData.items ?? responseData ?? [],
+		pagination: responseData.pagination ?? {
+			page: 1,
+			limit: 20,
+			total: 0,
+			totalPages: 0,
+		},
+	};
+}
+
+/**
+ * Approve a permit (admin action).
+ * Uses global endpoint that doesn't require org ID.
+ */
+export async function approveGlobalPermit(
+	permitId: string,
+): Promise<StakeholderPermit> {
+	const res = await api.post(`/stakeholder-orgs/permits/${permitId}/approve`);
+	return res.data.data ?? res.data;
+}
+
+/**
+ * Reject a permit (admin action).
+ * Uses global endpoint that doesn't require org ID.
+ */
+export async function rejectGlobalPermit(
+	permitId: string,
+	reason: string,
+): Promise<StakeholderPermit> {
+	const res = await api.post(`/stakeholder-orgs/permits/${permitId}/reject`, { reason });
+	return res.data.data ?? res.data;
+}
+
+// ============================================
 // STAKEHOLDER FLIGHTS (Airline-specific)
 // ============================================
 
@@ -337,21 +386,28 @@ export async function reviewStakeholderInvoice(
 export async function stakeholderLogin(
 	input: StakeholderAuthLoginInput,
 ): Promise<StakeholderAuthLoginResponse> {
-	const res = await api.post("/stakeholder-auth/login", input);
+	const res = await api.post("/stakeholder-orgs/auth/login", input);
+	return res.data.data ?? res.data;
+}
+
+export async function refreshStakeholderToken(
+	refreshToken: string,
+): Promise<StakeholderAuthLoginResponse> {
+	const res = await api.post("/stakeholder-orgs/auth/refresh", { refreshToken });
 	return res.data.data ?? res.data;
 }
 
 export async function stakeholderRegister(
 	input: StakeholderRegistrationInput,
 ): Promise<{ success: boolean; message: string; data: StakeholderOrganization }> {
-	const res = await api.post("/stakeholder-auth/register", input);
+	const res = await api.post("/stakeholder-orgs/auth/register", input);
 	return res.data;
 }
 
 export async function stakeholderForgotPassword(
 	email: string,
 ): Promise<{ success: boolean; message: string }> {
-	const res = await api.post("/stakeholder-auth/forgot-password", { email });
+	const res = await api.post("/stakeholder-orgs/auth/forgot-password", { email });
 	return res.data;
 }
 
@@ -359,7 +415,7 @@ export async function stakeholderResetPassword(
 	token: string,
 	newPassword: string,
 ): Promise<{ success: boolean; message: string }> {
-	const res = await api.post("/stakeholder-auth/reset-password", {
+	const res = await api.post("/stakeholder-orgs/auth/reset-password", {
 		token,
 		newPassword,
 	});

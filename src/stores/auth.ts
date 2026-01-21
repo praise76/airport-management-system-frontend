@@ -7,6 +7,7 @@ type User = {
   role?: string // e.g. "super_admin"
   roles?: string[] // kept for compatibility if needed
   organizationId?: string
+  type?: string // 'staff' | 'stakeholder'
 }
 
 type AuthState = {

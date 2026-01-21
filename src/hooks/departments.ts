@@ -114,8 +114,11 @@ export function useAssignHOD() {
 			queryClient.invalidateQueries({ queryKey: ["departments", "tree"] });
 			if (data) {
 				queryClient.setQueryData(["departments", data.id], data);
+				const role = data.departmentLevel === 2 ? "Head of Unit" : "Head of Department";
+				toast.success(`${role} assigned successfully`);
+			} else {
+				toast.success("Head assigned successfully");
 			}
-			toast.success("Head of Department assigned successfully");
 		},
 		onError: (error: unknown) => {
 			const message =
@@ -124,7 +127,7 @@ export function useAssignHOD() {
 					: typeof error === "object" && error && "message" in error
 						? String((error as { message?: unknown }).message ?? "")
 						: "";
-			toast.error(message || "Failed to assign HOD");
+			toast.error(message || "Failed to assign head");
 		},
 	});
 }

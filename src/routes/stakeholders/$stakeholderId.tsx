@@ -17,7 +17,9 @@ import {
 	Ban,
 	AlertTriangle,
 	RefreshCw,
+	Printer,
 } from "lucide-react";
+import { PermitBadge } from "@/components/stakeholders/PermitBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -555,8 +557,12 @@ function TypeSpecificDetails({ stakeholder }: { stakeholder: StakeholderOrganiza
 	}
 }
 
+import { DocumentViewer, useDocumentViewer } from "@/components/ui/document-viewer";
+import type { StakeholderDocument } from "@/types/stakeholder-portal";
+
 function DocumentsTab({ stakeholder }: { stakeholder: StakeholderOrganization }) {
 	const documents = stakeholder.documents ?? [];
+	const viewer = useDocumentViewer();
 
 	if (documents.length === 0) {
 		return (
@@ -570,40 +576,96 @@ function DocumentsTab({ stakeholder }: { stakeholder: StakeholderOrganization })
 		);
 	}
 
+	const handleOpenDocument = (doc: StakeholderDocument) => {
+		viewer.openDocument({
+			name: doc.name,
+			url: doc.url,
+			type: doc.url.toLowerCase().includes('.pdf') ? 'pdf' : 'image',
+		});
+	};
+
 	return (
-		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-			{documents.map((doc) => (
-				<div key={doc.id} className="border rounded-lg p-4">
-					<div className="flex items-start justify-between">
-						<div className="flex items-center gap-3">
-							<FileText className="h-8 w-8 text-muted-foreground" />
-							<div>
-								<p className="font-medium">{doc.name}</p>
-								<p className="text-sm text-muted-foreground">{doc.documentType}</p>
+		<>
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				{documents.map((doc) => (
+					<div
+						key={doc.id}
+						className="border rounded-lg p-4 hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer group"
+						onClick={() => handleOpenDocument(doc)}
+					>
+						<div className="flex items-start justify-between">
+							<div className="flex items-center gap-3">
+								<div
+									className={cn(
+										"h-10 w-10 rounded-lg flex items-center justify-center",
+										doc.url.toLowerCase().includes('.pdf')
+											? "bg-red-100 dark:bg-red-900/30"
+											: "bg-blue-100 dark:bg-blue-900/30"
+									)}
+								>
+									<FileText
+										className={cn(
+											"h-5 w-5",
+											doc.url.toLowerCase().includes('.pdf')
+												? "text-red-600 dark:text-red-400"
+												: "text-blue-600 dark:text-blue-400"
+										)}
+									/>
+								</div>
+								<div>
+									<p className="font-medium">{doc.name}</p>
+									<p className="text-sm text-muted-foreground">{doc.documentType}</p>
+								</div>
+							</div>
+							{doc.isVerified && (
+								<Badge variant="outline" className="bg-green-50 text-green-700 shrink-0">
+									Verified
+								</Badge>
+							)}
+						</div>
+						{doc.expiryDate && (
+							<p className="text-xs text-muted-foreground mt-2">
+								Expires: {new Date(doc.expiryDate).toLocaleDateString()}
+							</p>
+						)}
+						<div className="flex items-center gap-1 text-primary text-sm mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+							<ExternalLink className="h-3 w-3" />
+							Click to preview
+						</div>
+					</div>
+				))}
+			</div>
+
+			{/* Document Viewer Modal */}
+			<DocumentViewer
+				open={viewer.isOpen}
+				onOpenChange={viewer.setIsOpen}
+				document={viewer.document}
+				sideInfo={
+					viewer.document && (
+						<div className="space-y-4">
+							<h4 className="font-semibold">Document Details</h4>
+							<div className="space-y-2 text-sm">
+								<div>
+									<p className="text-muted-foreground">Document Name</p>
+									<p className="font-medium">{viewer.document.name}</p>
+								</div>
+								<div>
+									<p className="text-muted-foreground">Organization</p>
+									<p className="font-medium">{stakeholder.organizationName}</p>
+								</div>
+								<div>
+									<p className="text-muted-foreground">Verification Status</p>
+									<Badge variant="outline" className="mt-1">
+										{stakeholder.verificationStatus.replace(/_/g, " ")}
+									</Badge>
+								</div>
 							</div>
 						</div>
-						{doc.isVerified && (
-							<Badge variant="outline" className="bg-green-50 text-green-700">
-								Verified
-							</Badge>
-						)}
-					</div>
-					{doc.expiryDate && (
-						<p className="text-xs text-muted-foreground mt-2">
-							Expires: {new Date(doc.expiryDate).toLocaleDateString()}
-						</p>
-					)}
-					<a
-						href={doc.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1 text-sm text-primary mt-3 hover:underline"
-					>
-						View Document <ExternalLink className="h-3 w-3" />
-					</a>
-				</div>
-			))}
-		</div>
+					)
+				}
+			/>
+		</>
 	);
 }
 
@@ -693,6 +755,9 @@ function ActivitiesTab({ activities }: { activities: StakeholderActivity[] }) {
 }
 
 function PermitsTab({ permits }: { permits: StakeholderPermit[] }) {
+	const [selectedPermit, setSelectedPermit] = useState<StakeholderPermit | null>(null);
+	const [badgeOpen, setBadgeOpen] = useState(false);
+
 	return (
 		<div className="space-y-4">
 			<div className="flex justify-between items-center">
@@ -713,17 +778,32 @@ function PermitsTab({ permits }: { permits: StakeholderPermit[] }) {
 										{permit.permitType} • {permit.permitNumber}
 									</p>
 								</div>
-								<Badge
-									variant={
-										permit.status === "approved"
-											? "default"
-											: permit.status === "rejected"
-												? "destructive"
-												: "outline"
-									}
-								>
-									{permit.status}
-								</Badge>
+								<div className="flex items-center gap-2">
+									<Badge
+										variant={
+											permit.status === "approved"
+												? "default"
+												: permit.status === "rejected"
+													? "destructive"
+													: "outline"
+										}
+									>
+										{permit.status}
+									</Badge>
+									{permit.status === "approved" && (
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => {
+												setSelectedPermit(permit);
+												setBadgeOpen(true);
+											}}
+											title="Print Badge"
+										>
+											<Printer className="h-4 w-4" />
+										</Button>
+									)}
+								</div>
 							</div>
 							<p className="text-xs text-muted-foreground mt-2">
 								Valid: {new Date(permit.validFrom).toLocaleDateString()} -{" "}
@@ -732,6 +812,13 @@ function PermitsTab({ permits }: { permits: StakeholderPermit[] }) {
 						</div>
 					))}
 				</div>
+			)}
+			{selectedPermit && (
+				<PermitBadge
+					permit={selectedPermit}
+					open={badgeOpen}
+					onOpenChange={setBadgeOpen}
+				/>
 			)}
 		</div>
 	);
