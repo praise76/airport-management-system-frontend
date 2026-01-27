@@ -9,7 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as TerminalsIndexRouteImport } from './routes/terminals/index'
@@ -49,6 +49,8 @@ import { Route as RosterGenerateRouteImport } from './routes/roster/generate'
 import { Route as PublicDutyBoardRouteImport } from './routes/public/duty-board'
 import { Route as OrganizationsNewRouteImport } from './routes/organizations/new'
 import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
+import { Route as MessagesNewRouteImport } from './routes/messages/new'
+import { Route as MessagesConversationIdRouteImport } from './routes/messages/$conversationId'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
@@ -80,9 +82,9 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -146,9 +148,9 @@ const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesIndexRoute = MessagesIndexRouteImport.update({
-  id: '/messages/',
-  path: '/messages/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => MessagesRoute,
 } as any)
 const InspectionsIndexRoute = InspectionsIndexRouteImport.update({
   id: '/inspections/',
@@ -282,6 +284,16 @@ const OrganizationsOrgIdRoute = OrganizationsOrgIdRouteImport.update({
   id: '/organizations/$orgId',
   path: '/organizations/$orgId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesNewRoute = MessagesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => MessagesRoute,
+} as any)
+const MessagesConversationIdRoute = MessagesConversationIdRouteImport.update({
+  id: '/$conversationId',
+  path: '/$conversationId',
+  getParentRoute: () => MessagesRoute,
 } as any)
 const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
   id: '/groups/$groupId',
@@ -437,7 +449,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/mcp': typeof McpRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -448,6 +460,8 @@ export interface FileRoutesByFullPath {
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
+  '/messages/new': typeof MessagesNewRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
   '/public/duty-board': typeof PublicDutyBoardRoute
@@ -474,7 +488,7 @@ export interface FileRoutesByFullPath {
   '/geofence': typeof GeofenceIndexRoute
   '/groups': typeof GroupsIndexRoute
   '/inspections': typeof InspectionsIndexRoute
-  '/messages': typeof MessagesIndexRoute
+  '/messages/': typeof MessagesIndexRoute
   '/organizations': typeof OrganizationsIndexRoute
   '/positions': typeof PositionsIndexRoute
   '/reports': typeof ReportsIndexRoute
@@ -509,7 +523,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/mcp': typeof McpRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -520,6 +533,8 @@ export interface FileRoutesByTo {
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
+  '/messages/new': typeof MessagesNewRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
   '/public/duty-board': typeof PublicDutyBoardRoute
@@ -582,7 +597,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/mcp': typeof McpRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -593,6 +608,8 @@ export interface FileRoutesById {
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
+  '/messages/$conversationId': typeof MessagesConversationIdRoute
+  '/messages/new': typeof MessagesNewRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
   '/public/duty-board': typeof PublicDutyBoardRoute
@@ -656,7 +673,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/mcp'
+    | '/messages'
     | '/auth/login'
     | '/auth/register'
     | '/demo/mcp-todos'
@@ -667,6 +684,8 @@ export interface FileRouteTypes {
     | '/documents/$docId'
     | '/documents/new'
     | '/groups/$groupId'
+    | '/messages/$conversationId'
+    | '/messages/new'
     | '/organizations/$orgId'
     | '/organizations/new'
     | '/public/duty-board'
@@ -693,7 +712,7 @@ export interface FileRouteTypes {
     | '/geofence'
     | '/groups'
     | '/inspections'
-    | '/messages'
+    | '/messages/'
     | '/organizations'
     | '/positions'
     | '/reports'
@@ -728,7 +747,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/mcp'
     | '/auth/login'
     | '/auth/register'
     | '/demo/mcp-todos'
@@ -739,6 +757,8 @@ export interface FileRouteTypes {
     | '/documents/$docId'
     | '/documents/new'
     | '/groups/$groupId'
+    | '/messages/$conversationId'
+    | '/messages/new'
     | '/organizations/$orgId'
     | '/organizations/new'
     | '/public/duty-board'
@@ -800,7 +820,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/mcp'
+    | '/messages'
     | '/auth/login'
     | '/auth/register'
     | '/demo/mcp-todos'
@@ -811,6 +831,8 @@ export interface FileRouteTypes {
     | '/documents/$docId'
     | '/documents/new'
     | '/groups/$groupId'
+    | '/messages/$conversationId'
+    | '/messages/new'
     | '/organizations/$orgId'
     | '/organizations/new'
     | '/public/duty-board'
@@ -873,7 +895,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  McpRoute: typeof McpRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   DemoMcpTodosRoute: typeof DemoMcpTodosRoute
@@ -910,7 +932,6 @@ export interface RootRouteChildren {
   GeofenceIndexRoute: typeof GeofenceIndexRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
   InspectionsIndexRoute: typeof InspectionsIndexRoute
-  MessagesIndexRoute: typeof MessagesIndexRoute
   OrganizationsIndexRoute: typeof OrganizationsIndexRoute
   PositionsIndexRoute: typeof PositionsIndexRoute
   ReportsIndexRoute: typeof ReportsIndexRoute
@@ -945,11 +966,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -1038,10 +1059,10 @@ declare module '@tanstack/react-router' {
     }
     '/messages/': {
       id: '/messages/'
-      path: '/messages'
-      fullPath: '/messages'
+      path: '/'
+      fullPath: '/messages/'
       preLoaderRoute: typeof MessagesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MessagesRoute
     }
     '/inspections/': {
       id: '/inspections/'
@@ -1224,6 +1245,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$orgId'
       preLoaderRoute: typeof OrganizationsOrgIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/messages/new': {
+      id: '/messages/new'
+      path: '/new'
+      fullPath: '/messages/new'
+      preLoaderRoute: typeof MessagesNewRouteImport
+      parentRoute: typeof MessagesRoute
+    }
+    '/messages/$conversationId': {
+      id: '/messages/$conversationId'
+      path: '/$conversationId'
+      fullPath: '/messages/$conversationId'
+      preLoaderRoute: typeof MessagesConversationIdRouteImport
+      parentRoute: typeof MessagesRoute
     }
     '/groups/$groupId': {
       id: '/groups/$groupId'
@@ -1438,6 +1473,22 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesConversationIdRoute: typeof MessagesConversationIdRoute
+  MessagesNewRoute: typeof MessagesNewRoute
+  MessagesIndexRoute: typeof MessagesIndexRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesConversationIdRoute: MessagesConversationIdRoute,
+  MessagesNewRoute: MessagesNewRoute,
+  MessagesIndexRoute: MessagesIndexRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 interface OrganizationsOrgIdRouteChildren {
   OrganizationsOrgIdEditRoute: typeof OrganizationsOrgIdEditRoute
 }
@@ -1451,7 +1502,7 @@ const OrganizationsOrgIdRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  McpRoute: McpRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   DemoMcpTodosRoute: DemoMcpTodosRoute,
@@ -1488,7 +1539,6 @@ const rootRouteChildren: RootRouteChildren = {
   GeofenceIndexRoute: GeofenceIndexRoute,
   GroupsIndexRoute: GroupsIndexRoute,
   InspectionsIndexRoute: InspectionsIndexRoute,
-  MessagesIndexRoute: MessagesIndexRoute,
   OrganizationsIndexRoute: OrganizationsIndexRoute,
   PositionsIndexRoute: PositionsIndexRoute,
   ReportsIndexRoute: ReportsIndexRoute,

@@ -26,3 +26,15 @@ Authorization: Bearer {{token}}
 
 GET http://localhost:3019/api/documents
 Authorization: Bearer {{token}}
+
+#####
+
+# Get Conversations
+GET http://localhost:3019/api/messages/conversations?page=1&limit=20&type=all
+Authorization: Bearer {{token}}
+
+#####
+
+# Search Users
+GET http://localhost:3019/api/messages/users/search?q=a&limit=5
+Authorization: Bearer {{token}}

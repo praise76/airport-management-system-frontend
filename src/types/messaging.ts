@@ -1,27 +1,60 @@
-// Messaging Types based on OpenAPI spec
+export type ConversationType = 'direct' | 'group' | 'emergency';
+export type MessageType = 'text' | 'file' | 'emergency';
+export type MessagePriority = 'normal' | 'critical';
+export type ReactionType = 'like' | 'love' | 'laugh' | 'wow' | 'sad' | 'angry';
 
-export type MessageType = "text" | "image" | "file" | "system";
-
-export interface ConversationParticipant {
-  userId: string;
+export interface User {
+  id: string; // uuid
   firstName: string;
   lastName: string;
+  email: string;
+  photoUrl?: string;
+  role?: string;
+  departmentId?: string;
+  employeeId?: string;
+}
+
+export interface Member {
+  id?: string; // membership uuid
+  userId: string;
+  role: 'admin' | 'member';
+  firstName: string;
+  lastName: string;
+  photoUrl?: string;
 }
 
 export interface Conversation {
   id: string;
-  organizationId: string;
-  isGroup: boolean;
-  groupName: string | null;
-  createdAt: string;
-  lastMessageAt: string | null;
-  participants: ConversationParticipant[];
+  type: ConversationType;
+  name?: string | null;
+  description?: string | null;
+  lastMessageAt?: string;
+  lastMessagePreview?: string;
+  memberCount: number;
+  isActive: boolean;
+  membership?: {
+    role: 'admin' | 'member';
+    unreadCount: number;
+    isMuted: boolean;
+    notificationsEnabled?: boolean;
+    canPost?: boolean;
+  };
+  otherUser?: User | null; // For direct messages
+  members?: Member[]; // Optional, for detailed view
 }
 
-export interface ConversationInput {
-  participantIds: string[];
-  isGroup?: boolean;
-  groupName?: string;
+export interface Attachment {
+  fileName: string;
+  originalName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+export interface MessageReaction {
+  type: ReactionType;
+  count: number;
+  userParams?: string[]; // IDs of users who reacted
 }
 
 export interface Message {
@@ -30,28 +63,46 @@ export interface Message {
   senderId: string;
   content: string;
   messageType: MessageType;
-  attachmentUrl?: string;
+  attachments: Attachment[];
+  parentMessageId?: string | null;
+  replyCount: number;
+  priority: MessagePriority;
+  reactionCount: number;
+  reactions?: MessageReaction[];
+  isEdited: boolean;
+  isPinned: boolean;
+  readAt?: string; // For self or checking if others read
   createdAt: string;
-  sender?: {
-    id: string;
-    firstName: string;
-    lastName: string;
+  editedAt?: string;
+  sender: User;
+}
+
+export interface CreateGroupPayload {
+  name: string;
+  description?: string;
+  memberIds: string[]; // User IDs
+  type: 'group';
+  settings?: {
+    whoCanPost: 'everyone' | 'admins';
+    allowFileSharing: boolean;
   };
 }
 
-export interface MessageInput {
-  content: string;
-  messageType?: MessageType;
-  attachmentUrl?: string;
+// WebSocket Payload Types
+export interface TypingPayload {
+  conversationId: string;
+  userId: string;
+  isTyping: boolean;
 }
 
-export interface ConversationListParams {
-  page?: number;
-  limit?: number;
+export interface MessageReadPayload {
+  messageId: string;
+  conversationId: string;
+  userId: string;
+  readAt: string;
 }
 
-export interface MessageListParams {
-  page?: number;
-  limit?: number;
-  before?: string;
+export interface OnlineStatusPayload {
+  userId: string;
+  isOnline: boolean;
 }
