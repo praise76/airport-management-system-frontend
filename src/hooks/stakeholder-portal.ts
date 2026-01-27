@@ -176,6 +176,24 @@ export function useCreateStakeholderUser(stakeholderOrgId: string) {
 	});
 }
 
+export function useUpdateStakeholderUser(stakeholderOrgId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ userId, input }: { userId: string; input: Partial<StakeholderUser> }) =>
+			StakeholderPortalApi.updateStakeholderUser(stakeholderOrgId, userId, input),
+		onSuccess: (_, { userId }) => {
+			qc.invalidateQueries({
+				queryKey: ["stakeholder-orgs", stakeholderOrgId, "users"],
+			});
+			qc.invalidateQueries({
+				queryKey: ["stakeholder-orgs", stakeholderOrgId, "users", userId],
+			});
+			toast.success("Profile updated successfully");
+		},
+		onError: (err: any) => toast.error(err.message || "Failed to update profile"),
+	});
+}
+
 // ============================================
 // STAKEHOLDER ACTIVITIES
 // ============================================

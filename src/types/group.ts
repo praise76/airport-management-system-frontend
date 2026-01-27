@@ -4,6 +4,8 @@ export type Group = {
   groupType: 'department' | 'project' | 'other'
   groupName: string
   visibility: 'public' | 'private'
+  isAutoManaged?: boolean
+  autoIncludeRule?: 'all_department' | 'managers_only'
   createdAt: string
   updatedAt: string
 }
@@ -14,6 +16,7 @@ export type GroupMember = {
   userId: string
   role: 'member' | 'admin'
   joinedAt: string
+  isAutoAdded?: boolean
 }
 
 export type CreateGroupRequest = {

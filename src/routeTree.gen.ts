@@ -24,6 +24,7 @@ import { Route as PositionsIndexRouteImport } from './routes/positions/index'
 import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
 import { Route as MessagesIndexRouteImport } from './routes/messages/index'
 import { Route as InspectionsIndexRouteImport } from './routes/inspections/index'
+import { Route as GroupsIndexRouteImport } from './routes/groups/index'
 import { Route as GeofenceIndexRouteImport } from './routes/geofence/index'
 import { Route as DocumentsIndexRouteImport } from './routes/documents/index'
 import { Route as DepartmentsIndexRouteImport } from './routes/departments/index'
@@ -36,6 +37,7 @@ import { Route as StakeholdersPermitsRouteImport } from './routes/stakeholders/p
 import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
 import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
 import { Route as StakeholderRegisterRouteImport } from './routes/stakeholder/register'
+import { Route as StakeholderProfileRouteImport } from './routes/stakeholder/profile'
 import { Route as StakeholderPermitsRouteImport } from './routes/stakeholder/permits'
 import { Route as StakeholderLoginRouteImport } from './routes/stakeholder/login'
 import { Route as StakeholderInvoicesRouteImport } from './routes/stakeholder/invoices'
@@ -43,8 +45,11 @@ import { Route as StakeholderFlightsRouteImport } from './routes/stakeholder/fli
 import { Route as StakeholderDashboardRouteImport } from './routes/stakeholder/dashboard'
 import { Route as StakeholderActivitiesRouteImport } from './routes/stakeholder/activities'
 import { Route as RosterMyShiftsRouteImport } from './routes/roster/my-shifts'
+import { Route as RosterGenerateRouteImport } from './routes/roster/generate'
+import { Route as PublicDutyBoardRouteImport } from './routes/public/duty-board'
 import { Route as OrganizationsNewRouteImport } from './routes/organizations/new'
 import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
+import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
@@ -54,7 +59,9 @@ import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoMcpTodosRouteImport } from './routes/demo/mcp-todos'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
+import { Route as RosterTemplatesNewRouteImport } from './routes/roster/templates/new'
 import { Route as OrganizationsOrgIdEditRouteImport } from './routes/organizations/$orgId.edit'
 import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
@@ -148,6 +155,11 @@ const InspectionsIndexRoute = InspectionsIndexRouteImport.update({
   path: '/inspections/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupsIndexRoute = GroupsIndexRouteImport.update({
+  id: '/groups/',
+  path: '/groups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GeofenceIndexRoute = GeofenceIndexRouteImport.update({
   id: '/geofence/',
   path: '/geofence/',
@@ -211,6 +223,11 @@ const StakeholderRegisterRoute = StakeholderRegisterRouteImport.update({
   path: '/stakeholder/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StakeholderProfileRoute = StakeholderProfileRouteImport.update({
+  id: '/stakeholder/profile',
+  path: '/stakeholder/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StakeholderPermitsRoute = StakeholderPermitsRouteImport.update({
   id: '/stakeholder/permits',
   path: '/stakeholder/permits',
@@ -246,6 +263,16 @@ const RosterMyShiftsRoute = RosterMyShiftsRouteImport.update({
   path: '/roster/my-shifts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RosterGenerateRoute = RosterGenerateRouteImport.update({
+  id: '/roster/generate',
+  path: '/roster/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicDutyBoardRoute = PublicDutyBoardRouteImport.update({
+  id: '/public/duty-board',
+  path: '/public/duty-board',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrganizationsNewRoute = OrganizationsNewRouteImport.update({
   id: '/organizations/new',
   path: '/organizations/new',
@@ -254,6 +281,11 @@ const OrganizationsNewRoute = OrganizationsNewRouteImport.update({
 const OrganizationsOrgIdRoute = OrganizationsOrgIdRouteImport.update({
   id: '/organizations/$orgId',
   path: '/organizations/$orgId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
+  id: '/groups/$groupId',
+  path: '/groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocumentsNewRoute = DocumentsNewRouteImport.update({
@@ -301,9 +333,19 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RosterTemplatesIndexRoute = RosterTemplatesIndexRouteImport.update({
+  id: '/roster/templates/',
+  path: '/roster/templates/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
   id: '/example/guitars/',
   path: '/example/guitars/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RosterTemplatesNewRoute = RosterTemplatesNewRouteImport.update({
+  id: '/roster/templates/new',
+  path: '/roster/templates/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrganizationsOrgIdEditRoute = OrganizationsOrgIdEditRouteImport.update({
@@ -405,8 +447,11 @@ export interface FileRoutesByFullPath {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
+  '/public/duty-board': typeof PublicDutyBoardRoute
+  '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
@@ -414,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
+  '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
@@ -426,6 +472,7 @@ export interface FileRoutesByFullPath {
   '/departments': typeof DepartmentsIndexRoute
   '/documents': typeof DocumentsIndexRoute
   '/geofence': typeof GeofenceIndexRoute
+  '/groups': typeof GroupsIndexRoute
   '/inspections': typeof InspectionsIndexRoute
   '/messages': typeof MessagesIndexRoute
   '/organizations': typeof OrganizationsIndexRoute
@@ -452,7 +499,9 @@ export interface FileRoutesByFullPath {
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
+  '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
+  '/roster/templates': typeof RosterTemplatesIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -470,8 +519,11 @@ export interface FileRoutesByTo {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
+  '/public/duty-board': typeof PublicDutyBoardRoute
+  '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
@@ -479,6 +531,7 @@ export interface FileRoutesByTo {
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
+  '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
@@ -491,6 +544,7 @@ export interface FileRoutesByTo {
   '/departments': typeof DepartmentsIndexRoute
   '/documents': typeof DocumentsIndexRoute
   '/geofence': typeof GeofenceIndexRoute
+  '/groups': typeof GroupsIndexRoute
   '/inspections': typeof InspectionsIndexRoute
   '/messages': typeof MessagesIndexRoute
   '/organizations': typeof OrganizationsIndexRoute
@@ -517,7 +571,9 @@ export interface FileRoutesByTo {
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
+  '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
+  '/roster/templates': typeof RosterTemplatesIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -536,8 +592,11 @@ export interface FileRoutesById {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/groups/$groupId': typeof GroupsGroupIdRoute
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
+  '/public/duty-board': typeof PublicDutyBoardRoute
+  '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
@@ -545,6 +604,7 @@ export interface FileRoutesById {
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
+  '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
@@ -557,6 +617,7 @@ export interface FileRoutesById {
   '/departments/': typeof DepartmentsIndexRoute
   '/documents/': typeof DocumentsIndexRoute
   '/geofence/': typeof GeofenceIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/inspections/': typeof InspectionsIndexRoute
   '/messages/': typeof MessagesIndexRoute
   '/organizations/': typeof OrganizationsIndexRoute
@@ -583,7 +644,9 @@ export interface FileRoutesById {
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
+  '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
+  '/roster/templates/': typeof RosterTemplatesIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -603,8 +666,11 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
+    | '/groups/$groupId'
     | '/organizations/$orgId'
     | '/organizations/new'
+    | '/public/duty-board'
+    | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
     | '/stakeholder/dashboard'
@@ -612,6 +678,7 @@ export interface FileRouteTypes {
     | '/stakeholder/invoices'
     | '/stakeholder/login'
     | '/stakeholder/permits'
+    | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholders/$stakeholderId'
@@ -624,6 +691,7 @@ export interface FileRouteTypes {
     | '/departments'
     | '/documents'
     | '/geofence'
+    | '/groups'
     | '/inspections'
     | '/messages'
     | '/organizations'
@@ -650,7 +718,9 @@ export interface FileRouteTypes {
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
     | '/organizations/$orgId/edit'
+    | '/roster/templates/new'
     | '/example/guitars'
+    | '/roster/templates'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -668,8 +738,11 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
+    | '/groups/$groupId'
     | '/organizations/$orgId'
     | '/organizations/new'
+    | '/public/duty-board'
+    | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
     | '/stakeholder/dashboard'
@@ -677,6 +750,7 @@ export interface FileRouteTypes {
     | '/stakeholder/invoices'
     | '/stakeholder/login'
     | '/stakeholder/permits'
+    | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholders/$stakeholderId'
@@ -689,6 +763,7 @@ export interface FileRouteTypes {
     | '/departments'
     | '/documents'
     | '/geofence'
+    | '/groups'
     | '/inspections'
     | '/messages'
     | '/organizations'
@@ -715,7 +790,9 @@ export interface FileRouteTypes {
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
     | '/organizations/$orgId/edit'
+    | '/roster/templates/new'
     | '/example/guitars'
+    | '/roster/templates'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -733,8 +810,11 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
+    | '/groups/$groupId'
     | '/organizations/$orgId'
     | '/organizations/new'
+    | '/public/duty-board'
+    | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
     | '/stakeholder/dashboard'
@@ -742,6 +822,7 @@ export interface FileRouteTypes {
     | '/stakeholder/invoices'
     | '/stakeholder/login'
     | '/stakeholder/permits'
+    | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholders/$stakeholderId'
@@ -754,6 +835,7 @@ export interface FileRouteTypes {
     | '/departments/'
     | '/documents/'
     | '/geofence/'
+    | '/groups/'
     | '/inspections/'
     | '/messages/'
     | '/organizations/'
@@ -780,7 +862,9 @@ export interface FileRouteTypes {
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
     | '/organizations/$orgId/edit'
+    | '/roster/templates/new'
     | '/example/guitars/'
+    | '/roster/templates/'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -799,8 +883,11 @@ export interface RootRouteChildren {
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   DocumentsDocIdRoute: typeof DocumentsDocIdRoute
   DocumentsNewRoute: typeof DocumentsNewRoute
+  GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   OrganizationsOrgIdRoute: typeof OrganizationsOrgIdRouteWithChildren
   OrganizationsNewRoute: typeof OrganizationsNewRoute
+  PublicDutyBoardRoute: typeof PublicDutyBoardRoute
+  RosterGenerateRoute: typeof RosterGenerateRoute
   RosterMyShiftsRoute: typeof RosterMyShiftsRoute
   StakeholderActivitiesRoute: typeof StakeholderActivitiesRoute
   StakeholderDashboardRoute: typeof StakeholderDashboardRoute
@@ -808,6 +895,7 @@ export interface RootRouteChildren {
   StakeholderInvoicesRoute: typeof StakeholderInvoicesRoute
   StakeholderLoginRoute: typeof StakeholderLoginRoute
   StakeholderPermitsRoute: typeof StakeholderPermitsRoute
+  StakeholderProfileRoute: typeof StakeholderProfileRoute
   StakeholderRegisterRoute: typeof StakeholderRegisterRoute
   StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
   StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
@@ -820,6 +908,7 @@ export interface RootRouteChildren {
   DepartmentsIndexRoute: typeof DepartmentsIndexRoute
   DocumentsIndexRoute: typeof DocumentsIndexRoute
   GeofenceIndexRoute: typeof GeofenceIndexRoute
+  GroupsIndexRoute: typeof GroupsIndexRoute
   InspectionsIndexRoute: typeof InspectionsIndexRoute
   MessagesIndexRoute: typeof MessagesIndexRoute
   OrganizationsIndexRoute: typeof OrganizationsIndexRoute
@@ -845,7 +934,9 @@ export interface RootRouteChildren {
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
   ExampleGuitarsGuitarIdRoute: typeof ExampleGuitarsGuitarIdRoute
+  RosterTemplatesNewRoute: typeof RosterTemplatesNewRoute
   ExampleGuitarsIndexRoute: typeof ExampleGuitarsIndexRoute
+  RosterTemplatesIndexRoute: typeof RosterTemplatesIndexRoute
   DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
   DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
   DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute
@@ -959,6 +1050,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InspectionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/groups/': {
+      id: '/groups/'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/geofence/': {
       id: '/geofence/'
       path: '/geofence'
@@ -1043,6 +1141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholderRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholder/profile': {
+      id: '/stakeholder/profile'
+      path: '/stakeholder/profile'
+      fullPath: '/stakeholder/profile'
+      preLoaderRoute: typeof StakeholderProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stakeholder/permits': {
       id: '/stakeholder/permits'
       path: '/stakeholder/permits'
@@ -1092,6 +1197,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RosterMyShiftsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/roster/generate': {
+      id: '/roster/generate'
+      path: '/roster/generate'
+      fullPath: '/roster/generate'
+      preLoaderRoute: typeof RosterGenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/public/duty-board': {
+      id: '/public/duty-board'
+      path: '/public/duty-board'
+      fullPath: '/public/duty-board'
+      preLoaderRoute: typeof PublicDutyBoardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/organizations/new': {
       id: '/organizations/new'
       path: '/organizations/new'
@@ -1104,6 +1223,13 @@ declare module '@tanstack/react-router' {
       path: '/organizations/$orgId'
       fullPath: '/organizations/$orgId'
       preLoaderRoute: typeof OrganizationsOrgIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups/$groupId': {
+      id: '/groups/$groupId'
+      path: '/groups/$groupId'
+      fullPath: '/groups/$groupId'
+      preLoaderRoute: typeof GroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/documents/new': {
@@ -1169,11 +1295,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/roster/templates/': {
+      id: '/roster/templates/'
+      path: '/roster/templates'
+      fullPath: '/roster/templates'
+      preLoaderRoute: typeof RosterTemplatesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/example/guitars/': {
       id: '/example/guitars/'
       path: '/example/guitars'
       fullPath: '/example/guitars'
       preLoaderRoute: typeof ExampleGuitarsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roster/templates/new': {
+      id: '/roster/templates/new'
+      path: '/roster/templates/new'
+      fullPath: '/roster/templates/new'
+      preLoaderRoute: typeof RosterTemplatesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/organizations/$orgId/edit': {
@@ -1321,8 +1461,11 @@ const rootRouteChildren: RootRouteChildren = {
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   DocumentsDocIdRoute: DocumentsDocIdRoute,
   DocumentsNewRoute: DocumentsNewRoute,
+  GroupsGroupIdRoute: GroupsGroupIdRoute,
   OrganizationsOrgIdRoute: OrganizationsOrgIdRouteWithChildren,
   OrganizationsNewRoute: OrganizationsNewRoute,
+  PublicDutyBoardRoute: PublicDutyBoardRoute,
+  RosterGenerateRoute: RosterGenerateRoute,
   RosterMyShiftsRoute: RosterMyShiftsRoute,
   StakeholderActivitiesRoute: StakeholderActivitiesRoute,
   StakeholderDashboardRoute: StakeholderDashboardRoute,
@@ -1330,6 +1473,7 @@ const rootRouteChildren: RootRouteChildren = {
   StakeholderInvoicesRoute: StakeholderInvoicesRoute,
   StakeholderLoginRoute: StakeholderLoginRoute,
   StakeholderPermitsRoute: StakeholderPermitsRoute,
+  StakeholderProfileRoute: StakeholderProfileRoute,
   StakeholderRegisterRoute: StakeholderRegisterRoute,
   StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
   StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
@@ -1342,6 +1486,7 @@ const rootRouteChildren: RootRouteChildren = {
   DepartmentsIndexRoute: DepartmentsIndexRoute,
   DocumentsIndexRoute: DocumentsIndexRoute,
   GeofenceIndexRoute: GeofenceIndexRoute,
+  GroupsIndexRoute: GroupsIndexRoute,
   InspectionsIndexRoute: InspectionsIndexRoute,
   MessagesIndexRoute: MessagesIndexRoute,
   OrganizationsIndexRoute: OrganizationsIndexRoute,
@@ -1367,7 +1512,9 @@ const rootRouteChildren: RootRouteChildren = {
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
   ExampleGuitarsGuitarIdRoute: ExampleGuitarsGuitarIdRoute,
+  RosterTemplatesNewRoute: RosterTemplatesNewRoute,
   ExampleGuitarsIndexRoute: ExampleGuitarsIndexRoute,
+  RosterTemplatesIndexRoute: RosterTemplatesIndexRoute,
   DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
   DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
   DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,

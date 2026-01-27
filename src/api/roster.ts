@@ -1,5 +1,15 @@
 import { api } from "./client";
-import type { Roster, RosterEntry, CreateRosterRequest, AddRosterEntryRequest, SwapRequest } from "@/types/roster";
+import type { 
+  Roster, 
+  RosterEntry, 
+  CreateRosterRequest, 
+  AddRosterEntryRequest, 
+  SwapRequest,
+  ShiftPatternTemplate,
+  CreateTemplateRequest,
+  GenerateRosterRequest,
+  GenerateRosterResponse
+} from "@/types/roster";
 
 export async function listRosters(params?: { unitId?: string; status?: string }): Promise<Roster[]> {
   const res = await api.get("/roster", { params });
@@ -31,6 +41,24 @@ export async function requestSwap(input: Omit<SwapRequest, 'id' | 'status'>): Pr
   return res.data;
 }
 
+
 export async function respondToSwap(swapId: string, input: { accepted: boolean; responseMessage: string }): Promise<void> {
   await api.post(`/roster/swap/${swapId}/respond`, input);
+}
+
+// --- Roster Templates ---
+
+export async function listTemplates(): Promise<ShiftPatternTemplate[]> {
+  const res = await api.get("/roster/templates");
+  return res.data.data;
+}
+
+export async function createTemplate(input: CreateTemplateRequest): Promise<ShiftPatternTemplate> {
+  const res = await api.post("/roster/templates", input);
+  return res.data;
+}
+
+export async function generateRoster(input: GenerateRosterRequest): Promise<GenerateRosterResponse> {
+  const res = await api.post("/roster/templates/generate", input);
+  return res.data;
 }

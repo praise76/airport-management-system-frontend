@@ -1,12 +1,10 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import { Bell, ChevronDown, LogOut, Search, User } from "lucide-react";
+import { Bell, LogOut, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { useOrganizationsQuery } from "@/hooks/organizations";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
-import { useUiStore } from "@/stores/ui";
 
 type AppShellProps = {
   children?: React.ReactNode;
@@ -18,17 +16,12 @@ type NavItem = {
   roles?: string[]; // if provided, only these roles can see
 };
 
-type OrganizationOption = {
-  id: string;
-  name: string;
-  industry: string;
-};
-
 const primaryNav: NavItem[] = [
   { label: "Dashboard", to: "/" },
   { label: "My Schedule", to: "/roster/my-shifts" },
   { label: "Organizations", to: "/organizations" },
   { label: "Departments", to: "/departments" },
+  { label: "Groups", to: "/groups" },
   { label: "Documents", to: "/documents" },
   { label: "Attendance", to: "/attendance" },
   {
@@ -39,18 +32,18 @@ const primaryNav: NavItem[] = [
   // { label: "Certifications", to: "/certifications" },
   { label: "Messages", to: "/messages" },
   { label: "Tasks", to: "/tasks" },
-  { label: "Inspections", to: "/inspections" },
+  // { label: "Inspections", to: "/inspections" },
   // { label: "Stakeholders", to: "/stakeholders" },
   {
     label: "Verification Queue",
     to: "/admin/stakeholders/verification",
     // roles: ["SUPER_ADMIN", "ADMIN", "RGM", "ACOS", "COMMERCIAL"],
   },
-  {
-    label: "Access Permits",
-    to: "/stakeholders/permits",
-    // roles: ["SUPER_ADMIN", "ADMIN", "RGM", "ACOS", "COMMERCIAL"],
-  },
+  // {
+  //   label: "Access Permits",
+  //   to: "/stakeholders/permits",
+  //   // roles: ["SUPER_ADMIN", "ADMIN", "RGM", "ACOS", "COMMERCIAL"],
+  // },
   { label: "Reports", to: "/reports" },
   { label: "Terminals", to: "/terminals" },
   { label: "Positions", to: "/positions" },
@@ -60,6 +53,12 @@ const primaryNav: NavItem[] = [
     to: "/admin/roster/planner",
     roles: ["SUPER_ADMIN"],
   },
+  {
+    label: "Roster Templates",
+    to: "/roster/templates",
+    roles: ["SUPER_ADMIN", "RGM", "ADMIN"],
+  },
+  { label: "Public Duty Board", to: "/public/duty-board" },
   { label: "RGM", to: "/rgm", roles: ["RGM"] },
   { label: "Security", to: "/security", roles: ["ACOS"] },
   //   { label: "Admin", to: "/admin", roles: ["SUPER_ADMIN"] },
@@ -68,21 +67,6 @@ const primaryNav: NavItem[] = [
 export function AppShell(props: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const user = useAuthStore((s) => s.user);
-  const selectedOrgId = useUiStore((s) => s.selectedOrganizationId);
-  const setSelectedOrgId = useUiStore((s) => s.setSelectedOrganizationId);
-  const [orgMenuOpen, setOrgMenuOpen] = useState(false);
-  const orgsQuery = useOrganizationsQuery({ page: 1, limit: 20 });
-
-  const organizations = useMemo(() => {
-    if (!orgsQuery.data) return [] as OrganizationOption[];
-    return orgsQuery.data.data ?? [];
-  }, [orgsQuery.data]);
-
-  const orgDisplay = useMemo(() => {
-    if (organizations.length === 0) return "Select org";
-    const found = organizations.find((o) => o.id === selectedOrgId);
-    return found?.name ?? "Select org";
-  }, [organizations, selectedOrgId]);
 
   const visibleNav = useMemo(() => {
     // Normalize user roles:
@@ -199,9 +183,11 @@ export function AppShell(props: AppShellProps) {
         <Button variant="ghost" size="icon" aria-label="Notifications">
           <Bell size={18} />
         </Button>
-        <Button variant="ghost" size="icon" aria-label="Profile">
-          <User size={18} />
-        </Button>
+        <Link to="/self-service">
+          <Button variant="ghost" size="icon" aria-label="Profile">
+            <User size={18} />
+          </Button>
+        </Link>
         <Button variant="outline" size="sm" aria-label="Logout">
           <LogOut size={16} />
           <span className="hidden md:inline">Logout</span>

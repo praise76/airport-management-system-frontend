@@ -12,7 +12,7 @@ import type {
 
 export async function getMyProfile(): Promise<User> {
   const res = await api.get("/self-service/profile");
-  return res.data;
+  return res.data.data ?? res.data;
 }
 
 export async function requestProfileUpdate(input: ProfileUpdateRequest): Promise<void> {

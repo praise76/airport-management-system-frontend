@@ -167,6 +167,15 @@ This endpoint returns ALL permits across ALL stakeholder organizations for the a
   - "Download Invoice" button (PDF generation).
 - **Payment Integration:** (Future scope) "Pay Now" button via Remita/Interswitch.
 
+### 3.6. Authentication (Portal Login)
+
+**Route:** `/login`
+**API Endpoint:** `POST /api/stakeholder-orgs/auth/login` ✅ **(Ready)**
+
+- **Credentials:** Email & Password.
+- **Backend Logic:** Authenticates against `stakeholder_users` (NOT `users` table).
+- **Session:** Returns JWT Access Token + Refresh Token (Manage tokens in `StakeholderUserContext`).
+
 ---
 
 ## 4. Technical Implementation Details
