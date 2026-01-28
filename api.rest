@@ -38,3 +38,31 @@ Authorization: Bearer {{token}}
 # Search Users
 GET http://localhost:3019/api/messages/users/search?q=a&limit=5
 Authorization: Bearer {{token}}
+
+#####
+
+# Get Available Roles
+GET http://localhost:3019/api/admin/roles
+Authorization: Bearer {{token}}
+
+#####
+
+# List All Staff
+GET http://localhost:3019/api/admin/staff
+Authorization: Bearer {{token}}
+
+#####
+
+# Create Staff Member
+# POST http://localhost:3019/api/admin/staff
+# Authorization: Bearer {{token}}
+# Content-Type: application/json
+#
+# {
+#   "organizationId": "YOUR_ORG_ID",
+#   "email": "test.staff@example.com",
+#   "firstName": "Test",
+#   "lastName": "Staff",
+#   "password": "SecurePass123!",
+#   "role": "staff"
+# }

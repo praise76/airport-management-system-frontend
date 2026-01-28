@@ -61,8 +61,10 @@ import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as DemoMcpTodosRouteImport } from './routes/demo/mcp-todos'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AdminStaffRouteImport } from './routes/admin/staff'
 import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
+import { Route as AdminStaffIndexRouteImport } from './routes/admin/staff/index'
 import { Route as RosterTemplatesNewRouteImport } from './routes/roster/templates/new'
 import { Route as OrganizationsOrgIdEditRouteImport } from './routes/organizations/$orgId.edit'
 import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
@@ -75,12 +77,14 @@ import { Route as DemoApiTanchatRouteImport } from './routes/demo/api.tanchat'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as DemoApiMcpTodosRouteImport } from './routes/demo/api.mcp-todos'
 import { Route as AdminStakeholdersVerificationRouteImport } from './routes/admin/stakeholders/verification'
+import { Route as AdminStaffNewRouteImport } from './routes/admin/staff/new'
 import { Route as AdminRosterPlannerRouteImport } from './routes/admin/roster/planner'
 import { Route as AdminAttendanceRegistryRouteImport } from './routes/admin/attendance/registry'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
+import { Route as AdminStaffIdEditRouteImport } from './routes/admin/staff/$id.edit'
 
 const MessagesRoute = MessagesRouteImport.update({
   id: '/messages',
@@ -345,6 +349,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStaffRoute = AdminStaffRouteImport.update({
+  id: '/admin/staff',
+  path: '/admin/staff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RosterTemplatesIndexRoute = RosterTemplatesIndexRouteImport.update({
   id: '/roster/templates/',
   path: '/roster/templates/',
@@ -354,6 +363,11 @@ const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
   id: '/example/guitars/',
   path: '/example/guitars/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminStaffIndexRoute = AdminStaffIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminStaffRoute,
 } as any)
 const RosterTemplatesNewRoute = RosterTemplatesNewRouteImport.update({
   id: '/roster/templates/new',
@@ -416,6 +430,11 @@ const AdminStakeholdersVerificationRoute =
     path: '/admin/stakeholders/verification',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminStaffNewRoute = AdminStaffNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AdminStaffRoute,
+} as any)
 const AdminRosterPlannerRoute = AdminRosterPlannerRouteImport.update({
   id: '/admin/roster/planner',
   path: '/admin/roster/planner',
@@ -446,10 +465,16 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
   path: '/demo/start/ssr/data-only',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminStaffIdEditRoute = AdminStaffIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => AdminStaffRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/admin/staff': typeof AdminStaffRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -502,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/users': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
+  '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -514,8 +540,10 @@ export interface FileRoutesByFullPath {
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
+  '/admin/staff/': typeof AdminStaffIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
+  '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -575,6 +603,7 @@ export interface FileRoutesByTo {
   '/users': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
+  '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -587,8 +616,10 @@ export interface FileRoutesByTo {
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
+  '/admin/staff': typeof AdminStaffIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
+  '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -598,6 +629,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/admin/staff': typeof AdminStaffRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/demo/mcp-todos': typeof DemoMcpTodosRoute
@@ -650,6 +682,7 @@ export interface FileRoutesById {
   '/users/': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
+  '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
   '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -662,8 +695,10 @@ export interface FileRoutesById {
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
+  '/admin/staff/': typeof AdminStaffIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/roster/templates/': typeof RosterTemplatesIndexRoute
+  '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
@@ -674,6 +709,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/messages'
+    | '/admin/staff'
     | '/auth/login'
     | '/auth/register'
     | '/demo/mcp-todos'
@@ -726,6 +762,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/admin/attendance/registry'
     | '/admin/roster/planner'
+    | '/admin/staff/new'
     | '/admin/stakeholders/verification'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
@@ -738,8 +775,10 @@ export interface FileRouteTypes {
     | '/example/guitars/$guitarId'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
+    | '/admin/staff/'
     | '/example/guitars'
     | '/roster/templates'
+    | '/admin/staff/$id/edit'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -799,6 +838,7 @@ export interface FileRouteTypes {
     | '/users'
     | '/admin/attendance/registry'
     | '/admin/roster/planner'
+    | '/admin/staff/new'
     | '/admin/stakeholders/verification'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
@@ -811,8 +851,10 @@ export interface FileRouteTypes {
     | '/example/guitars/$guitarId'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
+    | '/admin/staff'
     | '/example/guitars'
     | '/roster/templates'
+    | '/admin/staff/$id/edit'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -821,6 +863,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/messages'
+    | '/admin/staff'
     | '/auth/login'
     | '/auth/register'
     | '/demo/mcp-todos'
@@ -873,6 +916,7 @@ export interface FileRouteTypes {
     | '/users/'
     | '/admin/attendance/registry'
     | '/admin/roster/planner'
+    | '/admin/staff/new'
     | '/admin/stakeholders/verification'
     | '/demo/api/mcp-todos'
     | '/demo/api/names'
@@ -885,8 +929,10 @@ export interface FileRouteTypes {
     | '/example/guitars/$guitarId'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
+    | '/admin/staff/'
     | '/example/guitars/'
     | '/roster/templates/'
+    | '/admin/staff/$id/edit'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
@@ -896,6 +942,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MessagesRoute: typeof MessagesRouteWithChildren
+  AdminStaffRoute: typeof AdminStaffRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   DemoMcpTodosRoute: typeof DemoMcpTodosRoute
@@ -1330,6 +1377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/staff': {
+      id: '/admin/staff'
+      path: '/admin/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AdminStaffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/roster/templates/': {
       id: '/roster/templates/'
       path: '/roster/templates'
@@ -1343,6 +1397,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/example/guitars'
       preLoaderRoute: typeof ExampleGuitarsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/staff/': {
+      id: '/admin/staff/'
+      path: '/'
+      fullPath: '/admin/staff/'
+      preLoaderRoute: typeof AdminStaffIndexRouteImport
+      parentRoute: typeof AdminStaffRoute
     }
     '/roster/templates/new': {
       id: '/roster/templates/new'
@@ -1428,6 +1489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminStakeholdersVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/staff/new': {
+      id: '/admin/staff/new'
+      path: '/new'
+      fullPath: '/admin/staff/new'
+      preLoaderRoute: typeof AdminStaffNewRouteImport
+      parentRoute: typeof AdminStaffRoute
+    }
     '/admin/roster/planner': {
       id: '/admin/roster/planner'
       path: '/admin/roster/planner'
@@ -1470,6 +1538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/staff/$id/edit': {
+      id: '/admin/staff/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/admin/staff/$id/edit'
+      preLoaderRoute: typeof AdminStaffIdEditRouteImport
+      parentRoute: typeof AdminStaffRoute
+    }
   }
 }
 
@@ -1489,6 +1564,22 @@ const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
   MessagesRouteChildren,
 )
 
+interface AdminStaffRouteChildren {
+  AdminStaffNewRoute: typeof AdminStaffNewRoute
+  AdminStaffIndexRoute: typeof AdminStaffIndexRoute
+  AdminStaffIdEditRoute: typeof AdminStaffIdEditRoute
+}
+
+const AdminStaffRouteChildren: AdminStaffRouteChildren = {
+  AdminStaffNewRoute: AdminStaffNewRoute,
+  AdminStaffIndexRoute: AdminStaffIndexRoute,
+  AdminStaffIdEditRoute: AdminStaffIdEditRoute,
+}
+
+const AdminStaffRouteWithChildren = AdminStaffRoute._addFileChildren(
+  AdminStaffRouteChildren,
+)
+
 interface OrganizationsOrgIdRouteChildren {
   OrganizationsOrgIdEditRoute: typeof OrganizationsOrgIdEditRoute
 }
@@ -1503,6 +1594,7 @@ const OrganizationsOrgIdRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MessagesRoute: MessagesRouteWithChildren,
+  AdminStaffRoute: AdminStaffRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   DemoMcpTodosRoute: DemoMcpTodosRoute,
