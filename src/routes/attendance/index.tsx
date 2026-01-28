@@ -6,6 +6,10 @@ import {
   useCheckIn,
   useCheckOut,
 } from "@/hooks/attendance";
+import type {
+  AttendanceRecord,
+  AttendanceStatus, // Keep for StatusPill props or explicit type
+} from "@/types/attendance";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -117,9 +121,7 @@ function AttendancePage() {
           <div className="border rounded-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold">Today's Status</h2>
-              {todayRecord?.status && (
-                <StatusPill status={todayRecord.status} />
-              )}
+              <StatusPill status={todayRecord?.status || "ABSENT"} />
             </div>
 
             {loadingToday && (
@@ -133,7 +135,7 @@ function AttendancePage() {
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  {todayRecord?.status === "ABSENT"
+                  {todayRecord?.status === "ABSENT" || !todayRecord?.status
                     ? "You are marked as absent for today. You can still check in if you're actually on duty."
                     : "You haven't checked in today"}
                 </p>
@@ -226,14 +228,16 @@ function AttendancePage() {
               <div className="space-y-2">
                 {history.data.map((record) => (
                   <div
-                    key={record.id}
+                    key={record.id || record.date}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium">
-                          {new Date(record.date).toLocaleDateString()}
+                          {record.date
+                            ? new Date(record.date).toLocaleDateString()
+                            : "N/A"}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {record.checkInTime && (

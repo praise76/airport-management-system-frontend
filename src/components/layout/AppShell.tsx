@@ -58,6 +58,11 @@ const primaryNav: NavItem[] = [
     to: "/roster/templates",
     roles: ["SUPER_ADMIN", "RGM", "ADMIN"],
   },
+  {
+    label: "Staff Management",
+    to: "/admin/staff",
+    roles: ["SUPER_ADMIN", "HR"],
+  },
   { label: "Public Duty Board", to: "/public/duty-board" },
   { label: "RGM", to: "/rgm", roles: ["RGM"] },
   { label: "Security", to: "/security", roles: ["ACOS"] },

@@ -77,6 +77,17 @@ export interface DailyAttendance {
   date: string
   activeSession: ActiveSession | null
   logs: AttendanceLog[]
+  status?: AttendanceStatus
+  checkInTime?: string
+  checkOutTime?: string
+  checkInZone?: {
+    id: string
+    name: string
+  }
+  checkOutZone?: {
+    id: string
+    name: string
+  }
 }
 
 export interface AttendanceSummary {
