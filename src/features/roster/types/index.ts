@@ -6,12 +6,12 @@ export type EntryStatus = 'scheduled' | 'confirmed' | 'swapped' | 'completed';
 
 export interface Roster {
   id: string; // UUID
-  name: string; // "Security Team A - Jan 2024"
+  rosterName: string; // "Security Team A - Jan 2024"
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   unitId: string;
   departmentId: string;
-  status: RosterStatus;
+  approvalStatus: RosterStatus;
   notes?: string;
 }
 

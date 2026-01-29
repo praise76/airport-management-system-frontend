@@ -80,7 +80,7 @@ function StaffListPage() {
                     <Badge variant="secondary">{member.role}</Badge>
                   </TableCell>
                   <TableCell>{member.employeeId || "-"}</TableCell>
-                  <TableCell>{member.departmentId || "-"}</TableCell>
+                  <TableCell>{member.department?.name || "-"}</TableCell>
                   <TableCell>
                     <Badge
                       variant={member.isActive ? "default" : "destructive"}

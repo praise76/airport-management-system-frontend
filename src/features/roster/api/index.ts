@@ -24,8 +24,8 @@ export const useGetRoster = (id: string) => {
   return useQuery({
     queryKey: ["roster", id],
     queryFn: async () => {
-      const { data } = await api.get<Roster & { entries: RosterEntry[] }>(`/roster/${id}`);
-      return data;
+      const { data } = await api.get<{ data: Roster & { entries: RosterEntry[] } }>(`/roster/${id}`);
+      return data.data;
     },
     enabled: !!id,
   });

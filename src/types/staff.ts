@@ -7,7 +7,11 @@ export interface Role {
 export interface StaffMember {
   id: string;
   organizationId: string;
-  departmentId?: string;
+  department: {
+    id: string;
+    name: string;
+    code: string;
+  } | null;
   email: string;
   phone?: string;
   firstName: string;
