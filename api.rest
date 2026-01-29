@@ -24,6 +24,16 @@ Authorization: Bearer {{token}}
 
 #####
 
+GET http://localhost:3019/api/departments/cb010335-7afa-4505-9fa6-15a1f8a49315/units
+Authorization: Bearer {{token}}
+
+#####
+
+GET http://localhost:3019/api/units?departmentId=cb010335-7afa-4505-9fa6-15a1f8a49315
+Authorization: Bearer {{token}}
+
+#####
+
 GET http://localhost:3019/api/documents
 Authorization: Bearer {{token}}
 

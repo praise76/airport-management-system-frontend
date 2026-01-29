@@ -86,16 +86,16 @@ function RosterPlannerPage() {
               <h1 className="text-2xl font-bold">{selectedRoster.name}</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {format(parseISO(selectedRoster.startDate), "MMM d")} -{" "}
-                  {format(parseISO(selectedRoster.endDate), "MMM d, yyyy")}
+                  {selectedRoster?.startDate || ""} -{" "}
+                  {selectedRoster?.endDate || ""}
                 </span>
-                <StatusPill status={selectedRoster.status} />
+                <StatusPill status={selectedRoster?.approvalStatus} />
               </div>
             </div>
           </div>
           <div className="flex gap-2">
             <ShiftManager unitId={selectedRoster.unitId} />
-            {selectedRoster.status === "draft" && (
+            {selectedRoster.approvalStatus === "draft" && (
               <Button
                 onClick={handleApprove}
                 disabled={approveMutation.isPending}
@@ -160,19 +160,19 @@ function RosterPlannerPage() {
               onClick={() => setSelectedRosterId(roster.id)}
             >
               <div className="flex justify-between items-start mb-2">
-                <h3 className="font-semibold text-lg">{roster.name}</h3>
-                <StatusPill status={roster.status} />
+                <h3 className="font-semibold text-lg">{roster.rosterName}</h3>
+                <StatusPill status={roster.approvalStatus} />
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                {format(parseISO(roster.startDate), "MMM d")} -{" "}
-                {format(parseISO(roster.endDate), "MMM d, yyyy")}
+                {format(roster?.startDate, "MMM d")} -{" "}
+                {format(roster?.endDate, "MMM d, yyyy")}
               </p>
               <div className="flex justify-between items-center text-sm">
                 <div className="text-muted-foreground">
                   {/* Placeholder for stats */}
                   Select to view details
                 </div>
-                {roster.status === "draft" && (
+                {roster.approvalStatus === "draft" && (
                   <Button
                     variant="ghost"
                     size="icon"

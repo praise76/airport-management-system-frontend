@@ -209,8 +209,8 @@ export const useGetShiftDefinitions = (filters?: { unitId?: string }) => {
       const params = new URLSearchParams();
       if (filters?.unitId) params.append("unitId", filters.unitId);
       
-      const { data } = await api.get<ShiftDefinition[]>(`/roster/shifts?${params.toString()}`);
-      return data;
+      const { data } = await api.get<{ data: ShiftDefinition[] }>(`/roster/shifts?${params.toString()}`);
+      return data.data
     },
   });
 };

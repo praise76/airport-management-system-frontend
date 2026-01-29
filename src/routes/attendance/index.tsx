@@ -58,8 +58,8 @@ function AttendancePage() {
       );
 
       await checkInMutation.mutateAsync({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
       });
     } catch (error: any) {
       if (error.code === 1) {
@@ -85,8 +85,8 @@ function AttendancePage() {
       );
 
       await checkOutMutation.mutateAsync({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
       });
     } catch (error: any) {
       if (error.code === 1) {

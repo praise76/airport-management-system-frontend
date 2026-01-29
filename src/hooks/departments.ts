@@ -12,6 +12,8 @@ import {
 	updateDepartment,
 	deleteDepartment,
 	type UpdateDepartmentRequest,
+	getUnitsByDepartment,
+	listUnits,
 } from "@/api/departments";
 
 export function useDepartments(params: ListDepartmentsParams = {}) {
@@ -129,5 +131,20 @@ export function useAssignHOD() {
 						: "";
 			toast.error(message || "Failed to assign head");
 		},
+	});
+}
+
+export function useDepartmentUnits(departmentId: string) {
+	return useQuery({
+		queryKey: ["departments", departmentId, "units"],
+		queryFn: () => getUnitsByDepartment(departmentId),
+		enabled: !!departmentId,
+	});
+}
+
+export function useUnits(params: { departmentId?: string } = {}) {
+	return useQuery({
+		queryKey: ["units", params],
+		queryFn: () => listUnits(params),
 	});
 }

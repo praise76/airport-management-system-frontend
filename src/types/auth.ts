@@ -7,10 +7,11 @@ export type LoginResponse = {
 	accessToken: string;
 	refreshToken: string;
 	user: {
-		id: string;
-		name: string;
+		userId: string;
+		firstName: string;
+		lastName: string;
 		email: string;
-		roles: string[];
+		role: string;
 		organizationId?: string;
 	};
 };

@@ -5,27 +5,31 @@ export interface GeofenceZone {
   organizationId: string;
   name: string;
   description?: string;
-  zoneType: "office" | "terminal" | "restricted" | "parking";
-  coordinates: Array<{ lat: number; lng: number }>;
-  radius?: number;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  zoneType: "work" | "parking" | "restricted";
   isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface GeofenceZoneInput {
   organizationId: string;
   name: string;
   description?: string;
-  zoneType: "office" | "terminal" | "restricted" | "parking";
-  coordinates: Array<{ lat: number; lng: number }>;
-  radius?: number;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  zoneType: "work" | "parking" | "restricted";
 }
 
 export interface GeofenceZoneUpdate {
   name?: string;
   description?: string;
-  zoneType?: "office" | "terminal" | "restricted" | "parking";
-  coordinates?: Array<{ lat: number; lng: number }>;
-  radius?: number;
+  latitude?: number;
+  longitude?: number;
+  radiusMeters?: number;
+  zoneType?: "work" | "parking" | "restricted";
   isActive?: boolean;
 }

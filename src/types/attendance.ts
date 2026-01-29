@@ -8,10 +8,8 @@ export interface GeofenceZone {
   id: string
   name: string
   description?: string
-  coordinates: {
-    latitude: number
-    longitude: number
-  }
+  lat: number
+  lng: number
   radius: number // in meters
   organizationId: string
   isActive: boolean
@@ -23,10 +21,11 @@ export interface AttendanceRecord {
   id: string
   userId: string
   user: {
-    id: string
-    name: string
+    userId: string
+    firstName: string
+    lastName: string
     email: string
-    department?: string
+    departmentId?: string
   }
   status: AttendanceStatus
   
@@ -34,12 +33,12 @@ export interface AttendanceRecord {
   checkInTime?: string
   checkOutTime?: string
   checkInLocation?: {
-    latitude: number
-    longitude: number
+    lat: number
+    lng: number
   }
   checkOutLocation?: {
-    latitude: number
-    longitude: number
+    lat: number
+    lng: number
   }
   checkInZone?: {
     id: string

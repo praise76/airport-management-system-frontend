@@ -40,14 +40,14 @@ export async function getAttendanceSummary(date?: string): Promise<AttendanceSum
 }
 
 export type CheckInRequest = {
-  latitude: number
-  longitude: number
+  lat: number
+  lng: number
   notes?: string
 }
 
 export type CheckOutRequest = {
-  latitude: number
-  longitude: number
+  lat: number
+  lng: number
   notes?: string
 }
 
@@ -62,7 +62,7 @@ export async function checkOut(input: CheckOutRequest): Promise<AttendanceRecord
 }
 
 export async function listGeofenceZones(): Promise<GeofenceZone[]> {
-  const res = await api.get('/geofence-zones')
+  const res = await api.get('/geofence/zones')
   return res.data
 }
 

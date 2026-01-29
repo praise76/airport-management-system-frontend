@@ -20,7 +20,7 @@ export async function listDepartments(
 	params: ListDepartmentsParams = {},
 ): Promise<DepartmentListResponse> {
 	const res = await api.get("/departments", { params });
-	const payload = (res.data?.data ?? res.data) as DepartmentListResponse;
+	const payload = (res.data) as DepartmentListResponse;
 	return payload;
 }
 
@@ -46,7 +46,7 @@ export type CreateDepartmentRequest = {
 	organizationId: string;
 	departmentLevel: DepartmentLevel;
 	parentDepartmentId?: string | null;
-	headUserId?: string | null;
+	hodUserId?: string | null;
 	locationDetails?: string | null;
 	airportCode?: string | null;
 	terminalCodes?: string | null;
@@ -58,7 +58,7 @@ export type UpdateDepartmentRequest = {
 	name?: string;
 	code?: string;
 	parentDepartmentId?: string | null;
-	headUserId?: string | null;
+	hodUserId?: string | null;
 	locationDetails?: string | null;
 	airportCode?: string | null;
 	terminalCodes?: string | null;
@@ -67,7 +67,7 @@ export type UpdateDepartmentRequest = {
 };
 
 export type AssignHODRequest = {
-	headUserId: string;
+	hodUserId: string;
 };
 
 export async function createDepartment(
@@ -100,6 +100,18 @@ export async function deleteDepartment(id: string): Promise<void> {
 	await api.delete(`/departments/${id}`);
 }
 
+export async function getUnitsByDepartment(departmentId: string): Promise<{data: Department[]}> {
+	const res = await api.get(`/departments/${departmentId}/units`);
+	const payload = (res.data) as {data: Department[]};
+	return payload;
+}
+
+export async function listUnits(params: { departmentId?: string } = {}): Promise<Department[]> {
+	const res = await api.get("/units", { params });
+	const payload = (res.data?.data ?? res.data) as Department[];
+	return payload;
+}
+
 // Helper to prepare form data for API request
 export function prepareCreateRequest(
 	formData: DepartmentFormData,
@@ -111,7 +123,7 @@ export function prepareCreateRequest(
 		organizationId,
 		departmentLevel: formData.departmentLevel,
 		parentDepartmentId: formData.parentDepartmentId || null,
-		headUserId: formData.headUserId || null,
+		hodUserId: formData.headUserId || null,
 		locationDetails: formData.locationDetails || null,
 		airportCode: formData.airportCode || null,
 		terminalCodes: formData.terminalCodes?.length

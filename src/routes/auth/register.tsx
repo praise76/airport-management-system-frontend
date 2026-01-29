@@ -1,6 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, redirect, useNavigate, Link } from "@tanstack/react-router";
-import { useId } from "react";
+import {
+  createFileRoute,
+  redirect,
+  useNavigate,
+  Link,
+} from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -14,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRegisterMutation } from "@/hooks/auth";
+import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
+import { useOrganizationsQuery } from "@/hooks/organizations";
 import { getAccessToken } from "@/utils/auth";
 
 const schema = z.object({
@@ -39,18 +45,39 @@ type FormValues = z.infer<typeof schema>;
 function RegisterPage() {
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useRegisterMutation();
-  const { register, handleSubmit, formState, setValue, watch } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      organizationId: "",
-      departmentId: "",
-      role: "staff",
-    },
+  const { register, handleSubmit, formState, setValue, watch } =
+    useForm<FormValues>({
+      resolver: zodResolver(schema),
+      defaultValues: {
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        organizationId: "",
+        departmentId: "",
+        role: "staff",
+      },
+    });
+
+  const selectedOrgId = watch("organizationId");
+  const selectedDeptId = watch("departmentId");
+
+  const { data: orgsData, isLoading: orgsLoading } = useOrganizationsQuery();
+  const { data: departments, isLoading: deptsLoading } = useDepartments({
+    organizationId: selectedOrgId,
+    limit: 100,
   });
+  const { data: units, isLoading: unitsLoading } =
+    useDepartmentUnits(selectedDeptId);
+
+  const handleOrgChange = (val: string) => {
+    setValue("organizationId", val);
+    setValue("departmentId", "");
+  };
+
+  const handleDeptChange = (val: string) => {
+    setValue("departmentId", val);
+  };
 
   async function onSubmit(values: FormValues) {
     await mutateAsync(values);
@@ -114,30 +141,93 @@ function RegisterPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="organizationId">Organization ID</Label>
-              <Input id="organizationId" {...register("organizationId")} placeholder="UUID" />
-              {formState.errors.organizationId && (
-                <p className="text-xs text-red-500">
-                  {formState.errors.organizationId.message}
-                </p>
-              )}
+              <Label>Organization</Label>
+              <Select onValueChange={handleOrgChange} value={selectedOrgId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      orgsLoading ? "Loading..." : "Select Organization"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {orgsData?.data.map((org: any) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="departmentId">Department ID</Label>
-              <Input id="departmentId" {...register("departmentId")} placeholder="UUID" />
-              {formState.errors.departmentId && (
-                <p className="text-xs text-red-500">
-                  {formState.errors.departmentId.message}
-                </p>
-              )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Select
+                  onValueChange={handleDeptChange}
+                  value={selectedDeptId}
+                  disabled={!selectedOrgId || deptsLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !selectedOrgId
+                          ? "Select Org first"
+                          : deptsLoading
+                            ? "Loading..."
+                            : "Select Dept"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments?.data
+                      .filter((d) => d.departmentLevel === 1)
+                      .map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Unit (Optional)</Label>
+                <Select
+                  onValueChange={(val) => setValue("departmentId", val)}
+                  disabled={!selectedDeptId || unitsLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        !selectedDeptId
+                          ? "Select Dept first"
+                          : unitsLoading
+                            ? "Loading..."
+                            : "Select Unit"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {units?.map((unit) => (
+                      <SelectItem key={unit.id} value={unit.id}>
+                        {unit.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select onValueChange={(val) => setValue("role", val)} defaultValue={role}>
+            <Select
+              onValueChange={(val) => setValue("role", val)}
+              defaultValue={role}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
@@ -154,11 +244,7 @@ function RegisterPage() {
             )}
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isPending}
-          >
+          <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? "Creating account…" : "Register"}
           </Button>
 
@@ -173,4 +259,3 @@ function RegisterPage() {
     </div>
   );
 }
-

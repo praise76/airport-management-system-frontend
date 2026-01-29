@@ -45,21 +45,22 @@ export async function registerDocument(
 }
 
 export type ForwardDocumentRequest = {
-	toDepartmentId: string;
-	comment?: string;
+	toUserId?: string;
+	toRole?: string;
+	comments?: string;
 };
 
 export type ReturnDocumentRequest = {
-	toDepartmentId: string;
-	comment?: string;
+	toRole?: string;
+	comments?: string;
 };
 
 export type ApproveDocumentRequest = {
-	comment?: string;
+	comments?: string;
 };
 
 export type RejectDocumentRequest = {
-	comment?: string;
+	comments?: string;
 };
 
 export async function forwardDocument(

@@ -1,4 +1,4 @@
-import { Link, Outlet } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { Bell, LogOut, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -72,6 +72,13 @@ const primaryNav: NavItem[] = [
 export function AppShell(props: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate({ to: "/auth/login" });
+  };
 
   const visibleNav = useMemo(() => {
     // Normalize user roles:
@@ -193,7 +200,12 @@ export function AppShell(props: AppShellProps) {
             <User size={18} />
           </Button>
         </Link>
-        <Button variant="outline" size="sm" aria-label="Logout">
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label="Logout"
+          onClick={handleLogout}
+        >
           <LogOut size={16} />
           <span className="hidden md:inline">Logout</span>
         </Button>

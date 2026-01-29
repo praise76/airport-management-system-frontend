@@ -51,7 +51,7 @@ export interface RosterEntry {
   lateMinutes: number; // Calculated automatically
   earlyDepartureMinutes: number; // Calculated automatically
 
-  status: EntryStatus;
+  approvalStatus: EntryStatus;
   
   // Populated fields (optional, depending on API response)
   user?: {

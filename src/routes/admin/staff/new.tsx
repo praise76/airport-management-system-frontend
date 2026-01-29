@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
 import type { CreateStaffInput } from "@/types/staff";
 
 export const Route = createFileRoute("/admin/staff/new")({
@@ -49,6 +50,19 @@ function NewStaffPage() {
 
   const selectedRole = watch("role");
   const selectedRoleInfo = roles?.find((r) => r.value === selectedRole);
+
+  const selectedDeptId = watch("departmentId");
+  const { data: departments, isLoading: departmentsLoading } = useDepartments({
+    limit: 100,
+  });
+  const { data: units, isLoading: unitsLoading } = useDepartmentUnits(
+    selectedDeptId || "",
+  );
+
+  const handleDepartmentChange = (value: string) => {
+    setValue("departmentId", value);
+    // You might want to reset a unit field if you had one specifically for units
+  };
 
   const onSubmit = async (data: CreateStaffInput) => {
     createMutation.mutate(data, {
@@ -226,6 +240,67 @@ function NewStaffPage() {
                 <Label htmlFor="canRegisterDocuments" className="font-normal">
                   Can register documents
                 </Label>
+              </div>
+            </div>
+
+            {/* Department & Unit */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Organization Structure</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Select
+                    onValueChange={handleDepartmentChange}
+                    value={selectedDeptId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          departmentsLoading
+                            ? "Loading..."
+                            : "Select Department"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments?.data
+                        .filter((d) => d.departmentLevel === 1)
+                        .map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Unit (Optional)</Label>
+                  <Select
+                    onValueChange={(value) => setValue("departmentId", value)}
+                    disabled={!selectedDeptId || unitsLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={
+                          !selectedDeptId
+                            ? "Select Dept first"
+                            : unitsLoading
+                              ? "Loading..."
+                              : "Select Unit"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {units?.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

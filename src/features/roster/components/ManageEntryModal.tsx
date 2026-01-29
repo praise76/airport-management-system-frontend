@@ -63,8 +63,8 @@ export function ManageEntryModal({
     if (existingEntry) {
       setShift(existingEntry.shift);
       setShiftDefinitionId(existingEntry.shiftDefinitionId || "custom");
-      setStartTime(existingEntry.shiftStartTime.slice(0, 5));
-      setEndTime(existingEntry.shiftEndTime.slice(0, 5));
+      setStartTime(existingEntry.shiftStartTime?.slice(0, 5) || "08:00");
+      setEndTime(existingEntry.shiftEndTime?.slice(0, 5) || "16:00");
       setPosition(existingEntry.dutyPosition || "");
       setLocation(existingEntry.dutyLocation || "");
     } else {
@@ -85,8 +85,8 @@ export function ManageEntryModal({
 
     const selected = shiftDefinitions?.find((s) => s.id === val);
     if (selected) {
-      setStartTime(selected.startTime.slice(0, 5));
-      setEndTime(selected.endTime.slice(0, 5));
+      setStartTime(selected.startTime?.slice(0, 5) || "08:00");
+      setEndTime(selected.endTime?.slice(0, 5) || "16:00");
       // Optionally deduce morning/afternoon/night based on time
       // Just keeping current shift type for now or could infer
     }
@@ -173,8 +173,8 @@ export function ManageEntryModal({
                 <SelectItem value="custom">Custom Hours</SelectItem>
                 {shiftDefinitions?.map((def) => (
                   <SelectItem key={def.id} value={def.id}>
-                    {def.name} ({def.startTime.slice(0, 5)} -{" "}
-                    {def.endTime.slice(0, 5)})
+                    {def.name} ({def.startTime?.slice(0, 5)} -{" "}
+                    {def.endTime?.slice(0, 5)})
                   </SelectItem>
                 ))}
               </SelectContent>

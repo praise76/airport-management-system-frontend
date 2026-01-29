@@ -20,7 +20,6 @@ import {
 import { ShiftDefinition } from "../types";
 import { Plus, Trash2, Edit2, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 
 interface ShiftManagerProps {
   unitId?: string;
@@ -38,6 +37,8 @@ export function ShiftManager({ unitId, trigger }: ShiftManagerProps) {
   const createMutation = useCreateShiftDefinition();
   const updateMutation = useUpdateShiftDefinition();
   const deleteMutation = useDeleteShiftDefinition();
+
+  // console.log("shifts", shifts);
 
   const handleEdit = (shift: ShiftDefinition) => {
     setEditingShift(shift);
@@ -110,8 +111,8 @@ export function ShiftManager({ unitId, trigger }: ShiftManagerProps) {
                         <p className="font-medium">{shift.name}</p>
                         <div className="flex items-center text-xs text-muted-foreground gap-1">
                           <Clock className="h-3 w-3" />
-                          {shift.startTime.slice(0, 5)} -{" "}
-                          {shift.endTime.slice(0, 5)}
+                          {shift.startTime?.slice(0, 5)} -{" "}
+                          {shift.endTime?.slice(0, 5)}
                         </div>
                       </div>
                     </div>

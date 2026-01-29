@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 
 type User = {
-  id: string
-  name: string
+  userId: string
+  firstName: string
+  lastName: string
   email: string
   role?: string // e.g. "super_admin"
-  roles?: string[] // kept for compatibility if needed
   organizationId?: string
+  departmentId?: string
   type?: string // 'staff' | 'stakeholder'
 }
 
