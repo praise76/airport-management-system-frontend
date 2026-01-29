@@ -7,6 +7,7 @@ import {
   Shield,
   AlertCircle,
   Settings2,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -74,6 +75,8 @@ function GroupDetailsPage() {
     queryKey: ["group-members", groupId],
     queryFn: () => listGroupMembers(groupId),
   });
+
+  console.log("members", members);
 
   const { data: usersData } = useUsers({ limit: 100 });
   const users = usersData?.data || [];

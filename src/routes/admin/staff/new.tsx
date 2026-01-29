@@ -293,7 +293,7 @@ function NewStaffPage() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {units?.map((unit) => (
+                      {units?.data?.map((unit) => (
                         <SelectItem key={unit.id} value={unit.id}>
                           {unit.name}
                         </SelectItem>

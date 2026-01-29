@@ -20,7 +20,7 @@ export async function getGroup(id: string): Promise<Group> {
 
 export async function listGroupMembers(groupId: string): Promise<GroupMember[]> {
   const res = await api.get(`/groups/${groupId}/members`);
-  return res.data;
+  return res.data.data;
 }
 
 export async function addGroupMember(groupId: string, input: AddMemberRequest): Promise<void> {
