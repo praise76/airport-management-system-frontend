@@ -23,6 +23,7 @@ import {
   useDeleteRosterEntry,
   useGetShiftDefinitions,
 } from "../api";
+import { useTerminals } from "@/hooks/terminals";
 import { RosterEntry, ShiftType } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -52,8 +53,10 @@ export function ManageEntryModal({
   const [endTime, setEndTime] = useState("16:00");
   const [position, setPosition] = useState("");
   const [location, setLocation] = useState("");
+  const [terminalId, setTerminalId] = useState<string>("");
 
   const { data: shiftDefinitions } = useGetShiftDefinitions({ unitId });
+  const { data: terminals } = useTerminals();
 
   const addMutation = useAddRosterEntry();
   const updateMutation = useUpdateRosterEntry();
@@ -67,6 +70,7 @@ export function ManageEntryModal({
       setEndTime(existingEntry.shiftEndTime?.slice(0, 5) || "16:00");
       setPosition(existingEntry.dutyPosition || "");
       setLocation(existingEntry.dutyLocation || "");
+      setTerminalId((existingEntry as any).terminalId || "");
     } else {
       // Defaults
       setShift("morning");
@@ -75,6 +79,7 @@ export function ManageEntryModal({
       setEndTime("16:00");
       setPosition("");
       setLocation("");
+      setTerminalId("");
     }
   }, [existingEntry, open]);
 
@@ -95,13 +100,15 @@ export function ManageEntryModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const entryData: any = {
-      userId,
+      staffId: userId,
+      unitDepartmentId: unitId,
       dutyDate: format(date, "yyyy-MM-dd"), // Ensure correct format
       shift,
       shiftStartTime: startTime,
       shiftEndTime: endTime,
       dutyPosition: position,
       dutyLocation: location,
+      terminalId: terminalId || undefined,
       status: "scheduled" as const,
     };
 
@@ -232,6 +239,23 @@ export function ManageEntryModal({
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g. Gate 1"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Terminal (Optional)</Label>
+            <Select value={terminalId} onValueChange={setTerminalId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Terminal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {terminals?.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.terminalName} ({t.terminalCode})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter className="fle sm:justify-between">

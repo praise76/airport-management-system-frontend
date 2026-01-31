@@ -51,7 +51,7 @@ const primaryNav: NavItem[] = [
   {
     label: "Roster Planner",
     to: "/admin/roster/planner",
-    roles: ["SUPER_ADMIN"],
+    roles: ["SUPER_ADMIN", "ADMIN", "ORG_ADMIN", "HOD", "HOU"],
   },
   {
     label: "Roster Templates",

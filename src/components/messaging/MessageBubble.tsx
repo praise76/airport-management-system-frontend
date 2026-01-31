@@ -16,6 +16,7 @@ export function MessageBubble({
   showAvatar = true,
 }: MessageBubbleProps) {
   const isEmergency = message.messageType === "emergency";
+  const isHandover = message.messageType === "handover";
 
   return (
     <div
@@ -57,6 +58,73 @@ export function MessageBubble({
           {isEmergency && (
             <div className="text-xs font-bold text-red-600 mb-1 flex items-center gap-1">
               🚨 CRITICAL ALERT
+            </div>
+          )}
+
+          {/* Handover Report Header */}
+          {isHandover && (
+            <div className="text-xs font-bold text-blue-600 mb-2 flex items-center gap-1 border-b border-blue-200 pb-1">
+              🔄 HANDOVER REPORT
+            </div>
+          )}
+
+          {/* Handover Metadata */}
+          {isHandover && message.metadata && (
+            <div className="mb-2 space-y-2 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white/50 p-1.5 rounded">
+                  <span className="block text-[10px] opacity-70">Status</span>
+                  <span className="font-semibold">
+                    {message.metadata.status}
+                  </span>
+                </div>
+                <div className="bg-white/50 p-1.5 rounded">
+                  <span className="block text-[10px] opacity-70">
+                    Passengers
+                  </span>
+                  <span className="font-semibold">
+                    {message.metadata.passengers}
+                  </span>
+                </div>
+              </div>
+
+              {message.metadata.urgent && (
+                <div className="bg-red-50 text-red-700 p-2 rounded border border-red-200">
+                  <div className="font-bold text-[10px] uppercase mb-0.5">
+                    Urgent Items
+                  </div>
+                  {message.metadata.urgent}
+                </div>
+              )}
+
+              {message.metadata.equipment &&
+                message.metadata.equipment.length > 0 && (
+                  <div className="bg-white/50 p-2 rounded">
+                    <div className="font-semibold text-[10px] opacity-70 mb-1">
+                      Equipment Status
+                    </div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {message.metadata.equipment.map((item, idx) => (
+                        <li
+                          key={idx}
+                          className={
+                            item.includes("Issue")
+                              ? "text-red-600 font-medium"
+                              : ""
+                          }
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              {message.metadata.notes && (
+                <div className="bg-white/50 p-2 rounded italic text-opacity-90">
+                  "{message.metadata.notes}"
+                </div>
+              )}
             </div>
           )}
 

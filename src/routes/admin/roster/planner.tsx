@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, ArrowLeft, CheckCircle, Trash2 } from "lucide-react";
+import { useMemo } from "react";
 import {
   useGetRosters,
   useGetRoster,
@@ -13,6 +14,7 @@ import { CreateRosterModal } from "@/features/roster/components/CreateRosterModa
 import { ManageEntryModal } from "@/features/roster/components/ManageEntryModal";
 import { ShiftManager } from "@/features/roster/components/ShiftManager";
 import { useUsers } from "@/hooks/users";
+import { useAuthStore } from "@/stores/auth";
 import { StatusPill } from "@/components/ui/status-pill";
 import { format, parseISO } from "date-fns";
 import { RosterEntry } from "@/features/roster/types";
@@ -43,6 +45,13 @@ function RosterPlannerPage() {
   const { data: usersData } = useUsers({ limit: 100 });
   const approveMutation = useApproveRoster();
   const deleteMutation = useDeleteRoster();
+
+  const user = useAuthStore((s) => s.user);
+  const canCreateRoster = useMemo(() => {
+    if (!user?.role) return false;
+    const role = user.role.toUpperCase();
+    return ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN", "HOD", "HOU"].includes(role);
+  }, [user?.role]);
 
   const handleCellClick = (userId: string, date: Date, entry?: RosterEntry) => {
     setSelectedUserForEntry(userId);
@@ -146,10 +155,12 @@ function RosterPlannerPage() {
             Manage duty rosters and shift assignments
           </p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Roster
-        </Button>
+        {canCreateRoster && (
+          <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Roster
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

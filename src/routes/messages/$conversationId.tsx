@@ -4,6 +4,7 @@ import { useMessagingStore } from "@/stores/messages";
 import { useMessages, useSendMessage } from "@/hooks/messaging";
 import { useConversations } from "@/hooks/messaging";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
+import { HandoverModal } from "@/features/messaging/HandoverModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Phone, Video, Info, Paperclip, Loader2 } from "lucide-react";
@@ -36,6 +37,7 @@ function ConversationView() {
 
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [handoverOpen, setHandoverOpen] = useState(false);
 
   useEffect(() => {
     setActiveConversation(conversationId);
@@ -106,7 +108,7 @@ function ConversationView() {
             <MessageBubble
               key={msg.id}
               message={msg}
-              isSelf={msg.senderId === user?.id}
+              isSelf={msg.senderId === user?.userId}
             />
           ))
         )}
@@ -118,6 +120,15 @@ function ConversationView() {
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <Button type="button" variant="ghost" size="icon">
             <Paperclip className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="Send Handover Report"
+            onClick={() => setHandoverOpen(true)}
+          >
+            <Info className="h-5 w-5" />
           </Button>
           <Input
             value={inputValue}
@@ -139,6 +150,12 @@ function ConversationView() {
           </Button>
         </form>
       </div>
+
+      <HandoverModal
+        conversationId={conversationId}
+        open={handoverOpen}
+        onOpenChange={setHandoverOpen}
+      />
     </div>
   );
 }

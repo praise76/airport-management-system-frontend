@@ -14,6 +14,24 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
+import { useTerminals } from "@/hooks/terminals";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Settings as SettingsIcon } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 // Custom CSS for coverage status pulsing
 const coverageStyles = `
@@ -27,11 +45,32 @@ const coverageStyles = `
 
 export const Route = createFileRoute("/public/duty-board")({
   component: PublicDutyBoardPage,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      terminalId: (search.terminalId as string) || undefined,
+    };
+  },
 });
 
 function PublicDutyBoardPage() {
-  const { data, loading, error } = useDutyBoardData();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const { data, loading, error } = useDutyBoardData("all", search.terminalId);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const { data: terminals } = useTerminals();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const currentTerminal = terminals?.find((t) => t.id === search.terminalId);
+
+  const handleTerminalChange = (val: string) => {
+    navigate({
+      search: {
+        terminalId: val === "all" ? undefined : val,
+      },
+    });
+    setSettingsOpen(false);
+  };
 
   // Clock
   useEffect(() => {
@@ -78,7 +117,10 @@ function PublicDutyBoardPage() {
             <h1 className="text-3xl font-bold tracking-tight text-white">
               Airport Operations
             </h1>
-            <p className="text-slate-400">Duty Roster Live Status</p>
+            <p className="text-slate-400">
+              Duty Roster Live Status{" "}
+              {currentTerminal && `• ${currentTerminal.terminalName}`}
+            </p>
           </div>
         </div>
 
@@ -91,6 +133,45 @@ function PublicDutyBoardPage() {
               {format(currentTime, "EEEE, MMM d, yyyy")}
             </div>
           </div>
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-600 hover:text-slate-300"
+              >
+                <SettingsIcon className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-slate-900 border-slate-800 text-slate-100">
+              <DialogHeader>
+                <DialogTitle>Display Settings</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-400">
+                    Filter by Terminal
+                  </label>
+                  <Select
+                    value={search.terminalId || "all"}
+                    onValueChange={handleTerminalChange}
+                  >
+                    <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
+                      <SelectValue placeholder="Select Terminal" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
+                      <SelectItem value="all">All Terminals</SelectItem>
+                      {terminals?.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.terminalName} ({t.terminalCode})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </header>
 

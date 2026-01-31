@@ -29,7 +29,7 @@ export function RosterGrid({ roster, users, onCellClick }: RosterGridProps) {
   const entriesMap = useMemo(() => {
     const map = new Map<string, RosterEntry>();
     roster.entries?.forEach((entry) => {
-      const key = `${entry.userId}-${format(parseISO(entry.dutyDate), "yyyy-MM-dd")}`;
+      const key = `${entry.staffId}-${format(parseISO(entry.dutyDate), "yyyy-MM-dd")}`;
       map.set(key, entry);
     });
     return map;

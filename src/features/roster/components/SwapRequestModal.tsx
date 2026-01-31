@@ -1,10 +1,22 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useUsers } from "@/hooks/users";
 import { useRequestSwap } from "../api";
 import { RosterEntry } from "../types";
@@ -17,7 +29,11 @@ interface SwapRequestModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function SwapRequestModal({ entry, open, onOpenChange }: SwapRequestModalProps) {
+export function SwapRequestModal({
+  entry,
+  open,
+  onOpenChange,
+}: SwapRequestModalProps) {
   const [targetUserId, setTargetUserId] = useState<string>("");
   const [reason, setReason] = useState<string>("");
   const { mutate: requestSwap, isPending } = useRequestSwap();
@@ -26,8 +42,8 @@ export function SwapRequestModal({ entry, open, onOpenChange }: SwapRequestModal
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetUserId || !reason) {
-        toast.error("Please fill in all fields");
-        return;
+      toast.error("Please fill in all fields");
+      return;
     }
 
     requestSwap(
@@ -46,7 +62,7 @@ export function SwapRequestModal({ entry, open, onOpenChange }: SwapRequestModal
         onError: () => {
           toast.error("Failed to send swap request");
         },
-      }
+      },
     );
   };
 
@@ -56,7 +72,8 @@ export function SwapRequestModal({ entry, open, onOpenChange }: SwapRequestModal
         <DialogHeader>
           <DialogTitle>Request Shift Swap</DialogTitle>
           <DialogDescription>
-            Request to swap your shift on {format(new Date(entry.dutyDate), "MMM dd")} ({entry.shift} shift).
+            Request to swap your shift on{" "}
+            {format(new Date(entry.dutyDate), "MMM dd")} ({entry.shift} shift).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,11 +84,13 @@ export function SwapRequestModal({ entry, open, onOpenChange }: SwapRequestModal
                 <SelectValue placeholder="Select a colleague" />
               </SelectTrigger>
               <SelectContent>
-                {usersData?.data?.filter((u: any) => u.id !== entry.userId).map((user: any) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.firstName} {user.lastName}
-                  </SelectItem>
-                ))}
+                {usersData?.data
+                  ?.filter((u: any) => u.id !== entry.staffId)
+                  .map((user: any) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.firstName} {user.lastName}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -85,7 +104,11 @@ export function SwapRequestModal({ entry, open, onOpenChange }: SwapRequestModal
             />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>

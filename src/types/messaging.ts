@@ -1,5 +1,5 @@
 export type ConversationType = 'direct' | 'group' | 'emergency';
-export type MessageType = 'text' | 'file' | 'emergency';
+export type MessageType = 'text' | 'file' | 'emergency' | 'handover';
 export type MessagePriority = 'normal' | 'critical';
 export type ReactionType = 'like' | 'love' | 'laugh' | 'wow' | 'sad' | 'angry';
 
@@ -32,6 +32,11 @@ export interface Conversation {
   lastMessagePreview?: string;
   memberCount: number;
   isActive: boolean;
+  settings?: {
+    isStationChannel?: boolean;
+    whoCanPost?: 'everyone' | 'admins';
+    allowFileSharing?: boolean;
+  };
   membership?: {
     role: 'admin' | 'member';
     unreadCount: number;
@@ -63,6 +68,13 @@ export interface Message {
   senderId: string;
   content: string;
   messageType: MessageType;
+  metadata?: {
+    status?: string;
+    passengers?: number;
+    equipment?: string[];
+    notes?: string;
+    urgent?: string;
+  };
   attachments: Attachment[];
   parentMessageId?: string | null;
   replyCount: number;

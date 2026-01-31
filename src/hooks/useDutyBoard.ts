@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/api/client'; // Using existing client instead of raw axios if possible
 import { DutyBoardResponse } from '@/types/dutyBoard';
 
-export const useDutyBoardData = (departmentId = 'all') => {
+export const useDutyBoardData = (departmentId = 'all', terminalId?: string) => {
   const [data, setData] = useState<DutyBoardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +10,7 @@ export const useDutyBoardData = (departmentId = 'all') => {
   const fetchData = async () => {
     try {
       const response = await api.get('/public/duty-board', {
-        params: { departmentId },
+        params: { departmentId, terminalId },
       });
       // Assuming api client unwraps data or returns axios response. 
       // Based on previous files, api.get returns axios response.
@@ -40,7 +40,7 @@ export const useDutyBoardData = (departmentId = 'all') => {
     // Auto-refresh every 60 seconds
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, [departmentId]);
+  }, [departmentId, terminalId]);
 
   return { data, loading, error, refetch: fetchData };
 };

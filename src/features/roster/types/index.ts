@@ -29,7 +29,7 @@ export interface ShiftDefinition {
 
 export interface RosterEntry {
   id: string;
-  userId: string;
+  staffId: string;
   rosterId: string;
   dutyDate: string; // YYYY-MM-DD
 

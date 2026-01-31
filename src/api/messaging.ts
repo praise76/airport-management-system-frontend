@@ -27,7 +27,7 @@ export interface UserSearchParams {
 
 export interface SendMessagePayload {
   content: string;
-  messageType: 'text' | 'file' | 'emergency';
+  messageType: 'text' | 'file' | 'emergency' | 'handover';
   attachments?: any[];
   parentMessageId?: string;
   priority?: 'normal' | 'critical';

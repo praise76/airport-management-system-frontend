@@ -1,63 +1,67 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import * as TerminalsApi from "@/api/terminals";
-import type { TerminalInput, TerminalUpdate } from "@/types/terminal";
-import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getTerminals, getTerminal, getTerminalStats, createTerminal, updateTerminal, deleteTerminal } from "@/api/terminals";
+import type { TerminalUpdate } from "@/types/terminal";
+
+export const terminalKeys = {
+  all: ["terminals"] as const,
+  lists: () => [...terminalKeys.all, "list"] as const,
+  list: () => [...terminalKeys.lists()] as const,
+  details: () => [...terminalKeys.all, "detail"] as const,
+  detail: (id: string) => [...terminalKeys.details(), id] as const,
+  stats: (id: string) => [...terminalKeys.detail(id), "stats"] as const,
+};
 
 export function useTerminals() {
   return useQuery({
-    queryKey: ["terminals"],
-    queryFn: () => TerminalsApi.getTerminals(),
+    queryKey: terminalKeys.list(),
+    queryFn: getTerminals,
   });
 }
 
 export function useTerminal(id: string) {
   return useQuery({
-    queryKey: ["terminals", id],
-    queryFn: () => TerminalsApi.getTerminal(id),
+    queryKey: terminalKeys.detail(id),
+    queryFn: () => getTerminal(id),
     enabled: !!id,
   });
 }
 
 export function useTerminalStats(id: string) {
   return useQuery({
-    queryKey: ["terminals", id, "stats"],
-    queryFn: () => TerminalsApi.getTerminalStats(id),
+    queryKey: terminalKeys.stats(id),
+    queryFn: () => getTerminalStats(id),
     enabled: !!id,
   });
 }
 
 export function useCreateTerminal() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: TerminalInput) => TerminalsApi.createTerminal(input),
+    mutationFn: createTerminal,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["terminals"] });
-      toast.success("Terminal created");
+      queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
     },
-    onError: (err: any) => toast.error(err.message || "Failed to create terminal"),
   });
 }
 
 export function useUpdateTerminal() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: TerminalUpdate }) => TerminalsApi.updateTerminal(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["terminals"] });
-      toast.success("Terminal updated");
+    mutationFn: ({ id, input }: { id: string; input: TerminalUpdate }) =>
+      updateTerminal(id, input),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: terminalKeys.detail(data.id) });
+      queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
     },
-    onError: (err: any) => toast.error(err.message || "Failed to update terminal"),
   });
 }
 
 export function useDeleteTerminal() {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => TerminalsApi.deleteTerminal(id),
+    mutationFn: deleteTerminal,
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["terminals"] });
-      toast.success("Terminal deleted");
+      queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
     },
-    onError: (err: any) => toast.error(err.message || "Failed to delete terminal"),
   });
 }

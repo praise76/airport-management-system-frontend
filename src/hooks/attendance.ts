@@ -57,6 +57,7 @@ export function useCheckIn() {
     mutationFn: (input: CheckInRequest) => checkIn(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] })
+      queryClient.invalidateQueries({ queryKey: ['messaging', 'conversations'] })
       toast.success('Checked in successfully')
     },
     onError: (error: any) => {

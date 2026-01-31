@@ -10,6 +10,8 @@ export interface Document {
 	priority: string;
 	status: string;
 	workflowStage: string;
+  fileUrl?: string;
+  fileId?: string;
 }
 
 export interface DocumentListResponse {

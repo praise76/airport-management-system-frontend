@@ -34,12 +34,22 @@ export type RegisterDocumentRequest = {
 	subject: string;
 	documentType: string;
 	priority?: string;
+  file?: File;
 };
 
 export async function registerDocument(
 	input: RegisterDocumentRequest,
 ): Promise<Document> {
-	const res = await api.post("/documents/register", input);
+  const formData = new FormData();
+  formData.append("organizationId", input.organizationId);
+  formData.append("registryNumber", input.registryNumber);
+  formData.append("direction", input.direction);
+  formData.append("subject", input.subject);
+  formData.append("documentType", input.documentType);
+  if (input.priority) formData.append("priority", input.priority);
+  if (input.file) formData.append("file", input.file);
+
+	const res = await api.post("/documents/register", formData);
 	const payload = (res.data?.data ?? res.data) as Document;
 	return payload;
 }

@@ -94,23 +94,88 @@ function MessagesLayout() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="p-2 space-y-1">
+          <div className="p-2 space-y-4">
             {isLoadingConversations && (
               <div className="p-4 text-center text-sm opacity-50">
                 Loading...
               </div>
             )}
-            {filteredConversations.map((conv: any) => (
-              <ConversationListItem
-                key={conv.id}
-                conversation={conv}
-                isActive={location.pathname === `/messages/${conv.id}`}
-                onClick={() => navigate({ to: `/messages/${conv.id}` })}
-              />
-            ))}
+
             {!isLoadingConversations && filteredConversations.length === 0 && (
               <div className="p-4 text-center text-sm opacity-50">
                 {searchQuery ? "No filtered results" : "No conversations yet"}
+              </div>
+            )}
+
+            {/* Station Channels */}
+            {filteredConversations.some(
+              (c: any) => c.type === "unit" && c.settings?.isStationChannel,
+            ) && (
+              <div className="space-y-1">
+                <h3 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Station Channels
+                </h3>
+                {filteredConversations
+                  .filter(
+                    (c: any) =>
+                      c.type === "unit" && c.settings?.isStationChannel,
+                  )
+                  .map((conv: any) => (
+                    <ConversationListItem
+                      key={conv.id}
+                      conversation={conv}
+                      isActive={location.pathname === `/messages/${conv.id}`}
+                      onClick={() => navigate({ to: `/messages/${conv.id}` })}
+                    />
+                  ))}
+              </div>
+            )}
+
+            {/* Unit & Department Channels */}
+            {filteredConversations.some(
+              (c: any) =>
+                (c.type === "unit" || c.type === "department") &&
+                !c.settings?.isStationChannel,
+            ) && (
+              <div className="space-y-1">
+                <h3 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Unit & Department Channels
+                </h3>
+                {filteredConversations
+                  .filter(
+                    (c: any) =>
+                      (c.type === "unit" || c.type === "department") &&
+                      !c.settings?.isStationChannel,
+                  )
+                  .map((conv: any) => (
+                    <ConversationListItem
+                      key={conv.id}
+                      conversation={conv}
+                      isActive={location.pathname === `/messages/${conv.id}`}
+                      onClick={() => navigate({ to: `/messages/${conv.id}` })}
+                    />
+                  ))}
+              </div>
+            )}
+
+            {/* Direct Messages */}
+            {filteredConversations.some(
+              (c: any) => c.type === "direct" || c.type === "group",
+            ) && (
+              <div className="space-y-1">
+                <h3 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Direct Messages
+                </h3>
+                {filteredConversations
+                  .filter((c: any) => c.type === "direct" || c.type === "group")
+                  .map((conv: any) => (
+                    <ConversationListItem
+                      key={conv.id}
+                      conversation={conv}
+                      isActive={location.pathname === `/messages/${conv.id}`}
+                      onClick={() => navigate({ to: `/messages/${conv.id}` })}
+                    />
+                  ))}
               </div>
             )}
           </div>
