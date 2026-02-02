@@ -24,6 +24,14 @@ export function useDocumentWorkflow(id: string) {
   });
 }
 
+export function useDocumentJourney(id: string) {
+  return useQuery({
+    queryKey: ["documents", id, "journey"],
+    queryFn: () => DocsApi.getDocumentJourney(id),
+    enabled: isValidDocumentId(id),
+  });
+}
+
 export function useRegisterDocument() {
   const qc = useQueryClient();
   return useMutation({

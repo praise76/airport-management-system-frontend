@@ -1,5 +1,12 @@
 import { api } from "./client";
-import type { Terminal, TerminalInput, TerminalUpdate, TerminalStats } from "@/types/terminal";
+import type { 
+  Terminal, 
+  TerminalInput, 
+  TerminalUpdate, 
+  TerminalStats,
+  TerminalRepresentative,
+  TerminalRepresentativeInput 
+} from "@/types/terminal";
 
 export async function getTerminals(): Promise<Terminal[]> {
   const res = await api.get("/terminals");
@@ -28,4 +35,18 @@ export async function deleteTerminal(id: string): Promise<void> {
 export async function getTerminalStats(id: string): Promise<TerminalStats> {
   const res = await api.get(`/terminals/${id}/stats`);
   return res.data.data;
+}
+
+export async function getTerminalRepresentatives(terminalId: string): Promise<TerminalRepresentative[]> {
+  const res = await api.get(`/terminals/${terminalId}/representatives`);
+  return res.data.data;
+}
+
+export async function addTerminalRepresentative(terminalId: string, input: TerminalRepresentativeInput): Promise<TerminalRepresentative> {
+  const res = await api.post(`/terminals/${terminalId}/representatives`, input);
+  return res.data.data;
+}
+
+export async function removeTerminalRepresentative(id: string): Promise<void> {
+  await api.delete(`/terminals/representatives/${id}`);
 }

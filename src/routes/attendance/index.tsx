@@ -5,12 +5,10 @@ import {
   useGeofenceZones,
   useCheckIn,
   useCheckOut,
+  useCheckLocation,
 } from "@/hooks/attendance";
-import type {
-  AttendanceRecord,
-  AttendanceStatus, // Keep for StatusPill props or explicit type
-} from "@/types/attendance";
-import { useState } from "react";
+import type { AttendanceRecord, AttendanceStatus } from "@/types/attendance";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -24,6 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { getAccessToken } from "@/utils/auth";
+import { SubmitShiftReportModal } from "@/features/shift-reports/SubmitShiftReportModal";
 
 export const Route = createFileRoute("/attendance/")({
   beforeLoad: () => {
@@ -39,11 +38,41 @@ function AttendancePage() {
   const { data: history, isLoading: loadingHistory } = useAttendance({
     pageSize: 30,
   });
+  console.log("history", history);
   const { data: zones } = useGeofenceZones();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
 
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [terminalCode, setTerminalCode] = useState("");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+
+  const { data: locStatus } = useCheckLocation(
+    currentLocation?.lat,
+    currentLocation?.lng,
+  );
+
+  // Periodic location check for geofence indicator
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const id = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) =>
+            setCurrentLocation({
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+            }),
+          () => {},
+          { enableHighAccuracy: true },
+        );
+      }, 30000); // Check every 30s
+      return () => clearInterval(id);
+    }
+  }, []);
 
   const handleCheckIn = async () => {
     setGettingLocation(true);
@@ -57,10 +86,17 @@ function AttendancePage() {
         },
       );
 
-      await checkInMutation.mutateAsync({
+      const result = await checkInMutation.mutateAsync({
         lat: position.coords.latitude,
         lng: position.coords.longitude,
+        terminalCode: terminalCode || undefined,
       });
+
+      if (result.rosterInfo.isLate) {
+        alert(
+          `Checked in, but you are marked as LATE (${result.rosterInfo.lateMinutes} minutes).`,
+        );
+      }
     } catch (error: any) {
       if (error.code === 1) {
         alert("Location permission denied. Please enable location access.");
@@ -88,6 +124,7 @@ function AttendancePage() {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
       });
+      setShowReportModal(true); // Show modal after successful checkout
     } catch (error: any) {
       if (error.code === 1) {
         alert("Location permission denied. Please enable location access.");
@@ -99,10 +136,15 @@ function AttendancePage() {
     }
   };
 
-  const isCheckedIn = todayRecord?.status === "CHECKED_IN";
-  const isCheckedOut = todayRecord?.status === "CHECKED_OUT";
-  const canCheckIn =
-    !todayRecord || todayRecord.status === "ABSENT" || !todayRecord.status;
+  // Derive status from either explicit status field or presence of active session
+  const effectiveStatus = (todayRecord?.status ||
+    (todayRecord?.activeSession ? "clocked_in" : "ABSENT")) as string;
+
+  const isCheckedIn =
+    effectiveStatus === "CHECKED_IN" || effectiveStatus === "clocked_in";
+  const isCheckedOut =
+    effectiveStatus === "CHECKED_OUT" || effectiveStatus === "clocked_out";
+  const canCheckIn = !todayRecord || effectiveStatus.toUpperCase() === "ABSENT";
 
   return (
     <div className="space-y-6">
@@ -119,10 +161,15 @@ function AttendancePage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Status Card */}
           <div className="border rounded-lg p-6 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <h2 className="font-semibold">Today's Status</h2>
-              <StatusPill status={todayRecord?.status || "ABSENT"} />
+              {locStatus?.inside && (
+                <Badge variant="success" className="animate-pulse">
+                  Inside {locStatus.zone?.name}
+                </Badge>
+              )}
             </div>
+            <StatusPill status={effectiveStatus} />
 
             {loadingToday && (
               <div className="text-center py-8 text-muted-foreground">
@@ -135,10 +182,21 @@ function AttendancePage() {
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">
-                  {todayRecord?.status === "ABSENT" || !todayRecord?.status
+                  {effectiveStatus.toUpperCase() === "ABSENT"
                     ? "You are marked as absent for today. You can still check in if you're actually on duty."
                     : "You haven't checked in today"}
                 </p>
+
+                <div className="max-w-xs mx-auto mb-4">
+                  <input
+                    type="text"
+                    placeholder="Enter Terminal Code (e.g. T1)"
+                    value={terminalCode}
+                    onChange={(e) => setTerminalCode(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md text-center"
+                  />
+                </div>
+
                 <Button
                   onClick={handleCheckIn}
                   disabled={gettingLocation || checkInMutation.isPending}
@@ -228,22 +286,22 @@ function AttendancePage() {
               <div className="space-y-2">
                 {history.data.map((record) => (
                   <div
-                    key={record.id || record.date}
+                    key={record.id || record.createdAt}
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium">
-                          {record.date
-                            ? new Date(record.date).toLocaleDateString()
+                          {record.createdAt
+                            ? new Date(record.createdAt).toLocaleDateString()
                             : "N/A"}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {record.checkInTime && (
                             <span>
                               In:{" "}
-                              {new Date(record.checkInTime).toLocaleTimeString(
+                              {new Date(record.createdAt).toLocaleTimeString(
                                 "en-US",
                                 { hour: "2-digit", minute: "2-digit" },
                               )}
@@ -317,6 +375,9 @@ function AttendancePage() {
           </div>
         </div>
       </div>
+      {showReportModal && (
+        <SubmitShiftReportModal onClose={() => setShowReportModal(false)} />
+      )}
     </div>
   );
 }

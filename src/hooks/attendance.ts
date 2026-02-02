@@ -6,11 +6,16 @@ import {
   getAttendanceSummary,
   checkIn,
   checkOut,
+  checkLocation,
   listGeofenceZones,
+  createGeofenceZone,
+  updateGeofenceZone,
+  deleteGeofenceZone,
   type ListAttendanceParams,
   type CheckInRequest,
   type CheckOutRequest,
 } from '@/api/attendance'
+import type { GeofenceZone } from '@/types/attendance'
 import { toast } from 'sonner'
 
 export function useAttendance(params: ListAttendanceParams = {}) {
@@ -50,6 +55,15 @@ export function useGeofenceZones() {
   })
 }
 
+export function useCheckLocation(lat?: number, lng?: number) {
+  return useQuery({
+    queryKey: ['attendance', 'check-location', lat, lng],
+    queryFn: () => checkLocation(lat!, lng!),
+    enabled: !!lat && !!lng,
+    refetchInterval: 60000, // Poll every 1 minute
+  })
+}
+
 export function useCheckIn() {
   const queryClient = useQueryClient()
   
@@ -77,6 +91,51 @@ export function useCheckOut() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to check out')
+    },
+  })
+}
+
+export function useCreateGeofenceZone() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: Partial<GeofenceZone>) => createGeofenceZone(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['geofence-zones'] })
+      toast.success('Geofence zone created')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create zone')
+    },
+  })
+}
+
+export function useUpdateGeofenceZone() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<GeofenceZone> }) => updateGeofenceZone(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['geofence-zones'] })
+      toast.success('Geofence zone updated')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update zone')
+    },
+  })
+}
+
+export function useDeleteGeofenceZone() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (id: string) => deleteGeofenceZone(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['geofence-zones'] })
+      toast.success('Geofence zone deleted')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to delete zone')
     },
   })
 }

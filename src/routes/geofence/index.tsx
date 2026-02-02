@@ -1,457 +1,727 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getAccessToken } from '@/utils/auth'
-import { useGeofenceZones, useCreateGeofenceZone, useUpdateGeofenceZone, useDeleteGeofenceZone } from '@/hooks/geofence'
-import type { GeofenceZone, GeofenceZoneInput } from '@/types/geofence'
-import { useState } from 'react'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getAccessToken } from "@/utils/auth";
+import {
+  useGeofenceZones,
+  useCreateGeofenceZone,
+  useUpdateGeofenceZone,
+  useDeleteGeofenceZone,
+} from "@/hooks/attendance";
+import type { GeofenceZone } from "@/types/attendance";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Plus,
+  Trash2,
+  X,
+  MapPin,
+  Circle as CircleIcon,
+  Pentagon,
+  Settings,
+  ChevronRight,
+  Map as MapIcon,
+} from "lucide-react";
 
-export const Route = createFileRoute('/geofence/')({
+export const Route = createFileRoute("/geofence/")({
   beforeLoad: () => {
-    const token = getAccessToken()
-    if (!token && typeof window !== 'undefined') throw redirect({ to: '/auth/login' })
+    const token = getAccessToken();
+    if (!token && typeof window !== "undefined")
+      throw redirect({ to: "/auth/login" });
   },
   component: Page,
-})
+});
 
 const zoneTypeColors: Record<string, string> = {
-  office: 'bg-blue-500/20 text-blue-400',
-  terminal: 'bg-purple-500/20 text-purple-400',
-  restricted: 'bg-red-500/20 text-red-400',
-  parking: 'bg-green-500/20 text-green-400',
-}
-
-const zoneTypeIcons: Record<string, string> = {
-  office: '🏢',
-  terminal: '🛫',
-  restricted: '⛔',
-  parking: '🅿️',
-}
+  office: "bg-indigo-500/10 text-indigo-500",
+  terminal: "bg-purple-500/10 text-purple-500",
+  restricted: "bg-rose-500/10 text-rose-500",
+  parking: "bg-emerald-500/10 text-emerald-500",
+  work: "bg-amber-500/10 text-amber-500",
+};
 
 function Page() {
-  const { data: zones, isLoading } = useGeofenceZones()
-  const [showCreate, setShowCreate] = useState(false)
-  const [selectedZone, setSelectedZone] = useState<GeofenceZone | null>(null)
-
-  // console.log('zones', zones)
+  const { data: zones, isLoading } = useGeofenceZones();
+  const [showCreate, setShowCreate] = useState(false);
+  const [selectedZone, setSelectedZone] = useState<GeofenceZone | null>(null);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 py-8">
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Geofence Zones</h1>
-          <p className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
-            Define attendance and access control zones
+          <h1 className="text-3xl font-bold tracking-tight">
+            Spatial Management
+          </h1>
+          <p className="text-muted-foreground mt-1 text-base">
+            Configure precision circular and polygonal geofence zones for
+            attendance tracking.
           </p>
         </div>
-        <button
+        <Button
           onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition flex items-center gap-2"
+          className="bg-primary hover:opacity-90 shadow-lg shadow-primary/20 h-11 px-6 gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Zone
-        </button>
+          <Plus className="w-5 h-5" />
+          Create New Zone
+        </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {(['office', 'terminal', 'restricted', 'parking'] as const).map((type) => {
-          const count = zones?.filter(z => z.zoneType === type).length
-          return (
-            <div key={type} className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${zoneTypeColors[type]}`}>
-                  <span className="text-lg">{zoneTypeIcons[type]}</span>
-                </div>
-                <div>
-                  <p className="text-2xl font-semibold">{count}</p>
-                  <p className="text-xs text-[color-mix(in_oklab,var(--color-text)_60%,transparent)] capitalize">{type}</p>
-                </div>
-              </div>
+      {/* Modern Stats / Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            label: "Total Zones",
+            val: zones?.length ?? 0,
+            icon: <MapPin className="text-indigo-500" />,
+          },
+          {
+            label: "Active",
+            val: zones?.filter((z) => z.isActive).length ?? 0,
+            icon: <ActivityIcon className="text-emerald-500" />,
+          },
+          {
+            label: "Circular",
+            val: zones?.filter((z) => z.type === "circle").length ?? 0,
+            icon: <CircleIcon className="text-amber-500" />,
+          },
+          {
+            label: "Polygonal",
+            val: zones?.filter((z) => z.type === "polygon").length ?? 0,
+            icon: <Pentagon className="text-purple-500" />,
+          },
+        ].map((stat, i) => (
+          <div
+            key={i}
+            className="bg-surface rounded-2xl border p-6 flex items-center gap-4 transition-all hover:shadow-md"
+          >
+            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center">
+              {stat.icon}
             </div>
-          )
-        })}
+            <div>
+              <p className="text-2xl font-bold">{stat.val}</p>
+              <p className="text-sm text-muted-foreground">{stat.label}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Zone List */}
-      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+      {/* High-End List UI */}
+      <div className="bg-surface rounded-2xl border overflow-hidden shadow-sm">
         {isLoading ? (
-          <div className="p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
-            Loading zones...
+          <div className="p-12 text-center text-muted-foreground italic flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            Determining spatial boundaries...
           </div>
         ) : zones?.length === 0 ? (
-          <div className="p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
-            No geofence zones defined. Add your first zone!
+          <div className="p-16 text-center">
+            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+              <MapIcon className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold">No Geofences Defined</h3>
+            <p className="text-muted-foreground mt-1 max-w-sm mx-auto">
+              You haven't created any spatial tracking zones yet. Start by
+              defining your first operational area.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreate(true)}
+              className="mt-6"
+            >
+              Establish First Zone
+            </Button>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-[var(--color-background)]">
-              <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Zone</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Type</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Coordinates</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-border)]">
-              {zones?.map((zone) => (
-                <tr
-                  key={zone.id}
-                  onClick={() => setSelectedZone(zone)}
-                  className="hover:bg-[var(--color-background)] cursor-pointer transition"
+          <div className="divide-y">
+            {zones?.map((zone) => (
+              <div
+                key={zone.id}
+                onClick={() => setSelectedZone(zone)}
+                className="group flex items-center p-5 hover:bg-muted/50 cursor-pointer transition-colors"
+              >
+                <div
+                  className={`w-12 h-12 rounded-xl shrink-0 flex items-center justify-center mr-5 ${zoneTypeColors[zone.zoneType]}`}
                 >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{zoneTypeIcons[zone.zoneType]}</span>
-                      <div>
-                        <p className="font-medium">{zone.name}</p>
-                        {zone.description && (
-                          <p className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)] truncate max-w-[200px]">
-                            {zone.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${zoneTypeColors[zone.zoneType]}`}>
-                      {zone.zoneType}
+                  {zone.type === "circle" ? (
+                    <CircleIcon className="w-6 h-6" />
+                  ) : (
+                    <Pentagon className="w-6 h-6" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-bold text-lg leading-none">
+                      {zone.name}
+                    </h3>
+                    <Badge
+                      variant={zone.isActive ? "default" : "secondary"}
+                      className="h-5 px-2 text-[10px] font-bold tracking-wider"
+                    >
+                      {zone.isActive ? "Active" : "Offline"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Settings className="w-3.5 h-3.5" />
+                      {zone.zoneType.charAt(0).toUpperCase() +
+                        zone.zoneType.slice(1)}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
-                    {zone.coordinates?.length || 0} points
-                    {zone.radius && ` • ${zone.radius}m radius`}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      zone.isActive ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      {zone.isActive ? 'Active' : 'Inactive'}
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {zone.type === "circle"
+                        ? `R: ${zone.radius}m`
+                        : `${zone.polygonJson?.coordinates?.[0]?.length || 0} vertices`}
                     </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
       {showCreate && <CreateZoneModal onClose={() => setShowCreate(false)} />}
-      {selectedZone && <ZoneDetailModal zone={selectedZone} onClose={() => setSelectedZone(null)} />}
+      {selectedZone && (
+        <ZoneDetailModal
+          zone={selectedZone}
+          onClose={() => setSelectedZone(null)}
+        />
+      )}
     </div>
-  )
+  );
 }
 
-function ZoneDetailModal({ zone, onClose }: { zone: GeofenceZone; onClose: () => void }) {
-  const updateZone = useUpdateGeofenceZone()
-  const deleteZone = useDeleteGeofenceZone()
-  const [isEditing, setIsEditing] = useState(false)
+function ActivityIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
+
+function ZoneDetailModal({
+  zone,
+  onClose,
+}: {
+  zone: GeofenceZone;
+  onClose: () => void;
+}) {
+  const updateZone = useUpdateGeofenceZone();
+  const deleteZone = useDeleteGeofenceZone();
+  const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     name: zone.name,
-    description: zone.description || '',
+    description: zone.description || "",
     zoneType: zone.zoneType,
-    radius: zone.radius || undefined,
+    type: zone.type,
+    latitude: zone.latitude || 0,
+    longitude: zone.longitude || 0,
+    radius: zone.radius || 0,
     isActive: zone.isActive,
-  })
+  });
 
   const handleSave = () => {
     updateZone.mutate(
-      { id: zone.id, input: form },
-      { onSuccess: () => setIsEditing(false) }
-    )
-  }
+      { id: zone.id, data: form },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          onClose();
+        },
+      },
+    );
+  };
 
   const handleDelete = () => {
-    if (confirm('Delete this zone?')) {
-      deleteZone.mutate(zone.id, { onSuccess: onClose })
+    if (
+      confirm("Permanently decommission this geofence? This cannot be undone.")
+    ) {
+      deleteZone.mutate(zone.id, { onSuccess: onClose });
     }
-  }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--color-surface)] rounded-xl w-full max-w-md border border-[var(--color-border)]">
-        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{zoneTypeIcons[zone.zoneType]}</span>
-            <h2 className="font-semibold">{zone.name}</h2>
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-surface rounded-2xl w-full max-w-xl border shadow-2xl overflow-hidden text-(--color-text)">
+        <div className="p-6 border-b flex justify-between items-center bg-muted/30">
+          <div className="flex items-center gap-4">
+            <div
+              className={`p-2.5 rounded-xl ${zoneTypeColors[zone.zoneType]}`}
+            >
+              {zone.type === "circle" ? (
+                <CircleIcon className="w-6 h-6" />
+              ) : (
+                <Pentagon className="w-6 h-6" />
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">{zone.name}</h2>
+              <p className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">
+                {zone.type} zone
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleDelete} className="p-2 hover:bg-red-500/10 text-red-400 rounded">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-            <button onClick={onClose} className="p-2 hover:bg-[var(--color-background)] rounded">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDelete}
+                className="text-rose-500 hover:bg-rose-500/10"
+              >
+                <Trash2 className="w-5 h-5" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
           </div>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
           {isEditing ? (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
+                  Display Name
+                </label>
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                  className="w-full px-4 py-3 rounded-xl bg-muted border-none focus:ring-2 focus:ring-primary transition"
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
+                  Categorization
+                </label>
                 <select
                   value={form.zoneType}
-                  onChange={(e) => setForm({ ...form, zoneType: e.target.value as any })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                  onChange={(e) =>
+                    setForm({ ...form, zoneType: e.target.value as any })
+                  }
+                  className="w-full px-4 py-3 rounded-xl bg-muted border-none cursor-pointer"
                 >
                   <option value="office">Office</option>
                   <option value="terminal">Terminal</option>
-                  <option value="restricted">Restricted</option>
-                  <option value="parking">Parking</option>
+                  <option value="restricted">Restricted Area</option>
+                  <option value="parking">Parking Area</option>
+                  <option value="work">Operational Post</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Radius (meters)</label>
-                <input
-                  type="number"
-                  value={form.radius || ''}
-                  onChange={(e) => setForm({ ...form, radius: e.target.value ? parseInt(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
-                />
+
+              {form.type === "circle" && (
+                <>
+                  <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
+                        Center Latitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={form.latitude}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            latitude: parseFloat(e.target.value),
+                          })
+                        }
+                        className="w-full px-4 py-3 rounded-xl bg-muted border-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
+                        Center Longitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={form.longitude}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            longitude: parseFloat(e.target.value),
+                          })
+                        }
+                        className="w-full px-4 py-3 rounded-xl bg-muted border-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
+                      Radius (m)
+                    </label>
+                    <input
+                      type="number"
+                      value={form.radius}
+                      onChange={(e) =>
+                        setForm({ ...form, radius: parseInt(e.target.value) })
+                      }
+                      className="w-full px-4 py-3 rounded-xl bg-muted border-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="md:col-span-2 bg-muted p-4 rounded-xl flex items-center justify-between">
+                <span className="font-semibold text-sm">
+                  Operational Status
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) =>
+                      setForm({ ...form, isActive: e.target.checked })
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                </label>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)] min-h-[60px]"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                />
-                <label htmlFor="isActive" className="text-sm">Active</label>
-              </div>
-              <div className="flex gap-2">
-                <button
+
+              <div className="md:col-span-2 flex gap-4 pt-4">
+                <Button
+                  variant="outline"
                   onClick={() => setIsEditing(false)}
-                  className="flex-1 py-2 bg-[var(--color-background)] rounded-lg"
+                  className="flex-1 py-6 rounded-2xl"
                 >
-                  Cancel
-                </button>
-                <button
+                  Abort Adjustments
+                </Button>
+                <Button
                   onClick={handleSave}
                   disabled={updateZone.isPending}
-                  className="flex-1 py-2 bg-[var(--color-primary)] text-white rounded-lg disabled:opacity-50"
+                  className="flex-1 py-6 rounded-2xl shadow-lg shadow-primary/20 bg-(--color-primary) text-white"
                 >
-                  {updateZone.isPending ? 'Saving...' : 'Save'}
-                </button>
+                  {updateZone.isPending ? "Syncing..." : "Publish Update"}
+                </Button>
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Type</span>
-                  <p className="font-medium capitalize">{zone.zoneType}</p>
+            <div className="space-y-8">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">
+                    Type & Category
+                  </p>
+                  <p className="text-lg font-bold capitalize">
+                    {zone.zoneType} • {zone.type}
+                  </p>
                 </div>
-                <div>
-                  <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Radius</span>
-                  <p className="font-medium">{zone.radius ? `${zone.radius}m` : '-'}</p>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">
+                    Coverage
+                  </p>
+                  <p className="text-lg font-bold">
+                    {zone.type === "circle"
+                      ? `${zone.radius}m Radius`
+                      : `${zone.polygonJson?.coordinates?.[0]?.length || 0} Points`}
+                  </p>
                 </div>
               </div>
 
-              {zone.description && (
-                <div>
-                  <span className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Description</span>
-                  <p className="text-sm mt-1">{zone.description}</p>
+              {zone.type === "circle" && (
+                <div className="space-y-3">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">
+                    Geolocation Center
+                  </p>
+                  <div className="bg-muted p-4 rounded-2xl font-mono text-sm grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="opacity-50 mr-2">LAT:</span>
+                      {zone?.latitude}
+                    </div>
+                    <div>
+                      <span className="opacity-50 mr-2">LNG:</span>
+                      {zone?.longitude}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {/* Coordinates Preview */}
-              <div>
-                <span className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Coordinates</span>
-                <div className="mt-2 bg-[var(--color-background)] rounded-lg p-3 max-h-32 overflow-y-auto">
-                  {zone.coordinates && zone.coordinates.length > 0 ? (
-                    <div className="space-y-1 text-xs font-mono">
-                      {zone.coordinates.map((coord, i) => (
-                        <div key={i}>
-                          {i + 1}. ({coord.lat.toFixed(6)}, {coord.lng.toFixed(6)})
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">No coordinates defined</p>
-                  )}
+              {zone.description && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">
+                    Operational Intelligence
+                  </p>
+                  <p className="text-sm bg-muted p-5 rounded-2xl text-muted-foreground leading-relaxed">
+                    {zone.description}
+                  </p>
                 </div>
-              </div>
+              )}
 
-              <button
+              <Button
                 onClick={() => setIsEditing(true)}
-                className="w-full py-2 bg-[var(--color-background)] rounded-lg"
+                className="w-full py-7 rounded-2xl gap-2 shadow-sm border"
               >
-                Edit Zone
-              </button>
+                <Settings className="w-5 h-5" />
+                Enter Modification Mode
+              </Button>
             </div>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function CreateZoneModal({ onClose }: { onClose: () => void }) {
-  const createZone = useCreateGeofenceZone()
-  const [form, setForm] = useState<Partial<GeofenceZoneInput>>({
-    name: '',
-    zoneType: 'office',
-    coordinates: [],
-    organizationId: '',
-  })
-  const [coordInput, setCoordInput] = useState({ lat: '', lng: '' })
+  const createZone = useCreateGeofenceZone();
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    zoneType: "work" as any,
+    type: "circle" as "circle" | "polygon",
+    latitude: "" as string | number,
+    longitude: "" as string | number,
+    radius: "" as string | number,
+    polygonJson: { type: "Polygon", coordinates: [[]] as any },
+    organizationId: "",
+  });
 
-  const addCoordinate = () => {
-    const lat = parseFloat(coordInput.lat)
-    const lng = parseFloat(coordInput.lng)
+  const [vertices, setVertices] = useState<{ lat: number; lng: number }[]>([]);
+  const [vInput, setVInput] = useState({ lat: "", lng: "" });
+
+  const addVertex = () => {
+    const lat = parseFloat(vInput.lat);
+    const lng = parseFloat(vInput.lng);
     if (!isNaN(lat) && !isNaN(lng)) {
-      setForm({
-        ...form,
-        coordinates: [...(form.coordinates || []), { lat, lng }]
-      })
-      setCoordInput({ lat: '', lng: '' })
+      setVertices([...vertices, { lat, lng }]);
+      setVInput({ lat: "", lng: "" });
     }
-  }
-
-  const removeCoordinate = (index: number) => {
-    setForm({
-      ...form,
-      coordinates: (form.coordinates || []).filter((_, i) => i !== index)
-    })
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    createZone.mutate(form as GeofenceZoneInput, { onSuccess: onClose })
-  }
+    e.preventDefault();
+
+    const payload: any = {
+      name: form.name,
+      description: form.description,
+      zoneType: form.zoneType,
+      type: form.type,
+      isActive: true,
+    };
+
+    if (form.type === "circle") {
+      payload.latitude = parseFloat(form.latitude as string);
+      payload.longitude = parseFloat(form.longitude as string);
+      payload.radius = parseInt(form.radius as string);
+    } else {
+      payload.polygonJson = {
+        type: "Polygon",
+        coordinates: [vertices.map((v) => [v.lng, v.lat])], // GeoJSON is [LNG, LAT]
+      };
+    }
+
+    createZone.mutate(payload, { onSuccess: onClose });
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--color-surface)] rounded-xl w-full max-w-md border border-[var(--color-border)] max-h-[90vh] overflow-y-auto">
-        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center sticky top-0 bg-[var(--color-surface)]">
-          <h2 className="font-semibold">Add Geofence Zone</h2>
-          <button onClick={onClose} className="p-1 hover:bg-[var(--color-background)] rounded">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-surface rounded-3xl w-full max-w-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col text-(--color-text)">
+        <div className="p-8 border-b flex justify-between items-center bg-muted/40">
+          <div>
+            <h2 className="text-2xl font-bold">New Operational Perimeter</h2>
+            <p className="text-sm text-muted-foreground">
+              Define a new physical zone for location tracking.
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full"
+          >
+            <X className="w-6 h-6" />
+          </Button>
         </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Zone Name</label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g., Main Office"
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
-            <select
-              value={form.zoneType}
-              onChange={(e) => setForm({ ...form, zoneType: e.target.value as any })}
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+
+        <form onSubmit={handleSubmit} className="p-8 space-y-8 overflow-y-auto">
+          {/* Spatial Mode Selector */}
+          <div className="flex p-1 bg-muted rounded-2xl">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, type: "circle" })}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all ${form.type === "circle" ? "bg-surface shadow-sm font-bold" : "text-muted-foreground"}`}
             >
-              <option value="office">Office</option>
-              <option value="terminal">Terminal</option>
-              <option value="restricted">Restricted</option>
-              <option value="parking">Parking</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Radius (meters, optional)</label>
-            <input
-              type="number"
-              value={form.radius || ''}
-              onChange={(e) => setForm({ ...form, radius: e.target.value ? parseInt(e.target.value) : undefined })}
-              placeholder="e.g., 100"
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              value={form.description || ''}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Zone details..."
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)] min-h-[60px]"
-            />
+              <CircleIcon className="w-4 h-4" /> Circular
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, type: "polygon" })}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all ${form.type === "polygon" ? "bg-surface shadow-sm font-bold" : "text-muted-foreground"}`}
+            >
+              <Pentagon className="w-4 h-4" /> Polygonal
+            </button>
           </div>
 
-          {/* Coordinates */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Coordinates</label>
-            <div className="flex gap-2 mb-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Zone Designation
+              </label>
               <input
-                type="number"
-                step="any"
-                value={coordInput.lat}
-                onChange={(e) => setCoordInput({ ...coordInput, lat: e.target.value })}
-                placeholder="Latitude"
-                className="flex-1 px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)] text-sm"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="e.g. Terminal 1 North Gate"
+                className="w-full px-5 py-4 rounded-2xl bg-muted border-none ring-offset-background placeholder:text-muted-foreground/50 focus:ring-2 focus:ring-primary h-14"
               />
-              <input
-                type="number"
-                step="any"
-                value={coordInput.lng}
-                onChange={(e) => setCoordInput({ ...coordInput, lng: e.target.value })}
-                placeholder="Longitude"
-                className="flex-1 px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)] text-sm"
-              />
-              <button
-                type="button"
-                onClick={addCoordinate}
-                className="px-3 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm"
-              >
-                Add
-              </button>
             </div>
-            {form.coordinates && form.coordinates.length > 0 && (
-              <div className="bg-[var(--color-background)] rounded-lg p-2 space-y-1">
-                {form.coordinates.map((coord, i) => (
-                  <div key={i} className="flex justify-between items-center text-xs">
-                    <span className="font-mono">({coord.lat.toFixed(6)}, {coord.lng.toFixed(6)})</span>
-                    <button
-                      type="button"
-                      onClick={() => removeCoordinate(i)}
-                      className="text-red-400 hover:text-red-300"
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Category
+              </label>
+              <select
+                value={form.zoneType}
+                onChange={(e) =>
+                  setForm({ ...form, zoneType: e.target.value as any })
+                }
+                className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
+              >
+                <option value="work">Work Post</option>
+                <option value="terminal">Airport Terminal</option>
+                <option value="office">Staff Office</option>
+                <option value="restricted">Restricted Area</option>
+                <option value="parking">Vehicle Parking</option>
+              </select>
+            </div>
+
+            {form.type === "circle" ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Detection Radius (m)
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    value={form.radius}
+                    onChange={(e) =>
+                      setForm({ ...form, radius: e.target.value })
+                    }
+                    placeholder="e.g. 50"
+                    className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Latitude
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    step="any"
+                    value={form.latitude}
+                    onChange={(e) =>
+                      setForm({ ...form, latitude: e.target.value })
+                    }
+                    placeholder="6.5779"
+                    className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Longitude
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    step="any"
+                    value={form.longitude}
+                    onChange={(e) =>
+                      setForm({ ...form, longitude: e.target.value })
+                    }
+                    placeholder="3.3215"
+                    className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="md:col-span-2 space-y-4 bg-muted p-6 rounded-3xl">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                  Boundary Vertices
+                </p>
+                <div className="flex gap-2 text-black">
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="LAT"
+                    value={vInput.lat}
+                    onChange={(e) =>
+                      setVInput({ ...vInput, lat: e.target.value })
+                    }
+                    className="flex-1 bg-surface border-none rounded-xl px-3 py-3"
+                  />
+                  <input
+                    type="number"
+                    step="any"
+                    placeholder="LNG"
+                    value={vInput.lng}
+                    onChange={(e) =>
+                      setVInput({ ...vInput, lng: e.target.value })
+                    }
+                    className="flex-1 bg-surface border-none rounded-xl px-3 py-3"
+                  />
+                  <Button
+                    type="button"
+                    onClick={addVertex}
+                    className="rounded-xl px-5 h-11"
+                  >
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 min-h-12 items-center">
+                  {vertices.map((v, i) => (
+                    <Badge
+                      key={i}
+                      variant="secondary"
+                      className="pl-3 pr-1 py-1 gap-2 rounded-lg border-none"
                     >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                      ({v.lat.toFixed(4)}, {v.lng.toFixed(4)})
+                      <button
+                        onClick={() =>
+                          setVertices(vertices.filter((_, idx) => idx !== i))
+                        }
+                        className="hover:text-rose-500"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {vertices.length === 0 && (
+                    <span className="text-xs text-muted-foreground/70 italic">
+                      At least 3 points required for polygons.
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={createZone.isPending}
-            className="w-full py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
+            className="w-full py-8 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 bg-(--color-primary) text-white h-14"
           >
-            {createZone.isPending ? 'Creating...' : 'Add Zone'}
-          </button>
+            {createZone.isPending
+              ? "Syncing Perimeter..."
+              : "Establish Geofence Zone"}
+          </Button>
         </form>
       </div>
     </div>
-  )
+  );
 }

@@ -16,6 +16,8 @@ export interface Task {
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  visibilityScope?: 'assigned_only' | 'unit' | 'department' | 'public';
+  visibilityUnitId?: string;
 }
 
 export interface TaskInput {
@@ -25,6 +27,8 @@ export interface TaskInput {
   dueAt?: string;
   terminalCode?: string;
   departmentId?: string;
+  visibilityScope?: 'assigned_only' | 'unit' | 'department' | 'public';
+  visibilityUnitId?: string;
 }
 
 export interface TaskUpdate {

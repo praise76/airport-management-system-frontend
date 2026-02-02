@@ -5,6 +5,9 @@ import type {
   DailyAttendance,
   GeofenceZone,
   Paginated,
+  CheckInResponse,
+  CheckOutResponse,
+  CheckLocationResponse,
 } from '@/types/attendance'
 
 export type ListAttendanceParams = {
@@ -42,6 +45,8 @@ export async function getAttendanceSummary(date?: string): Promise<AttendanceSum
 export type CheckInRequest = {
   lat: number
   lng: number
+  terminalCode?: string // [NEW]
+  zoneId?: string
   notes?: string
 }
 
@@ -51,18 +56,48 @@ export type CheckOutRequest = {
   notes?: string
 }
 
-export async function checkIn(input: CheckInRequest): Promise<AttendanceRecord> {
+export async function checkIn(input: CheckInRequest): Promise<CheckInResponse> {
   const res = await api.post('/attendance/check-in', input)
-  return res.data
+  return res.data.data
 }
 
-export async function checkOut(input: CheckOutRequest): Promise<AttendanceRecord> {
+export async function checkOut(input: CheckOutRequest): Promise<CheckOutResponse> {
   const res = await api.post('/attendance/check-out', input)
-  return res.data
+  return res.data.data
+}
+
+export async function checkLocation(lat: number, lng: number): Promise<CheckLocationResponse> {
+  const res = await api.post('/attendance/check-location', { lat, lng })
+  return res.data.data
+}
+
+export type AutoClockRequest = {
+  userId: string
+  organizationId: string
+  lat: number
+  lng: number
+}
+
+export async function autoClock(input: AutoClockRequest): Promise<void> {
+  await api.post('/attendance/auto-clock', input)
 }
 
 export async function listGeofenceZones(): Promise<GeofenceZone[]> {
   const res = await api.get('/geofence/zones')
-  return res.data
+  return res.data.data || res.data
+}
+
+export async function createGeofenceZone(data: Partial<GeofenceZone>): Promise<GeofenceZone> {
+  const res = await api.post('/geofence/zones', data)
+  return res.data.data
+}
+
+export async function updateGeofenceZone(id: string, data: Partial<GeofenceZone>): Promise<GeofenceZone> {
+  const res = await api.patch(`/geofence/zones/${id}`, data)
+  return res.data.data
+}
+
+export async function deleteGeofenceZone(id: string): Promise<void> {
+  await api.delete(`/geofence/zones/${id}`)
 }
 

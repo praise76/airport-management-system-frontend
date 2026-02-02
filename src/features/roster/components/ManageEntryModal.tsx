@@ -24,6 +24,7 @@ import {
   useGetShiftDefinitions,
 } from "../api";
 import { useTerminals } from "@/hooks/terminals";
+import { useGeofenceZones } from "@/hooks/attendance";
 import { RosterEntry, ShiftType } from "../types";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -57,6 +58,7 @@ export function ManageEntryModal({
 
   const { data: shiftDefinitions } = useGetShiftDefinitions({ unitId });
   const { data: terminals } = useTerminals();
+  const { data: zones } = useGeofenceZones();
 
   const addMutation = useAddRosterEntry();
   const updateMutation = useUpdateRosterEntry();
@@ -107,8 +109,8 @@ export function ManageEntryModal({
       shiftStartTime: startTime,
       shiftEndTime: endTime,
       dutyPosition: position,
-      dutyLocation: location,
-      terminalId: terminalId || undefined,
+      dutyLocation: location && location !== "none" ? location : undefined,
+      terminalId: terminalId && terminalId !== "none" ? terminalId : undefined,
       status: "scheduled" as const,
     };
 
@@ -233,12 +235,20 @@ export function ManageEntryModal({
             />
           </div>
           <div className="space-y-2">
-            <Label>Location</Label>
-            <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Gate 1"
-            />
+            <Label>Location / Zone</Label>
+            <Select value={location} onValueChange={setLocation}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Location Zone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {zones?.map((zone) => (
+                  <SelectItem key={zone.id} value={zone.id}>
+                    {zone.name} {zone.type === "circle" ? "(Point)" : "(Area)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

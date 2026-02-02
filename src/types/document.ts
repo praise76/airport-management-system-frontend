@@ -14,6 +14,25 @@ export interface Document {
   fileId?: string;
 }
 
+export interface DocumentJourneyStep {
+  stepNumber: number;
+  status: "pending" | "completed" | "current" | "rejected";
+  actionTaken?: string;
+  comments?: string;
+  completedAt?: string;
+  assignedAt?: string;
+  
+  // Destination Info
+  departmentName?: string;
+  positionCode?: string;
+  assignedToUserFirstName?: string;
+  assignedToUserLastName?: string;
+  
+  // External
+  finalDestinationName?: string;
+  destinationType: string;
+}
+
 export interface DocumentListResponse {
 	data: Document[];
 	pagination?: {

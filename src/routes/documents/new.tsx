@@ -22,6 +22,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { listDepartments } from "@/api/departments";
+import { listUsers } from "@/api/users";
+import { getPositions } from "@/api/positions";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/documents/new")({
   component: NewDocumentPage,
@@ -35,7 +39,29 @@ function NewDocumentPage() {
   const [formData, setFormData] = useState<Partial<RegisterDocumentRequest>>({
     direction: "incoming",
     priority: "normal",
-    organizationId: user?.organizationId || "", // Default to user's org if available
+    organizationId: user?.organizationId || "",
+    destinationType: "department", // Default
+  });
+
+  // Queries for selectors
+  const { data: departmentsResponse } = useQuery({
+    queryKey: ["departments"],
+    queryFn: () => listDepartments({ limit: 100 }),
+    enabled: formData.destinationType === "department",
+  });
+  const departments = departmentsResponse?.data || [];
+
+  const { data: usersResponse } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => listUsers({ limit: 100 }),
+    enabled: formData.destinationType === "user",
+  });
+  const users = usersResponse?.data || [];
+
+  const { data: positions } = useQuery({
+    queryKey: ["positions"],
+    queryFn: () => getPositions(),
+    enabled: formData.destinationType === "position",
   });
 
   const updateForm = (data: Partial<RegisterDocumentRequest>) => {
@@ -49,9 +75,22 @@ function NewDocumentPage() {
       !formData.documentType ||
       !formData.registryNumber ||
       !formData.direction ||
-      !formData.organizationId
+      !formData.organizationId ||
+      !formData.destinationType
     ) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    if (
+      (formData.destinationType === "department" &&
+        !formData.finalDestinationId) ||
+      (formData.destinationType === "user" && !formData.finalDestinationId) ||
+      ((formData.destinationType === "external" ||
+        formData.destinationType === "registry") &&
+        !formData.finalDestinationName)
+    ) {
+      toast.error("Please specify the destination details");
       return;
     }
 
@@ -90,6 +129,7 @@ function NewDocumentPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+            {/* Top Row: Reg Num & Org ID */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Registry Number *</Label>
@@ -112,12 +152,10 @@ function NewDocumentPage() {
                   placeholder="Organization UUID"
                   required
                 />
-                <p className="text-[0.8rem] text-muted-foreground">
-                  The organization this document belongs to.
-                </p>
               </div>
             </div>
 
+            {/* Subject */}
             <div className="space-y-2">
               <Label>Subject *</Label>
               <Input
@@ -128,6 +166,7 @@ function NewDocumentPage() {
               />
             </div>
 
+            {/* Attachment */}
             <div className="space-y-2">
               <Label>Document Attachment</Label>
               <Input
@@ -137,6 +176,7 @@ function NewDocumentPage() {
               />
             </div>
 
+            {/* Config Row */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Direction *</Label>
@@ -190,6 +230,113 @@ function NewDocumentPage() {
                     <SelectItem value="urgent">Urgent</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Destination / Routing */}
+            <div className="pt-4 border-t">
+              <h3 className="text-lg font-medium mb-4">
+                Routing / Destination
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Destination Type *</Label>
+                  <Select
+                    value={formData.destinationType}
+                    onValueChange={(val: any) =>
+                      updateForm({
+                        destinationType: val,
+                        finalDestinationId: "",
+                        finalDestinationName: "",
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="department">Department</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="position">Position</SelectItem>
+                      <SelectItem value="external">External Entity</SelectItem>
+                      <SelectItem value="registry">Registry</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Destination Target *</Label>
+                  {formData.destinationType === "department" && (
+                    <Select
+                      value={formData.finalDestinationId}
+                      onValueChange={(val) =>
+                        updateForm({ finalDestinationId: val })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept: any) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {formData.destinationType === "user" && (
+                    <Select
+                      value={formData.finalDestinationId}
+                      onValueChange={(val) =>
+                        updateForm({ finalDestinationId: val })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select User" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users.map((u: any) => (
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.firstName} {u.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {formData.destinationType === "position" && (
+                    <Select
+                      value={formData.finalDestinationId} // Assuming we store ID for position too if simple
+                      onValueChange={(val) =>
+                        updateForm({ finalDestinationId: val })
+                      } // Or store code? Requirements vague, assuming ID.
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {positions?.map((p: any) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name} ({p.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {(formData.destinationType === "external" ||
+                    formData.destinationType === "registry") && (
+                    <Input
+                      placeholder="Enter Entity/Registry Name"
+                      value={formData.finalDestinationName || ""}
+                      onChange={(e) =>
+                        updateForm({ finalDestinationName: e.target.value })
+                      }
+                    />
+                  )}
+                </div>
               </div>
             </div>
 

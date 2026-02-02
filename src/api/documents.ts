@@ -35,6 +35,11 @@ export type RegisterDocumentRequest = {
 	documentType: string;
 	priority?: string;
   file?: File;
+
+  // Routing
+  destinationType: 'department' | 'user' | 'position' | 'external' | 'registry';
+  finalDestinationId?: string;
+  finalDestinationName?: string;
 };
 
 export async function registerDocument(
@@ -49,9 +54,27 @@ export async function registerDocument(
   if (input.priority) formData.append("priority", input.priority);
   if (input.file) formData.append("file", input.file);
 
+  // Routing
+  formData.append("destinationType", input.destinationType);
+  if (input.finalDestinationId) {
+    formData.append("finalDestinationId", input.finalDestinationId);
+    // Legacy support for backend expecting destinationDepartmentId
+    if (input.destinationType === 'department') {
+       formData.append("destinationDepartmentId", input.finalDestinationId);
+    }
+  }
+  if (input.finalDestinationName) {
+    formData.append("finalDestinationName", input.finalDestinationName);
+  }
+
 	const res = await api.post("/documents/register", formData);
 	const payload = (res.data?.data ?? res.data) as Document;
 	return payload;
+}
+
+export async function getDocumentJourney(id: string): Promise<import("@/types/document").DocumentJourneyStep[]> {
+  const res = await api.get(`/documents/${id}/journey`);
+  return (res.data?.data ?? res.data) as import("@/types/document").DocumentJourneyStep[];
 }
 
 export type ForwardDocumentRequest = {

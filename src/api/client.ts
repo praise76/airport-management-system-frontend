@@ -88,11 +88,18 @@ function createApiClient(): AxiosInstance {
 					// Clear pending requests and logout on total failure
 					pendingRequests = [];
 					useAuthStore.getState().logout();
+						useAuthStore.getState().logout();
 					return Promise.reject(normalizeError(error));
 				} finally {
 					isRefreshing = false;
 				}
 			}
+
+            // If 401 and it was a retry, or some other non-retryable 401
+            if (status === 401) {
+                useAuthStore.getState().logout();
+            }
+
 			return Promise.reject(normalizeError(error));
 		},
 	);

@@ -1,6 +1,8 @@
 export type AttendanceStatus = 
   | 'CHECKED_IN'
   | 'CHECKED_OUT'
+  | 'clocked_in'
+  | 'clocked_out'
   | 'ABSENT'
   | 'ON_LEAVE'
 
@@ -8,9 +10,11 @@ export interface GeofenceZone {
   id: string
   name: string
   description?: string
-  lat: number
-  lng: number
-  radius: number // in meters
+  type: 'polygon' | 'circle'
+  latitude?: number // Required for circle
+  longitude?: number // Required for circle
+  radius?: number // in meters. Required for circle.
+  polygonJson?: any // Required for polygon
   organizationId: string
   isActive: boolean
   createdAt: string
@@ -65,6 +69,33 @@ export interface ActiveSession {
   zoneName?: string
 }
 
+export interface RosterInfo {
+  scheduled: boolean
+  isLate: boolean
+  lateMinutes: number
+  scheduledStart: string
+  rosterEntryId: string
+}
+
+export interface CheckInResponse {
+  status: 'clocked_in'
+  sessionId: string
+  rosterInfo: RosterInfo
+}
+
+export interface CheckOutResponse {
+  status: 'clocked_out'
+  sessionId: string
+}
+
+export interface CheckLocationResponse {
+  inside: boolean
+  zone?: {
+    id: string
+    name: string
+  }
+}
+
 export interface AttendanceLog {
   id: string
   eventType: 'auto_in' | 'manual_in' | 'auto_out' | 'manual_out'
@@ -87,6 +118,7 @@ export interface DailyAttendance {
     id: string
     name: string
   }
+  rosterInfo?: RosterInfo
 }
 
 export interface AttendanceSummary {

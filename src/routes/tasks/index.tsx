@@ -1,43 +1,57 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getAccessToken } from '@/utils/auth'
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useTaskComments, useAddTaskComment } from '@/hooks/tasks'
-import type { Task, TaskStatus, TaskPriority, TaskInput, TaskCommentInput } from '@/types/task'
-import { useState } from 'react'
-import { format } from 'date-fns'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getAccessToken } from "@/utils/auth";
+import {
+  useTasks,
+  useCreateTask,
+  useUpdateTask,
+  useDeleteTask,
+  useTaskComments,
+  useAddTaskComment,
+} from "@/hooks/tasks";
+import type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  TaskInput,
+  TaskCommentInput,
+} from "@/types/task";
+import { useState } from "react";
+import { format } from "date-fns";
 
-export const Route = createFileRoute('/tasks/')({
+export const Route = createFileRoute("/tasks/")({
   beforeLoad: () => {
-    const token = getAccessToken()
-    if (!token && typeof window !== 'undefined') throw redirect({ to: '/auth/login' })
+    const token = getAccessToken();
+    if (!token && typeof window !== "undefined")
+      throw redirect({ to: "/auth/login" });
   },
   component: Page,
-})
+});
 
 const statusColors: Record<TaskStatus, string> = {
-  open: 'bg-blue-500/20 text-blue-400',
-  in_progress: 'bg-yellow-500/20 text-yellow-400',
-  blocked: 'bg-red-500/20 text-red-400',
-  done: 'bg-green-500/20 text-green-400',
-}
+  open: "bg-blue-500/20 text-blue-400",
+  in_progress: "bg-yellow-500/20 text-yellow-400",
+  blocked: "bg-red-500/20 text-red-400",
+  done: "bg-green-500/20 text-green-400",
+};
 
 const priorityColors: Record<TaskPriority, string> = {
-  low: 'bg-gray-500/20 text-gray-400',
-  normal: 'bg-blue-500/20 text-blue-400',
-  high: 'bg-orange-500/20 text-orange-400',
-  urgent: 'bg-red-500/20 text-red-400',
-}
+  low: "bg-gray-500/20 text-gray-400",
+  normal: "bg-blue-500/20 text-blue-400",
+  high: "bg-orange-500/20 text-orange-400",
+  urgent: "bg-red-500/20 text-red-400",
+};
 
 function Page() {
-  const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('')
-  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | ''>('')
-  const [showCreate, setShowCreate] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "">("");
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "">("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
   const { data: tasksData, isLoading } = useTasks({
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
-  })
-  const tasks = tasksData?.data || []
+  });
+  const tasks = tasksData?.data || [];
 
   return (
     <div className="space-y-6">
@@ -53,8 +67,18 @@ function Page() {
           onClick={() => setShowCreate(true)}
           className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition flex items-center gap-2"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           New Task
         </button>
@@ -64,7 +88,7 @@ function Page() {
       <div className="flex gap-4 flex-wrap">
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as TaskStatus | '')}
+          onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "")}
           className="px-3 py-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
         >
           <option value="">All Status</option>
@@ -75,7 +99,9 @@ function Page() {
         </select>
         <select
           value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value as TaskPriority | '')}
+          onChange={(e) =>
+            setPriorityFilter(e.target.value as TaskPriority | "")
+          }
           className="px-3 py-2 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] text-sm"
         >
           <option value="">All Priority</option>
@@ -107,14 +133,25 @@ function Page() {
 
       {/* Create Modal */}
       {showCreate && <CreateTaskModal onClose={() => setShowCreate(false)} />}
-      
+
       {/* Detail Drawer */}
-      {selectedTask && <TaskDetailDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />}
+      {selectedTask && (
+        <TaskDetailDrawer
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </div>
-  )
+  );
 }
 
-function TaskRow({ task, onSelect }: { task: Task; onSelect: (t: Task) => void }) {
+function TaskRow({
+  task,
+  onSelect,
+}: {
+  task: Task;
+  onSelect: (t: Task) => void;
+}) {
   return (
     <div
       onClick={() => onSelect(task)}
@@ -128,42 +165,59 @@ function TaskRow({ task, onSelect }: { task: Task; onSelect: (t: Task) => void }
           </p>
         )}
       </div>
-      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[task.status]}`}>
-        {task.status.replace('_', ' ')}
+      <span
+        className={`px-2 py-1 rounded text-xs font-medium ${statusColors[task.status]}`}
+      >
+        {task.status.replace("_", " ")}
       </span>
-      <span className={`px-2 py-1 rounded text-xs font-medium ${priorityColors[task.priority]}`}>
+      <span
+        className={`px-2 py-1 rounded text-xs font-medium ${priorityColors[task.priority]}`}
+      >
         {task.priority}
       </span>
       {task.dueAt && (
         <span className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
-          {format(new Date(task.dueAt), 'MMM d')}
+          {format(new Date(task.dueAt), "MMM d")}
         </span>
       )}
     </div>
-  )
+  );
 }
 
 function CreateTaskModal({ onClose }: { onClose: () => void }) {
-  const createTask = useCreateTask()
+  const createTask = useCreateTask();
   const [form, setForm] = useState<TaskInput>({
-    title: '',
-    description: '',
-    priority: 'normal',
-  })
+    title: "",
+    description: "",
+    priority: "normal",
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    createTask.mutate(form, { onSuccess: onClose })
-  }
+    e.preventDefault();
+    createTask.mutate(form, { onSuccess: onClose });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-[var(--color-surface)] rounded-xl w-full max-w-md border border-[var(--color-border)]">
         <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
           <h2 className="font-semibold">Create Task</h2>
-          <button onClick={onClose} className="p-1 hover:bg-[var(--color-background)] rounded">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-[var(--color-background)] rounded"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -178,10 +232,14 @@ function CreateTaskModal({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
             <textarea
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
               className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)] min-h-[80px]"
             />
           </div>
@@ -189,7 +247,9 @@ function CreateTaskModal({ onClose }: { onClose: () => void }) {
             <label className="block text-sm font-medium mb-1">Priority</label>
             <select
               value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value as TaskPriority })}
+              onChange={(e) =>
+                setForm({ ...form, priority: e.target.value as TaskPriority })
+              }
               className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
             >
               <option value="low">Low</option>
@@ -202,62 +262,129 @@ function CreateTaskModal({ onClose }: { onClose: () => void }) {
             <label className="block text-sm font-medium mb-1">Due Date</label>
             <input
               type="date"
-              value={form.dueAt || ''}
+              value={form.dueAt || ""}
               onChange={(e) => setForm({ ...form, dueAt: e.target.value })}
               className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Visibility</label>
+            <select
+              value={form.visibilityScope || "assigned_only"}
+              onChange={(e) =>
+                setForm({ ...form, visibilityScope: e.target.value as any })
+              }
+              className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+            >
+              <option value="assigned_only">Assigned Only</option>
+              <option value="unit">My Unit</option>
+              <option value="department">Department</option>
+              <option value="public">Everyone</option>
+            </select>
+          </div>
+
+          {form.visibilityScope === "unit" && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Unit ID (Mock)
+              </label>
+              <input
+                value={form.visibilityUnitId || ""}
+                onChange={(e) =>
+                  setForm({ ...form, visibilityUnitId: e.target.value })
+                }
+                className="w-full px-3 py-2 rounded-lg bg-[var(--color-background)] border border-[var(--color-border)]"
+                placeholder="Enter Unit ID"
+              />
+            </div>
+          )}
           <button
             type="submit"
             disabled={createTask.isPending}
             className="w-full py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition disabled:opacity-50"
           >
-            {createTask.isPending ? 'Creating...' : 'Create Task'}
+            {createTask.isPending ? "Creating..." : "Create Task"}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 }
 
-function TaskDetailDrawer({ task, onClose }: { task: Task; onClose: () => void }) {
-  const { data: comments = [] } = useTaskComments(task.id)
-  const addComment = useAddTaskComment()
-  const updateTask = useUpdateTask()
-  const deleteTask = useDeleteTask()
-  const [comment, setComment] = useState('')
+function TaskDetailDrawer({
+  task,
+  onClose,
+}: {
+  task: Task;
+  onClose: () => void;
+}) {
+  const { data: comments = [] } = useTaskComments(task.id);
+  const addComment = useAddTaskComment();
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const [comment, setComment] = useState("");
 
   const handleStatusChange = (status: TaskStatus) => {
-    updateTask.mutate({ id: task.id, input: { status } })
-  }
+    updateTask.mutate({ id: task.id, input: { status } });
+  };
 
   const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!comment.trim()) return
-    addComment.mutate({ taskId: task.id, input: { content: comment } }, {
-      onSuccess: () => setComment('')
-    })
-  }
+    e.preventDefault();
+    if (!comment.trim()) return;
+    addComment.mutate(
+      { taskId: task.id, input: { content: comment } },
+      {
+        onSuccess: () => setComment(""),
+      },
+    );
+  };
 
   const handleDelete = () => {
-    if (confirm('Delete this task?')) {
-      deleteTask.mutate(task.id, { onSuccess: onClose })
+    if (confirm("Delete this task?")) {
+      deleteTask.mutate(task.id, { onSuccess: onClose });
     }
-  }
+  };
 
   return (
     <div className="fixed inset-y-0 right-0 w-full max-w-md bg-[var(--color-surface)] border-l border-[var(--color-border)] shadow-xl z-50 flex flex-col">
       <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
         <h2 className="font-semibold truncate">{task.title}</h2>
         <div className="flex items-center gap-2">
-          <button onClick={handleDelete} className="p-2 hover:bg-red-500/10 text-red-400 rounded">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          <button
+            onClick={handleDelete}
+            className="p-2 hover:bg-red-500/10 text-red-400 rounded"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </button>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--color-background)] rounded">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-[var(--color-background)] rounded"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -268,24 +395,30 @@ function TaskDetailDrawer({ task, onClose }: { task: Task; onClose: () => void }
         <div>
           <label className="block text-sm font-medium mb-2">Status</label>
           <div className="flex gap-2 flex-wrap">
-            {(['open', 'in_progress', 'blocked', 'done'] as TaskStatus[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => handleStatusChange(s)}
-                className={`px-3 py-1 rounded text-sm font-medium transition ${
-                  task.status === s ? statusColors[s] : 'bg-[var(--color-background)] text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]'
-                }`}
-              >
-                {s.replace('_', ' ')}
-              </button>
-            ))}
+            {(["open", "in_progress", "blocked", "done"] as TaskStatus[]).map(
+              (s) => (
+                <button
+                  key={s}
+                  onClick={() => handleStatusChange(s)}
+                  className={`px-3 py-1 rounded text-sm font-medium transition ${
+                    task.status === s
+                      ? statusColors[s]
+                      : "bg-[var(--color-background)] text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]"
+                  }`}
+                >
+                  {s.replace("_", " ")}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
         {/* Description */}
         {task.description && (
           <div>
-            <label className="block text-sm font-medium mb-2">Description</label>
+            <label className="block text-sm font-medium mb-2">
+              Description
+            </label>
             <p className="text-sm text-[color-mix(in_oklab,var(--color-text)_80%,transparent)]">
               {task.description}
             </p>
@@ -295,26 +428,39 @@ function TaskDetailDrawer({ task, onClose }: { task: Task; onClose: () => void }
         {/* Details */}
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Priority</span>
+            <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
+              Priority
+            </span>
             <p className="font-medium capitalize">{task.priority}</p>
           </div>
           {task.dueAt && (
             <div>
-              <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">Due</span>
-              <p className="font-medium">{format(new Date(task.dueAt), 'MMM d, yyyy')}</p>
+              <span className="text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
+                Due
+              </span>
+              <p className="font-medium">
+                {format(new Date(task.dueAt), "MMM d, yyyy")}
+              </p>
             </div>
           )}
         </div>
 
         {/* Comments */}
         <div>
-          <label className="block text-sm font-medium mb-2">Comments ({comments.length})</label>
+          <label className="block text-sm font-medium mb-2">
+            Comments ({comments.length})
+          </label>
           <div className="space-y-3 mb-4">
             {comments.map((c) => (
-              <div key={c.id} className="bg-[var(--color-background)] rounded-lg p-3">
+              <div
+                key={c.id}
+                className="bg-[var(--color-background)] rounded-lg p-3"
+              >
                 <div className="flex justify-between text-xs text-[color-mix(in_oklab,var(--color-text)_60%,transparent)] mb-1">
-                  <span>{c.user ? `${c.user.firstName} ${c.user.lastName}` : 'User'}</span>
-                  <span>{format(new Date(c.createdAt), 'MMM d, h:mm a')}</span>
+                  <span>
+                    {c.user ? `${c.user.firstName} ${c.user.lastName}` : "User"}
+                  </span>
+                  <span>{format(new Date(c.createdAt), "MMM d, h:mm a")}</span>
                 </div>
                 <p className="text-sm">{c.content}</p>
               </div>
@@ -338,5 +484,5 @@ function TaskDetailDrawer({ task, onClose }: { task: Task; onClose: () => void }
         </div>
       </div>
     </div>
-  )
+  );
 }
