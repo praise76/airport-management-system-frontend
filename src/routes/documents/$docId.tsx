@@ -1,7 +1,27 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { DocumentJourney } from "@/features/documents/components/DocumentJourney";
-import { useDocumentJourney } from "@/hooks/documents";
+import {
+  useDocumentJourney,
+  useRgmForwardDocument,
+  useAcknowledgeDocument,
+} from "@/hooks/documents";
 import { getAccessToken } from "@/utils/auth";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
+import { Send, CheckCircle2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { DepartmentSelector } from "@/components/departments";
+import { useAuthStore } from "@/stores/auth";
 
 export const Route = createFileRoute("/documents/$docId")({
   beforeLoad: () => {
@@ -63,17 +83,142 @@ function DocumentDetailsPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-sm text-muted-foreground">Document Journey</p>
-        <h1 className="text-2xl font-semibold">Tracking History: {docId}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Track the complete journey and current status of this document.
-        </p>
+      <header className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Document Journey</p>
+          <h1 className="text-2xl font-semibold">Tracking History: {docId}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Track the complete journey and current status of this document.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <ForwardToDeptDialog docId={docId!} />
+          <AcknowledgeDialog docId={docId!} />
+        </div>
       </header>
 
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
         <DocumentJourney steps={steps} />
       </div>
     </div>
+  );
+}
+
+function ForwardToDeptDialog({ docId }: { docId: string }) {
+  const [open, setOpen] = useState(false);
+  const forwardMutation = useRgmForwardDocument(docId);
+  const { register, handleSubmit, setValue, watch, reset } = useForm();
+
+  // TODO: Replace with actual role check from auth store
+  // const isRGM = user?.role === 'rgm' || user?.role === 'admin';
+  const isRGM = true; // For demo purposes, allow everyone to see it for now
+
+  if (!isRGM) return null;
+
+  const onSubmit = (data: any) => {
+    if (!data.targetDeptId) return;
+
+    forwardMutation.mutate(
+      {
+        targetDeptId: data.targetDeptId,
+        comments: data.comments,
+      },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          reset();
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Send className="mr-2 h-4 w-4" /> Forward to Dept
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Forward Document (RGM)</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Target Department</Label>
+            <DepartmentSelector
+              value={watch("targetDeptId")}
+              onChange={(val) => setValue("targetDeptId", val)}
+              placeholder="Select Department"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Comments</Label>
+            <Textarea
+              {...register("comments")}
+              placeholder="Instructions for the department..."
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={forwardMutation.isPending}>
+              {forwardMutation.isPending ? "Forwarding..." : "Forward Document"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AcknowledgeDialog({ docId }: { docId: string }) {
+  const [open, setOpen] = useState(false);
+  const ackMutation = useAcknowledgeDocument(docId);
+  const { register, handleSubmit, reset } = useForm();
+
+  // TODO: Add HOD role check if needed
+  const canAcknowledge = true; // Placeholder
+
+  if (!canAcknowledge) return null;
+
+  const onSubmit = (data: any) => {
+    ackMutation.mutate(
+      {
+        notes: data.notes,
+      },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          reset();
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <CheckCircle2 className="mr-2 h-4 w-4" /> Acknowledge
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Acknowledge Receipt</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Notes (Optional)</Label>
+            <Textarea {...register("notes")} placeholder="Any remarks..." />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={ackMutation.isPending}>
+              {ackMutation.isPending
+                ? "Acknowledging..."
+                : "Confirm Acknowledge"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

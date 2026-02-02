@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTerminals, getTerminal, getTerminalStats, createTerminal, updateTerminal, deleteTerminal, getTerminalRepresentatives, addTerminalRepresentative, removeTerminalRepresentative } from "@/api/terminals";
-import type { TerminalUpdate, TerminalRepresentativeInput } from "@/types/terminal";
+import { getTerminals, getTerminal, getTerminalStats, createTerminal, updateTerminal, deleteTerminal, getTerminalRepresentatives, addTerminalRepresentative, removeTerminalRepresentative, submitTerminalReport, getTerminalPerformance } from "@/api/terminals";
+import type { TerminalUpdate, TerminalRepresentativeInput, TerminalReportInput } from "@/types/terminal";
+import { toast } from "sonner";
 
 export const terminalKeys = {
   all: ["terminals"] as const,
@@ -10,10 +11,10 @@ export const terminalKeys = {
   detail: (id: string) => [...terminalKeys.details(), id] as const,
   stats: (id: string) => [...terminalKeys.detail(id), "stats"] as const,
   representatives: (id: string) => [...terminalKeys.detail(id), "representatives"] as const,
+  performance: (id: string) => [...terminalKeys.detail(id), "performance"] as const,
 };
 
 export function useTerminals() {
-// ... existing useTerminals
   return useQuery({
     queryKey: terminalKeys.list(),
     queryFn: getTerminals,
@@ -37,7 +38,11 @@ export function useAddTerminalRepresentative() {
       addTerminalRepresentative(terminalId, input),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: terminalKeys.representatives(data.terminalId) });
+      toast.success("Representative added");
     },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to add representative");
+    }
   });
 }
 
@@ -46,15 +51,14 @@ export function useRemoveTerminalRepresentative() {
   return useMutation({
     mutationFn: removeTerminalRepresentative,
     onSuccess: () => {
-      // Ideally we'd know which terminal to invalidate, but void return makes it hard.
-      // We can invalidate all details or just rely on parent component refetching if critical.
-      // For now, invalidating all 'details' is a safe broad approach or assume caller handles it.
-      // Better: pass terminalId in mutation context if needed.
-      queryClient.invalidateQueries({ queryKey: terminalKeys.details() }); 
+      queryClient.invalidateQueries({ queryKey: terminalKeys.details() });
+      toast.success("Representative removed");
     },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to remove representative");
+    }
   });
 }
-
 
 export function useTerminal(id: string) {
   return useQuery({
@@ -78,6 +82,7 @@ export function useCreateTerminal() {
     mutationFn: createTerminal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
+      toast.success("Terminal created");
     },
   });
 }
@@ -90,6 +95,7 @@ export function useUpdateTerminal() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: terminalKeys.detail(data.id) });
       queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
+      toast.success("Terminal updated");
     },
   });
 }
@@ -100,6 +106,29 @@ export function useDeleteTerminal() {
     mutationFn: deleteTerminal,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
+      toast.success("Terminal deleted");
     },
   });
 }
+
+export function useSubmitTerminalReport() {
+  return useMutation({
+    mutationFn: ({ terminalId, input }: { terminalId: string; input: TerminalReportInput }) =>
+      submitTerminalReport(terminalId, input),
+    onSuccess: () => {
+      toast.success("Report submitted successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to submit report");
+    }
+  });
+}
+
+export function useTerminalPerformance(id: string) {
+  return useQuery({
+    queryKey: terminalKeys.performance(id),
+    queryFn: () => getTerminalPerformance(id),
+    enabled: !!id,
+  });
+}
+

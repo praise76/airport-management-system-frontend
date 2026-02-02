@@ -90,3 +90,22 @@ export type BulkOperationRequest = {
   operationName: string
   inputFileUrl: string
 }
+
+export interface RgmForwardRequest {
+  targetDeptId: string;
+  comments?: string;
+}
+
+export interface InternalBroadcastRequest {
+  subject: string;
+  file?: File;
+  priority: 'low' | 'medium' | 'high';
+  targetDepartmentIds: string[];
+  content: string;
+  deadline?: string;
+  fileUrl?: string; // Kept for backward compatibility or direct URL broadcasts
+}
+
+export interface AcknowledgeDocumentRequest {
+  notes?: string;
+}

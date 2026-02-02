@@ -63,6 +63,52 @@ export function useForwardDocument(id: string) {
 
 // ... other actions (approve, reject, return) would follow similar pattern
 
+export function useRgmForwardDocument(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DocsApi.RgmForwardRequest) => DocsApi.rgmForwardDocument(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      qc.invalidateQueries({ queryKey: ["documents", id, "workflow"] });
+      qc.invalidateQueries({ queryKey: ["documents", id, "journey"] });
+      toast.success("Document forwarded to department");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to forward document");
+    },
+  });
+}
+
+export function useInternalBroadcast() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DocsApi.InternalBroadcastRequest) => DocsApi.internalBroadcast(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Internal memo broadcasted");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to broadcast memo");
+    },
+  });
+}
+
+export function useAcknowledgeDocument(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: DocsApi.AcknowledgeDocumentRequest) => DocsApi.acknowledgeDocument(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      qc.invalidateQueries({ queryKey: ["documents", id, "workflow"] });
+      qc.invalidateQueries({ queryKey: ["documents", id, "journey"] });
+      toast.success("Document acknowledged");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to acknowledge document");
+    },
+  });
+}
+
 export function useTemplates(params?: { categoryId?: string; templateType?: string }) {
   return useQuery({
     queryKey: ["templates", params],

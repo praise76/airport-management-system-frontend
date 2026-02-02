@@ -48,6 +48,8 @@ export type CheckInRequest = {
   terminalCode?: string // [NEW]
   zoneId?: string
   notes?: string
+  clockInMethod?: string
+  deviceId?: string
 }
 
 export type CheckOutRequest = {

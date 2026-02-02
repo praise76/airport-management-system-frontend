@@ -78,3 +78,11 @@ export interface ShiftSwapRequest {
   entryToGive?: RosterEntry;
   entryToReceive?: RosterEntry;
 }
+
+export interface ShiftPattern {
+  id: string;
+  patternName: string;
+  patternType: 'rotating' | 'permanent' | 'custom';
+  cycleLengthDays: number;
+  shiftSequenceJson: Array<{ day: number; shift: string }>;
+}

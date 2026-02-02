@@ -63,6 +63,7 @@ import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
 import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
+import { Route as RosterPatternsIndexRouteImport } from './routes/roster/patterns/index'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
 import { Route as AdminStaffIndexRouteImport } from './routes/admin/staff/index'
 import { Route as RosterTemplatesNewRouteImport } from './routes/roster/templates/new'
@@ -359,6 +360,11 @@ const RosterTemplatesIndexRoute = RosterTemplatesIndexRouteImport.update({
   path: '/roster/templates/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RosterPatternsIndexRoute = RosterPatternsIndexRouteImport.update({
+  id: '/roster/patterns/',
+  path: '/roster/patterns/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
   id: '/example/guitars/',
   path: '/example/guitars/',
@@ -542,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff/': typeof AdminStaffIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
+  '/roster/patterns': typeof RosterPatternsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -618,6 +625,7 @@ export interface FileRoutesByTo {
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff': typeof AdminStaffIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
+  '/roster/patterns': typeof RosterPatternsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -697,6 +705,7 @@ export interface FileRoutesById {
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff/': typeof AdminStaffIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
+  '/roster/patterns/': typeof RosterPatternsIndexRoute
   '/roster/templates/': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -777,6 +786,7 @@ export interface FileRouteTypes {
     | '/roster/templates/new'
     | '/admin/staff/'
     | '/example/guitars'
+    | '/roster/patterns'
     | '/roster/templates'
     | '/admin/staff/$id/edit'
     | '/demo/start/ssr/data-only'
@@ -853,6 +863,7 @@ export interface FileRouteTypes {
     | '/roster/templates/new'
     | '/admin/staff'
     | '/example/guitars'
+    | '/roster/patterns'
     | '/roster/templates'
     | '/admin/staff/$id/edit'
     | '/demo/start/ssr/data-only'
@@ -931,6 +942,7 @@ export interface FileRouteTypes {
     | '/roster/templates/new'
     | '/admin/staff/'
     | '/example/guitars/'
+    | '/roster/patterns/'
     | '/roster/templates/'
     | '/admin/staff/$id/edit'
     | '/demo/start/ssr/data-only'
@@ -1004,6 +1016,7 @@ export interface RootRouteChildren {
   ExampleGuitarsGuitarIdRoute: typeof ExampleGuitarsGuitarIdRoute
   RosterTemplatesNewRoute: typeof RosterTemplatesNewRoute
   ExampleGuitarsIndexRoute: typeof ExampleGuitarsIndexRoute
+  RosterPatternsIndexRoute: typeof RosterPatternsIndexRoute
   RosterTemplatesIndexRoute: typeof RosterTemplatesIndexRoute
   DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
   DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
@@ -1391,6 +1404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RosterTemplatesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/roster/patterns/': {
+      id: '/roster/patterns/'
+      path: '/roster/patterns'
+      fullPath: '/roster/patterns'
+      preLoaderRoute: typeof RosterPatternsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/example/guitars/': {
       id: '/example/guitars/'
       path: '/example/guitars'
@@ -1656,6 +1676,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExampleGuitarsGuitarIdRoute: ExampleGuitarsGuitarIdRoute,
   RosterTemplatesNewRoute: RosterTemplatesNewRoute,
   ExampleGuitarsIndexRoute: ExampleGuitarsIndexRoute,
+  RosterPatternsIndexRoute: RosterPatternsIndexRoute,
   RosterTemplatesIndexRoute: RosterTemplatesIndexRoute,
   DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
   DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,

@@ -14,6 +14,9 @@ export interface ShiftReport {
   attachments?: string[]
   registryNumber?: string // SR/AVSEC/YYYY/XXXXXX
   status: 'draft' | 'submitted' | 'approved' | 'rejected'
+  shiftDate?: string
+  shiftType?: string
+  submittedBy?: string
   createdAt: string
   updatedAt: string
 }

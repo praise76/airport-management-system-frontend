@@ -90,6 +90,11 @@ function AttendancePage() {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
         terminalCode: terminalCode || undefined,
+        clockInMethod: "web",
+        deviceId:
+          typeof navigator !== "undefined"
+            ? navigator.userAgent
+            : "web-unknown",
       });
 
       if (result.rosterInfo.isLate) {

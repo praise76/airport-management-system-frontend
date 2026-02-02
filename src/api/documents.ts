@@ -2,13 +2,19 @@ import type {
 	Document,
 	DocumentDirection,
 	DocumentListResponse,
-	DocumentWorkflowResponse,
-  Template, 
-  CreateTemplateRequest, 
-  PreviewTemplateRequest, 
-  GenerateDocumentRequest, 
-  BulkOperationRequest
+	  DocumentWorkflowResponse,
+  Template,
+  CreateTemplateRequest,
+  PreviewTemplateRequest,
+  GenerateDocumentRequest,
+  BulkOperationRequest,
+  RgmForwardRequest,
+  InternalBroadcastRequest,
+  AcknowledgeDocumentRequest
 } from "@/types/document";
+
+export type { RgmForwardRequest, InternalBroadcastRequest, AcknowledgeDocumentRequest };
+
 import { api } from "./client";
 
 export type ListDocumentsParams = {
@@ -138,6 +144,44 @@ export async function getDocumentWorkflow(
 	const res = await api.get(`/documents/${id}/workflow`);
 	const payload = (res.data?.data ?? res.data) as DocumentWorkflowResponse;
 	return payload;
+}
+
+// --- Phase 2: RGM & Registry Enhancements ---
+
+export async function rgmForwardDocument(
+  id: string,
+  input: RgmForwardRequest
+): Promise<Document> {
+  const res = await api.post(`/documents/${id}/rgm-forward`, input);
+  return (res.data?.data ?? res.data) as Document;
+}
+
+export async function internalBroadcast(
+  input: InternalBroadcastRequest
+): Promise<Document> {
+  const formData = new FormData();
+  formData.append("subject", input.subject);
+  formData.append("priority", input.priority);
+  formData.append("content", input.content);
+  
+  input.targetDepartmentIds.forEach((id) => {
+    formData.append("targetDepartmentIds[]", id);
+  });
+
+  if (input.deadline) formData.append("deadline", input.deadline);
+  if (input.file) formData.append("file", input.file);
+  if (input.fileUrl) formData.append("fileUrl", input.fileUrl);
+
+  const res = await api.post(`/documents/internal-broadcast`, formData);
+  return (res.data?.data ?? res.data) as Document;
+}
+
+export async function acknowledgeDocument(
+  id: string,
+  input: AcknowledgeDocumentRequest
+): Promise<Document> {
+  const res = await api.post(`/documents/${id}/acknowledge`, input);
+  return (res.data?.data ?? res.data) as Document;
 }
 
 // Templates

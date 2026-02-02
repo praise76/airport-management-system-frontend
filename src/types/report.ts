@@ -48,10 +48,14 @@ export interface StaffSummaryReport {
 }
 
 export interface RosterSummaryReport {
-  activeRosters: number;
-  scheduledShifts: number;
-  shifts: {
-    byAttendance: { present: number; late: number; absent: number };
+  rosters: {
+    total: number;
+    byStatus: Record<string, number>;
+  };
+  entries: {
+    total: number;
+    byStatus: Record<string, number>;
+    byAttendance: Record<string, number>;
   };
   lateStats: {
     totalLateEntries: number;

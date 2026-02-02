@@ -1,12 +1,30 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { FileText, Plus, Paperclip, Download } from "lucide-react";
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
+import { FileText, Plus, Paperclip, Radio } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { useDocuments } from "@/hooks/documents";
+import { useDocuments, useInternalBroadcast } from "@/hooks/documents";
 import type { DocumentDirection } from "@/types/document";
 import { getAccessToken } from "@/utils/auth";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { DepartmentSelector } from "@/components/departments";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/documents/")({
   beforeLoad: () => {
@@ -18,6 +36,7 @@ export const Route = createFileRoute("/documents/")({
 });
 
 function DocumentsPage() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [direction, setDirection] = useState<DocumentDirection | "">("");
@@ -46,12 +65,15 @@ function DocumentsPage() {
             Manage incoming, outgoing, and internal documents
           </p>
         </div>
-        <Link to="/documents/new">
-          <Button>
-            <Plus className="h-4 w-4" />
-            Register Document
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <InternalBroadcastDialog />
+          <Link to="/documents/new">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Register Document
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -144,7 +166,13 @@ function DocumentsPage() {
               {data.data.map((doc) => (
                 <tr
                   key={doc.id}
-                  className="border-b hover:bg-muted/30 transition-colors"
+                  className="border-b hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() =>
+                    navigate({
+                      to: "/documents/$docId",
+                      params: { docId: doc.id },
+                    })
+                  }
                 >
                   <td className="p-3 font-mono text-sm">
                     {doc.registryNumber}
@@ -168,6 +196,7 @@ function DocumentsPage() {
                         target="_blank"
                         rel="noreferrer"
                         className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Paperclip className="h-4 w-4" />
                         View
@@ -215,5 +244,124 @@ function DocumentsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function InternalBroadcastDialog() {
+  const [open, setOpen] = useState(false);
+  const broadcastMutation = useInternalBroadcast();
+  const { register, handleSubmit, setValue, watch, reset } = useForm({
+    defaultValues: {
+      subject: "",
+      priority: "medium",
+      targetDepartmentIds: [] as string[],
+      content: "",
+      deadline: "",
+      file: null as FileList | null,
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    const payload = {
+      ...data,
+      file: data.file?.[0],
+      // Convert date string to ISO 8601 format for backend validation
+      deadline: data.deadline
+        ? new Date(data.deadline).toISOString()
+        : undefined,
+    };
+
+    broadcastMutation.mutate(payload, {
+      onSuccess: () => {
+        setOpen(false);
+        reset();
+      },
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="secondary">
+          <Radio className="mr-2 h-4 w-4" /> Broadcast Memo
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Broadcast Internal Memo</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Subject</Label>
+            <Input
+              {...register("subject")}
+              placeholder="Subject of the memo"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Target Departments</Label>
+            <DepartmentSelector
+              multiple
+              selectedValues={watch("targetDepartmentIds")}
+              onMultipleChange={(vals) => setValue("targetDepartmentIds", vals)}
+              placeholder="Select Departments"
+            />
+            <p className="text-xs text-muted-foreground">
+              Select a department to broadcast to.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Message Content</Label>
+            <Textarea
+              {...register("content")}
+              placeholder="Type the body of the memo here..."
+              className="min-h-[100px]"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <select
+                className="w-full border rounded-md p-2 text-sm"
+                {...register("priority")}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Deadline (Optional)</Label>
+              <Input type="datetime-local" {...register("deadline")} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>File Attachment</Label>
+            <Input
+              type="file"
+              {...register("file")}
+              accept=".pdf,.doc,.docx,.jpg,.png"
+            />
+            <p className="text-xs text-muted-foreground">
+              Attach a PDF, document, or image to the memo.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button type="submit" disabled={broadcastMutation.isPending}>
+              {broadcastMutation.isPending
+                ? "Broadcasting..."
+                : "Broadcast Memo"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import { Roster, RosterEntry, ShiftSwapRequest } from "../types";
+import { Roster, RosterEntry, ShiftSwapRequest, ShiftPattern } from "../types";
 
 // --- Roster Management (Admin) ---
 
@@ -252,3 +252,42 @@ export const useDeleteShiftDefinition = () => {
     },
   });
 };
+
+// --- Shift Patterns ---
+
+export const useGetShiftPatterns = () => {
+  return useQuery({
+    queryKey: ["shift-patterns"],
+    queryFn: async () => {
+      const { data } = await api.get<ShiftPattern[]>("/roster/patterns");
+      return data;
+    },
+  });
+};
+
+export const useCreateShiftPattern = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (pattern: Omit<ShiftPattern, "id">) => {
+      const { data } = await api.post<ShiftPattern>("/roster/patterns", pattern);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-patterns"] });
+    },
+  });
+};
+
+export const useAssignShiftPattern = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (assignment: { userId: string; shiftPatternId: string; effectiveFrom: string }) => {
+      const { data } = await api.post("/roster/patterns/assign", assignment);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rosters"] }); // Invalidate rosters as assignments change schedule
+    },
+  });
+};
+

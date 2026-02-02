@@ -5,7 +5,8 @@ import type {
   TerminalUpdate, 
   TerminalStats,
   TerminalRepresentative,
-  TerminalRepresentativeInput 
+  TerminalRepresentativeInput,
+  TerminalReportInput
 } from "@/types/terminal";
 
 export async function getTerminals(): Promise<Terminal[]> {
@@ -39,7 +40,7 @@ export async function getTerminalStats(id: string): Promise<TerminalStats> {
 
 export async function getTerminalRepresentatives(terminalId: string): Promise<TerminalRepresentative[]> {
   const res = await api.get(`/terminals/${terminalId}/representatives`);
-  return res.data.data;
+  return res.data
 }
 
 export async function addTerminalRepresentative(terminalId: string, input: TerminalRepresentativeInput): Promise<TerminalRepresentative> {
@@ -49,4 +50,13 @@ export async function addTerminalRepresentative(terminalId: string, input: Termi
 
 export async function removeTerminalRepresentative(id: string): Promise<void> {
   await api.delete(`/terminals/representatives/${id}`);
+}
+
+export async function submitTerminalReport(terminalId: string, input: TerminalReportInput): Promise<void> {
+  await api.post(`/terminals/${terminalId}/reports`, input);
+}
+
+export async function getTerminalPerformance(terminalId: string): Promise<any> {
+    const res = await api.get(`/terminals/${terminalId}/performance`);
+    return res.data.data;
 }

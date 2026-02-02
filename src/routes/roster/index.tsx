@@ -31,6 +31,12 @@ function RosterPage() {
               Manage Templates
             </Link>
           </Button>
+          <Button variant="secondary" asChild className="hidden md:flex">
+            <Link to="/roster/patterns">
+              <Settings className="mr-2 h-4 w-4" />
+              Manage Patterns
+            </Link>
+          </Button>
           <Button
             variant={view === "today" ? "default" : "outline"}
             onClick={() => setView("today")}
@@ -52,7 +58,7 @@ function RosterPage() {
           {myRosterQuery.data?.entries?.map((entry) => (
             <div
               key={entry.id}
-              className="border rounded-xl p-4 bg-[var(--color-surface)] flex items-center justify-between"
+              className="border rounded-xl p-4 bg-(--color-surface) flex items-center justify-between"
             >
               <div className="flex items-center gap-4">
                 <div className="bg-primary/10 p-3 rounded-lg">
@@ -94,7 +100,7 @@ function RosterPage() {
           {todaysRosterQuery.data?.map((entry) => (
             <div
               key={entry.id}
-              className="border rounded-xl p-4 bg-[var(--color-surface)] flex gap-4"
+              className="border rounded-xl p-4 bg-(--color-surface) flex gap-4"
             >
               <div className="bg-secondary/20 p-3 rounded-full h-12 w-12 flex items-center justify-center">
                 <UserIcon className="h-5 w-5 text-secondary-foreground" />

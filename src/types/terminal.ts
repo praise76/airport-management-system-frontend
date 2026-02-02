@@ -4,7 +4,7 @@ export interface TerminalRepresentative {
   userId: string
   departmentId: string
   role: string
-  isPrimary: boolean
+  isPrimary: "Y" | "N"
   user: {
     firstName: string
     lastName: string
@@ -20,7 +20,7 @@ export interface TerminalRepresentativeInput {
   userId: string
   departmentId: string
   role: string
-  isPrimary?: boolean
+  isPrimary?: "Y" | "N"
 }
 
 export type TerminalType = "domestic" | "international" | "cargo" | "general_aviation" | "vip" | "seasonal" | "mixed";
@@ -61,4 +61,16 @@ export interface TerminalStats {
   activeRosters: number;
   activeInspections: number;
   activeTasks: number;
+}
+
+export interface TerminalReportInput {
+  reportDate?: string;
+  reportPeriod?: "daily" | "weekly" | "monthly";
+  totalPassengers?: number;
+  totalFlights?: number;
+  incidentsCount: number;
+  equipmentDowntimeHours?: number;
+  achievements: string;
+  challenges?: string;
+  actionItems?: string;
 }

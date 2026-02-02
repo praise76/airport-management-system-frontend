@@ -1,5 +1,5 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { getAccessToken } from '@/utils/auth'
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getAccessToken } from "@/utils/auth";
 import {
   useExecutiveDashboard,
   useDocumentFlowReport,
@@ -7,22 +7,49 @@ import {
   useInspectionsSummaryReport,
   useStaffSummaryReport,
   useRosterSummaryReport,
-} from '@/hooks/reports'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from 'recharts'
-import { useState } from 'react'
+} from "@/hooks/reports";
+import {
+  useShiftReports,
+  useApproveShiftReport,
+  useConsolidateShiftReports,
+} from "@/hooks/shift-reports";
+import { Check, FileText } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { useState } from "react";
 
-export const Route = createFileRoute('/reports/')({
+export const Route = createFileRoute("/reports/")({
   beforeLoad: () => {
-    const token = getAccessToken()
-    if (!token && typeof window !== 'undefined') throw redirect({ to: '/auth/login' })
+    const token = getAccessToken();
+    if (!token && typeof window !== "undefined")
+      throw redirect({ to: "/auth/login" });
   },
   component: Page,
-})
+});
 
-const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4']
+const COLORS = [
+  "#4F46E5",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
+];
 
 function Page() {
-  const [activeReport, setActiveReport] = useState<'executive' | 'tasks' | 'inspections' | 'staff' | 'roster'>('executive')
+  const [activeReport, setActiveReport] = useState<
+    "executive" | "tasks" | "inspections" | "staff" | "roster" | "shifts"
+  >("executive");
 
   return (
     <div className="space-y-6">
@@ -37,19 +64,20 @@ function Page() {
       {/* Report Selector */}
       <div className="flex gap-2 flex-wrap">
         {[
-          { id: 'executive', label: 'Executive Dashboard' },
-          { id: 'tasks', label: 'Tasks' },
-          { id: 'inspections', label: 'Inspections' },
-          { id: 'staff', label: 'Staff' },
-          { id: 'roster', label: 'Roster' },
+          { id: "executive", label: "Executive Dashboard" },
+          { id: "tasks", label: "Tasks" },
+          { id: "inspections", label: "Inspections" },
+          { id: "staff", label: "Staff" },
+          { id: "roster", label: "Roster" },
+          { id: "shifts", label: "Shift Reports" },
         ].map((r) => (
           <button
             key={r.id}
             onClick={() => setActiveReport(r.id as any)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               activeReport === r.id
-                ? 'bg-[var(--color-primary)] text-white'
-                : 'bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-background)]'
+                ? "bg-[var(--color-primary)] text-white"
+                : "bg-[var(--color-surface)] border border-[var(--color-border)] hover:bg-[var(--color-background)]"
             }`}
           >
             {r.label}
@@ -58,36 +86,57 @@ function Page() {
       </div>
 
       {/* Report Content */}
-      {activeReport === 'executive' && <ExecutiveDashboard />}
-      {activeReport === 'tasks' && <TasksReport />}
-      {activeReport === 'inspections' && <InspectionsReport />}
-      {activeReport === 'staff' && <StaffReport />}
-      {activeReport === 'roster' && <RosterReport />}
+      {activeReport === "executive" && <ExecutiveDashboard />}
+      {activeReport === "tasks" && <TasksReport />}
+      {activeReport === "inspections" && <InspectionsReport />}
+      {activeReport === "staff" && <StaffReport />}
+      {activeReport === "roster" && <RosterReport />}
+      {activeReport === "shifts" && <ShiftReportsReport />}
     </div>
-  )
+  );
 }
 
 function ExecutiveDashboard() {
-  const { data, isLoading } = useExecutiveDashboard()
+  const { data, isLoading } = useExecutiveDashboard();
 
   if (isLoading) {
-    return <LoadingState />
+    return <LoadingState />;
   }
 
   if (!data) {
-    return <EmptyState message="No dashboard data available" />
+    return <EmptyState message="No dashboard data available" />;
   }
 
-  const summary = data.summary || {}
+  const summary = data.summary || {};
 
   return (
     <div className="space-y-6">
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Documents" value={summary.documents?.total || 0} icon="📄" color="indigo" />
-        <StatCard title="Tasks" value={summary.tasks?.total || 0} icon="✓" color="green" />
-        <StatCard title="Inspections" value={summary.inspections?.total || 0} icon="🔍" color="yellow" />
-        <StatCard title="Staff" value={summary.staff?.total || 0} icon="👤" color="blue" />
+        <StatCard
+          title="Documents"
+          value={summary.documents?.total || 0}
+          icon="📄"
+          color="indigo"
+        />
+        <StatCard
+          title="Tasks"
+          value={summary.tasks?.total || 0}
+          icon="✓"
+          color="green"
+        />
+        <StatCard
+          title="Inspections"
+          value={summary.inspections?.total || 0}
+          icon="🔍"
+          color="yellow"
+        />
+        <StatCard
+          title="Staff"
+          value={summary.staff?.total || 0}
+          icon="👤"
+          color="blue"
+        />
       </div>
 
       {/* Charts Row */}
@@ -98,21 +147,22 @@ function ExecutiveDashboard() {
 
       {/* Generated */}
       <p className="text-xs text-[color-mix(in_oklab,var(--color-text)_40%,transparent)] text-right">
-        Generated: {data.generatedAt ? new Date(data.generatedAt).toLocaleString() : '-'}
+        Generated:{" "}
+        {data.generatedAt ? new Date(data.generatedAt).toLocaleString() : "-"}
       </p>
     </div>
-  )
+  );
 }
 
 function DocumentFlowChart() {
-  const { data } = useDocumentFlowReport()
-  
-  if (!data?.byStage) return null
+  const { data } = useDocumentFlowReport();
+
+  if (!data?.byStage) return null;
 
   const chartData = Object.entries(data.byStage).map(([name, value]) => ({
-    name: name.replace('_', ' '),
+    name: name.replace("_", " "),
     value,
-  }))
+  }));
 
   return (
     <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-4">
@@ -129,16 +179,16 @@ function DocumentFlowChart() {
         </ResponsiveContainer>
       </div>
     </div>
-  )
+  );
 }
 
 function TaskStatusChart({ tasks }: { tasks?: any }) {
-  if (!tasks?.byStatus) return null
+  if (!tasks?.byStatus) return null;
 
   const chartData = Object.entries(tasks.byStatus).map(([name, value]) => ({
-    name: name.replace('_', ' '),
+    name: name.replace("_", " "),
     value,
-  }))
+  }));
 
   return (
     <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-4">
@@ -146,9 +196,20 @@ function TaskStatusChart({ tasks }: { tasks?: any }) {
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              label
+            >
               {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
             <Tooltip />
@@ -156,22 +217,37 @@ function TaskStatusChart({ tasks }: { tasks?: any }) {
         </ResponsiveContainer>
       </div>
     </div>
-  )
+  );
 }
 
 function TasksReport() {
-  const { data, isLoading } = useTasksSummaryReport()
+  const { data, isLoading } = useTasksSummaryReport();
 
-  if (isLoading) return <LoadingState />
-  if (!data) return <EmptyState message="No task data" />
+  if (isLoading) return <LoadingState />;
+  if (!data) return <EmptyState message="No task data" />;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Total Tasks" value={data.total} icon="📋" color="indigo" />
+        <StatCard
+          title="Total Tasks"
+          value={data.total}
+          icon="📋"
+          color="indigo"
+        />
         <StatCard title="Overdue" value={data.overdue} icon="⚠️" color="red" />
-        <StatCard title="Completion Rate" value={`${(data.completionRate * 100).toFixed(0)}%`} icon="✓" color="green" />
-        <StatCard title="Done" value={data.byStatus?.done || 0} icon="✅" color="emerald" />
+        <StatCard
+          title="Completion Rate"
+          value={`${(data.completionRate * 100).toFixed(0)}%`}
+          icon="✓"
+          color="green"
+        />
+        <StatCard
+          title="Done"
+          value={data.byStatus?.done || 0}
+          icon="✅"
+          color="emerald"
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -179,8 +255,11 @@ function TasksReport() {
           <h3 className="font-medium mb-4">By Status</h3>
           <div className="space-y-2">
             {Object.entries(data.byStatus || {}).map(([status, count]) => (
-              <div key={status} className="flex justify-between items-center py-1">
-                <span className="capitalize">{status.replace('_', ' ')}</span>
+              <div
+                key={status}
+                className="flex justify-between items-center py-1"
+              >
+                <span className="capitalize">{status.replace("_", " ")}</span>
                 <span className="font-medium">{count as number}</span>
               </div>
             ))}
@@ -190,7 +269,10 @@ function TasksReport() {
           <h3 className="font-medium mb-4">By Priority</h3>
           <div className="space-y-2">
             {Object.entries(data.byPriority || {}).map(([priority, count]) => (
-              <div key={priority} className="flex justify-between items-center py-1">
+              <div
+                key={priority}
+                className="flex justify-between items-center py-1"
+              >
                 <span className="capitalize">{priority}</span>
                 <span className="font-medium">{count as number}</span>
               </div>
@@ -199,28 +281,46 @@ function TasksReport() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function InspectionsReport() {
-  const { data, isLoading } = useInspectionsSummaryReport()
+  const { data, isLoading } = useInspectionsSummaryReport();
 
-  if (isLoading) return <LoadingState />
-  if (!data) return <EmptyState message="No inspection data" />
+  if (isLoading) return <LoadingState />;
+  if (!data) return <EmptyState message="No inspection data" />;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <StatCard title="Total Inspections" value={data.total} icon="🔍" color="indigo" />
-        <StatCard title="Completion Rate" value={`${(data.completionRate * 100).toFixed(0)}%`} icon="✓" color="green" />
-        <StatCard title="Submitted" value={data.byStatus?.submitted || 0} icon="✅" color="emerald" />
+        <StatCard
+          title="Total Inspections"
+          value={data.total}
+          icon="🔍"
+          color="indigo"
+        />
+        <StatCard
+          title="Completion Rate"
+          value={`${(data.completionRate * 100).toFixed(0)}%`}
+          icon="✓"
+          color="green"
+        />
+        <StatCard
+          title="Submitted"
+          value={data.byStatus?.submitted || 0}
+          icon="✅"
+          color="emerald"
+        />
       </div>
 
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-4">
         <h3 className="font-medium mb-4">By Template</h3>
         <div className="space-y-2">
           {(data.byTemplate || []).map((t: any) => (
-            <div key={t.templateId} className="flex justify-between items-center py-2 border-b border-[var(--color-border)] last:border-0">
+            <div
+              key={t.templateId}
+              className="flex justify-between items-center py-2 border-b border-[var(--color-border)] last:border-0"
+            >
               <span>{t.templateName}</span>
               <span className="font-medium">{t.count}</span>
             </div>
@@ -228,21 +328,31 @@ function InspectionsReport() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function StaffReport() {
-  const { data, isLoading } = useStaffSummaryReport()
+  const { data, isLoading } = useStaffSummaryReport();
 
-  if (isLoading) return <LoadingState />
-  if (!data) return <EmptyState message="No staff data" />
+  if (isLoading) return <LoadingState />;
+  if (!data) return <EmptyState message="No staff data" />;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <StatCard title="Total Staff" value={data.total} icon="👥" color="indigo" />
+        <StatCard
+          title="Total Staff"
+          value={data.total}
+          icon="👥"
+          color="indigo"
+        />
         <StatCard title="Active" value={data.active} icon="✓" color="green" />
-        <StatCard title="Departments" value={data.byDepartment?.length || 0} icon="🏢" color="blue" />
+        <StatCard
+          title="Departments"
+          value={data.byDepartment?.length || 0}
+          icon="🏢"
+          color="blue"
+        />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -250,8 +360,11 @@ function StaffReport() {
           <h3 className="font-medium mb-4">By Role</h3>
           <div className="space-y-2">
             {Object.entries(data.byRole || {}).map(([role, count]) => (
-              <div key={role} className="flex justify-between items-center py-1">
-                <span className="capitalize">{role.replace('_', ' ')}</span>
+              <div
+                key={role}
+                className="flex justify-between items-center py-1"
+              >
+                <span className="capitalize">{role.replace("_", " ")}</span>
                 <span className="font-medium">{count as number}</span>
               </div>
             ))}
@@ -261,7 +374,10 @@ function StaffReport() {
           <h3 className="font-medium mb-4">By Department</h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {(data.byDepartment || []).map((d: any) => (
-              <div key={d.departmentId} className="flex justify-between items-center py-1">
+              <div
+                key={d.departmentId}
+                className="flex justify-between items-center py-1"
+              >
                 <span>{d.departmentName}</span>
                 <span className="font-medium">{d.count}</span>
               </div>
@@ -270,28 +386,48 @@ function StaffReport() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function RosterReport() {
-  const { data, isLoading } = useRosterSummaryReport()
+  const { data, isLoading } = useRosterSummaryReport();
 
-  if (isLoading) return <LoadingState />
-  if (!data) return <EmptyState message="No roster data" />
+  if (isLoading) return <LoadingState />;
+  if (!data) return <EmptyState message="No roster data" />;
 
-  const attendanceData = data.shifts?.byAttendance || {}
+  const attendanceData = data.entries?.byAttendance || {};
   const chartData = Object.entries(attendanceData).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
     value,
-  }))
+  }));
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard title="Active Rosters" value={data.activeRosters} icon="📅" color="indigo" />
-        <StatCard title="Scheduled Shifts" value={data.scheduledShifts} icon="🕐" color="blue" />
-        <StatCard title="Late Entries" value={data.lateStats?.totalLateEntries || 0} icon="⚠️" color="yellow" />
-        <StatCard title="Avg Late (min)" value={data.lateStats?.averageLateMinutes?.toFixed(0) || 0} icon="⏱️" color="red" />
+        <StatCard
+          title="Total Rosters"
+          value={data.rosters?.total || 0}
+          icon="📅"
+          color="indigo"
+        />
+        <StatCard
+          title="Scheduled Entries"
+          value={data.entries?.byStatus?.scheduled || 0}
+          icon="🕐"
+          color="blue"
+        />
+        <StatCard
+          title="Late Entries"
+          value={data.lateStats?.totalLateEntries || 0}
+          icon="⚠️"
+          color="yellow"
+        />
+        <StatCard
+          title="Avg Late (min)"
+          value={data.lateStats?.averageLateMinutes?.toFixed(0) || 0}
+          icon="⏱️"
+          color="red"
+        />
       </div>
 
       <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-4">
@@ -299,9 +435,20 @@ function RosterReport() {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label
+              >
                 {chartData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip />
@@ -310,30 +457,123 @@ function RosterReport() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-function StatCard({ title, value, icon, color }: { title: string; value: number | string; icon: string; color: string }) {
+function ShiftReportsReport() {
+  const { data, isLoading } = useShiftReports({ status: "submitted" }); // Initially show submitted reports needing attention
+  const approveMutation = useApproveShiftReport();
+  const consolidateMutation = useConsolidateShiftReports();
+
+  if (isLoading) return <LoadingState />;
+  if (!data?.data || data.data.length === 0)
+    return <EmptyState message="No pending shift reports" />;
+
+  const handleApprove = (id: string) => {
+    approveMutation.mutate({ id });
+  };
+
+  const handleConsolidate = () => {
+    const today = new Date().toISOString().split("T")[0];
+    consolidateMutation.mutate(today);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Pending Approvals</h3>
+        <button
+          onClick={handleConsolidate}
+          disabled={consolidateMutation.isPending}
+          className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition disabled:opacity-50 text-sm flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          {consolidateMutation.isPending
+            ? "Consolidating..."
+            : "Consolidate Daily Report"}
+        </button>
+      </div>
+
+      <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-muted/50 border-b">
+            <tr>
+              <th className="p-3 font-semibold">Date</th>
+              <th className="p-3 font-semibold">Shift</th>
+              <th className="p-3 font-semibold">Submitted By</th>
+              <th className="p-3 font-semibold">Handover Notes</th>
+              <th className="p-3 font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.data.map((report) => (
+              <tr
+                key={report.id}
+                className="border-b last:border-0 hover:bg-muted/30"
+              >
+                <td className="p-3">
+                  {new Date(
+                    report.shiftDate || report.createdAt,
+                  ).toLocaleDateString()}
+                </td>
+                <td className="p-3 capitalize">{report.shiftType || "N/A"}</td>
+                <td className="p-3">{report.submittedBy || "Unknown"}</td>
+                <td className="p-3 max-w-xs truncate">
+                  {report.handoverNotes}
+                </td>
+                <td className="p-3">
+                  <button
+                    onClick={() => handleApprove(report.id)}
+                    disabled={approveMutation.isPending}
+                    className="flex items-center gap-1 px-3 py-1 bg-green-500/10 text-green-600 rounded hover:bg-green-500/20 transition disabled:opacity-50"
+                  >
+                    <Check className="w-3 h-3" /> Approve
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  icon,
+  color,
+}: {
+  title: string;
+  value: number | string;
+  icon: string;
+  color: string;
+}) {
   const colorClasses: Record<string, string> = {
-    indigo: 'bg-indigo-500/20 text-indigo-400',
-    green: 'bg-green-500/20 text-green-400',
-    emerald: 'bg-emerald-500/20 text-emerald-400',
-    yellow: 'bg-yellow-500/20 text-yellow-400',
-    red: 'bg-red-500/20 text-red-400',
-    blue: 'bg-blue-500/20 text-blue-400',
-  }
+    indigo: "bg-indigo-500/20 text-indigo-400",
+    green: "bg-green-500/20 text-green-400",
+    emerald: "bg-emerald-500/20 text-emerald-400",
+    yellow: "bg-yellow-500/20 text-yellow-400",
+    red: "bg-red-500/20 text-red-400",
+    blue: "bg-blue-500/20 text-blue-400",
+  };
 
   return (
     <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+        <div
+          className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClasses[color]}`}
+        >
           <span className="text-lg">{icon}</span>
         </div>
-        <span className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">{title}</span>
+        <span className="text-sm text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
+          {title}
+        </span>
       </div>
       <p className="text-2xl font-semibold">{value}</p>
     </div>
-  )
+  );
 }
 
 function LoadingState() {
@@ -341,7 +581,7 @@ function LoadingState() {
     <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
       Loading report data...
     </div>
-  )
+  );
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -349,5 +589,5 @@ function EmptyState({ message }: { message: string }) {
     <div className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
       {message}
     </div>
-  )
+  );
 }
