@@ -152,7 +152,19 @@ export async function rgmForwardDocument(
   id: string,
   input: RgmForwardRequest
 ): Promise<Document> {
-  const res = await api.post(`/documents/${id}/rgm-forward`, input);
+  // Now using the polymorphic forward endpoint
+  const res = await api.post(`/documents/${id}/forward`, {
+    targetDeptId: input.targetDeptId,
+    comments: input.comments,
+  });
+  return (res.data?.data ?? res.data) as Document;
+}
+
+export async function dispatchToHod(
+  id: string,
+  input: { comments?: string }
+): Promise<Document> {
+  const res = await api.post(`/documents/${id}/dispatch`, input);
   return (res.data?.data ?? res.data) as Document;
 }
 

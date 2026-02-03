@@ -2,7 +2,7 @@ export type Group = {
   id: string
   departmentId: string
   groupType: 'department' | 'project' | 'other'
-  groupName: string
+  name: string
   visibility: 'public' | 'private'
   isAutoManaged?: boolean
   autoIncludeRule?: 'all_department' | 'managers_only'
@@ -17,12 +17,19 @@ export type GroupMember = {
   role: 'member' | 'admin'
   joinedAt: string
   isAutoAdded?: boolean
+  user: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    role: string
+  }
 }
 
 export type CreateGroupRequest = {
   departmentId: string
   groupType: string
-  groupName: string
+  name: string
   visibility: string
 }
 

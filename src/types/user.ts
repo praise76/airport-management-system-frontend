@@ -7,6 +7,7 @@ export type User = {
   role: string
   organizationId: string
   departmentId?: string
+  roles?: string[]
   createdAt: string
   updatedAt: string
 }

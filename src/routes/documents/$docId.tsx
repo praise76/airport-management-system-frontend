@@ -109,9 +109,11 @@ function ForwardToDeptDialog({ docId }: { docId: string }) {
   const forwardMutation = useRgmForwardDocument(docId);
   const { register, handleSubmit, setValue, watch, reset } = useForm();
 
-  // TODO: Replace with actual role check from auth store
-  // const isRGM = user?.role === 'rgm' || user?.role === 'admin';
-  const isRGM = true; // For demo purposes, allow everyone to see it for now
+  const user = useAuthStore((s) => s.user);
+  const userRoles = user?.roles || (user?.role ? [user.role] : []);
+  const isRGM = userRoles.some((r: string) =>
+    ["RGM", "SUPER_ADMIN", "ADMIN"].includes(r.toUpperCase()),
+  );
 
   if (!isRGM) return null;
 
@@ -150,6 +152,7 @@ function ForwardToDeptDialog({ docId }: { docId: string }) {
               value={watch("targetDeptId")}
               onChange={(val) => setValue("targetDeptId", val)}
               placeholder="Select Department"
+              filterLevel={1}
             />
           </div>
           <div className="space-y-2">

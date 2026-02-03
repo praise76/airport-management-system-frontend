@@ -13,6 +13,7 @@ import {
 	deleteDepartment,
 	type UpdateDepartmentRequest,
 	getUnitsByDepartment,
+	getStationsByUnit,
 	listUnits,
 } from "@/api/departments";
 
@@ -139,6 +140,14 @@ export function useDepartmentUnits(departmentId: string) {
 		queryKey: ["departments", departmentId, "units"],
 		queryFn: () => getUnitsByDepartment(departmentId),
 		enabled: !!departmentId,
+	});
+}
+
+export function useUnitStations(unitId: string) {
+	return useQuery({
+		queryKey: ["departments", unitId, "stations"],
+		queryFn: () => getStationsByUnit(unitId),
+		enabled: !!unitId,
 	});
 }
 

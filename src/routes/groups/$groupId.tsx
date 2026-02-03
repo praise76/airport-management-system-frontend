@@ -18,7 +18,6 @@ import {
   addGroupMember,
   removeGroupMember,
 } from "@/api/groups";
-import { useUsers } from "@/hooks/users";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -53,6 +52,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { listUsers } from "@/api/users";
 
 export const Route = createFileRoute("/groups/$groupId")({
   component: GroupDetailsPage,
@@ -76,10 +76,10 @@ function GroupDetailsPage() {
     queryFn: () => listGroupMembers(groupId),
   });
 
-  console.log("members", members);
-
-  const { data: usersData } = useUsers({ limit: 100 });
-  const users = usersData?.data || [];
+  const { data: users } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => listUsers(),
+  });
 
   // Mutations
   const addMemberMutation = useMutation({
@@ -127,9 +127,7 @@ function GroupDetailsPage() {
         </Button>
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">
-              {group.groupName}
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight">{group.name}</h1>
             {group.isAutoManaged && (
               <Badge
                 variant="secondary"
@@ -181,7 +179,7 @@ function GroupDetailsPage() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Add Member to {group.groupName}</DialogTitle>
+                <DialogTitle>Add Member to {group.name}</DialogTitle>
                 <DialogDescription>
                   Select a user to add to this group.
                 </DialogDescription>
@@ -197,7 +195,7 @@ function GroupDetailsPage() {
                       <SelectValue placeholder="Select user..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {users.map((user) => {
+                      {users?.data?.map((user) => {
                         const isAlreadyMember = members?.some(
                           (m) => m.userId === user.id,
                         );
@@ -255,7 +253,7 @@ function GroupDetailsPage() {
           ) : (
             <div className="space-y-2">
               {members?.map((member) => {
-                const user = users.find((u) => u.id === member.userId);
+                const user = member.user;
                 const isRemovable = !group.isAutoManaged || !member.isAutoAdded;
                 // Logic: If group is auto-managed, disable remove for auto-added members.
                 // Fallback logic: If isAutoAdded is undefined but group is autoManaged, we might want to be conservative or lenient.

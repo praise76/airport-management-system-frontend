@@ -2,7 +2,7 @@ import { Conversation } from "@/types/messaging";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { Users, AlertTriangle } from "lucide-react";
+import { Users, AlertTriangle, Book, Clock } from "lucide-react";
 
 interface ConversationListItemProps {
   conversation: Conversation;
@@ -31,6 +31,16 @@ export function ConversationListItem({
   const unreadCount = conversation.membership?.unreadCount || 0;
   const isEmergency = conversation.type === "emergency";
 
+  // Enchanced Chat Props
+  const settings = conversation.settings || {};
+  const isShiftChannel =
+    conversation.type === "unit" &&
+    settings.isStationChannel &&
+    !settings.isStationMasterChannel;
+  const isMasterChannel =
+    conversation.type === "unit" && settings.isStationMasterChannel;
+  const shiftType = settings.shiftType;
+
   return (
     <div
       onClick={onClick}
@@ -42,7 +52,15 @@ export function ConversationListItem({
       )}
     >
       <div className="relative">
-        <Avatar className="h-10 w-10 border border-(--color-border)">
+        <Avatar
+          className={cn(
+            "h-10 w-10 border border-(--color-border)",
+            isShiftChannel &&
+              "ring-2 ring-green-500 ring-offset-1 ring-offset-(--color-surface)",
+            isMasterChannel &&
+              "ring-2 ring-amber-500/50 ring-offset-1 ring-offset-(--color-surface)",
+          )}
+        >
           <AvatarImage src={avatarUrl} alt={displayName} />
           <AvatarFallback
             className={
@@ -53,12 +71,21 @@ export function ConversationListItem({
           >
             {conversation.type === "group" && !avatarUrl ? (
               <Users className="h-4 w-4" />
+            ) : isMasterChannel ? (
+              <Book className="h-4 w-4" />
+            ) : isShiftChannel ? (
+              <Clock className="h-4 w-4" />
             ) : (
               fallback
             )}
           </AvatarFallback>
         </Avatar>
         {/* Simple online indicator logic could go here if we passed online status */}
+        {isShiftChannel && (
+          <div className="absolute -bottom-1 -right-1 bg-green-500 text-white text-[9px] px-1 rounded-full border border-white">
+            {shiftType || "NOW"}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-w-0">

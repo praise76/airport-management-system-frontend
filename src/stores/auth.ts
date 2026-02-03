@@ -8,6 +8,8 @@ type User = {
   role?: string // e.g. "super_admin"
   organizationId?: string
   departmentId?: string
+  roles?: string[]
+  name?: string
   type?: string // 'staff' | 'stakeholder'
 }
 

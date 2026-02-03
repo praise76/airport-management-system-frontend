@@ -79,6 +79,22 @@ export function useRgmForwardDocument(id: string) {
   });
 }
 
+export function useDispatchToHod(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { comments?: string }) => DocsApi.dispatchToHod(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      qc.invalidateQueries({ queryKey: ["documents", id, "workflow"] });
+      qc.invalidateQueries({ queryKey: ["documents", id, "journey"] });
+      toast.success("Document dispatched to HOD");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to dispatch document");
+    },
+  });
+}
+
 export function useInternalBroadcast() {
   const qc = useQueryClient();
   return useMutation({

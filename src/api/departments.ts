@@ -106,6 +106,12 @@ export async function getUnitsByDepartment(departmentId: string): Promise<{data:
 	return payload;
 }
 
+export async function getStationsByUnit(unitId: string): Promise<{data: Department[]}> {
+	const res = await api.get(`/departments/${unitId}/stations`);
+	const payload = (res.data) as {data: Department[]};
+	return payload;
+}
+
 export async function listUnits(params: { departmentId?: string } = {}): Promise<Department[]> {
 	const res = await api.get("/units", { params });
 	const payload = (res.data?.data ?? res.data) as Department[];

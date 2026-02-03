@@ -29,6 +29,11 @@ const primaryNav: NavItem[] = [
     to: "/admin/attendance/registry",
     roles: ["SUPER_ADMIN"],
   },
+  {
+    label: "Registry Desk",
+    to: "/documents/registry",
+    roles: ["REGISTRY_OFFICER", "SUPER_ADMIN"],
+  },
   // { label: "Certifications", to: "/certifications" },
   { label: "Messages", to: "/messages" },
   { label: "Tasks", to: "/tasks" },
@@ -87,7 +92,10 @@ export function AppShell(props: AppShellProps) {
     let userRoles: string[] = [];
     if (user?.role) userRoles.push(user.role.toUpperCase());
     if (user?.roles)
-      userRoles = [...userRoles, ...user.roles.map((r) => r.toUpperCase())];
+      userRoles = [
+        ...userRoles,
+        ...user.roles.map((r: string) => r.toUpperCase()),
+      ];
 
     return primaryNav.filter((n) => {
       if (!n.roles || n.roles.length === 0) return true;
@@ -227,7 +235,12 @@ export function AppShell(props: AppShellProps) {
                 className:
                   "bg-[color-mix(in_oklab,var(--color-primary)_25%,transparent)] text-[var(--color-primary)]",
               }}
-              activeOptions={{ exact: item.to === "/" || item.to === "/admin" }}
+              activeOptions={{
+                exact:
+                  item.to === "/" ||
+                  item.to === "/admin" ||
+                  item.to === "/documents",
+              }}
               className="block px-3 py-2 rounded-md text-sm hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
             >
               {item.label}

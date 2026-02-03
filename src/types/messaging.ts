@@ -1,4 +1,4 @@
-export type ConversationType = 'direct' | 'group' | 'emergency';
+export type ConversationType = 'direct' | 'group' | 'emergency' | 'unit' | 'department';
 export type MessageType = 'text' | 'file' | 'emergency' | 'handover';
 export type MessagePriority = 'normal' | 'critical';
 export type ReactionType = 'like' | 'love' | 'laugh' | 'wow' | 'sad' | 'angry';
@@ -36,6 +36,10 @@ export interface Conversation {
     isStationChannel?: boolean;
     whoCanPost?: 'everyone' | 'admins';
     allowFileSharing?: boolean;
+    // New fields for Enhanced Chat
+    isStationMasterChannel?: boolean;
+    shiftType?: string; // e.g. "Morning", "Afternoon", "Night"
+    channelCode?: string; // e.g. "AVSEC-PC-T1-GATE1-MORNING"
   };
   membership?: {
     role: 'admin' | 'member';

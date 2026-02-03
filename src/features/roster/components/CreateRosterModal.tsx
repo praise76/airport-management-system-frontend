@@ -18,7 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateRoster } from "../api";
-import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
+import {
+  useDepartments,
+  useDepartmentUnits,
+  useUnitStations,
+} from "@/hooks/departments";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -36,12 +40,15 @@ export function CreateRosterModal({
   const [endDate, setEndDate] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   const [unitId, setUnitId] = useState("");
+  const [stationId, setStationId] = useState("");
 
   const { data: departments, isLoading: departmentsLoading } = useDepartments({
     limit: 100,
   });
   const { data: units, isLoading: unitsLoading } =
     useDepartmentUnits(departmentId);
+  const { data: stations, isLoading: stationsLoading } =
+    useUnitStations(unitId);
 
   // console.log("units", units);
 
@@ -50,18 +57,24 @@ export function CreateRosterModal({
   const handleDepartmentChange = (value: string) => {
     setDepartmentId(value);
     setUnitId(""); // Reset unit when department changes
+    setStationId("");
+  };
+
+  const handleUnitChange = (value: string) => {
+    setUnitId(value);
+    setStationId("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutate(
       {
-        name,
+        rosterName: name,
         startDate,
         endDate,
-        unitId: unitId || undefined,
+        unitId: stationId || unitId || undefined,
         departmentId: departmentId || undefined,
-        status: "draft",
+        approvalStatus: "draft" as any,
       },
       {
         onSuccess: () => {
@@ -72,6 +85,7 @@ export function CreateRosterModal({
           setEndDate("");
           setDepartmentId("");
           setUnitId("");
+          setStationId("");
         },
         onError: (err: any) =>
           toast.error(err?.message || "Failed to create roster"),
@@ -148,7 +162,7 @@ export function CreateRosterModal({
             <Label>Unit (Optional)</Label>
             <Select
               value={unitId}
-              onValueChange={setUnitId}
+              onValueChange={handleUnitChange}
               disabled={!departmentId || unitsLoading}
             >
               <SelectTrigger className="w-full">
@@ -163,9 +177,65 @@ export function CreateRosterModal({
                 />
               </SelectTrigger>
               <SelectContent>
-                {units?.data?.map((unit) => (
+                {units?.data?.map((unit: any) => (
                   <SelectItem key={unit.id} value={unit.id}>
                     {unit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Station (Optional)</Label>
+            <Select
+              value={stationId}
+              onValueChange={setStationId}
+              disabled={!unitId || stationsLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    !unitId
+                      ? "Select a unit first"
+                      : stationsLoading
+                        ? "Loading stations..."
+                        : "Select Station"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {stations?.data?.map((station: any) => (
+                  <SelectItem key={station.id} value={station.id}>
+                    {station.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Station (Optional)</Label>
+            <Select
+              value={stationId}
+              onValueChange={setStationId}
+              disabled={!unitId || stationsLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    !unitId
+                      ? "Select a unit first"
+                      : stationsLoading
+                        ? "Loading stations..."
+                        : "Select Station"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {stations?.data?.map((station: any) => (
+                  <SelectItem key={station.id} value={station.id}>
+                    {station.name}
                   </SelectItem>
                 ))}
               </SelectContent>

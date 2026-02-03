@@ -51,6 +51,24 @@ function MessagesLayout() {
 
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Auto-switch to active shift channel if no channel selected
+  useEffect(() => {
+    if (
+      !isLoadingConversations &&
+      conversations.length > 0 &&
+      (location.pathname === "/messages" || location.pathname === "/messages/")
+    ) {
+      // Prioritize "Station Channel" (Shift Channel)
+      const shiftChannel = conversations.find(
+        (c: any) => c.type === "unit" && c.settings?.isStationChannel,
+      );
+
+      if (shiftChannel) {
+        navigate({ to: `/messages/${shiftChannel.id}`, replace: true });
+      }
+    }
+  }, [conversations, isLoadingConversations, location.pathname, navigate]);
+
   const filteredConversations = conversations.filter((c: any) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -107,9 +125,12 @@ function MessagesLayout() {
               </div>
             )}
 
-            {/* Station Channels */}
+            {/* Station Channels (Shift + Master) */}
             {filteredConversations.some(
-              (c: any) => c.type === "unit" && c.settings?.isStationChannel,
+              (c: any) =>
+                c.type === "unit" &&
+                (c.settings?.isStationChannel ||
+                  c.settings?.isStationMasterChannel),
             ) && (
               <div className="space-y-1">
                 <h3 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -118,8 +139,24 @@ function MessagesLayout() {
                 {filteredConversations
                   .filter(
                     (c: any) =>
-                      c.type === "unit" && c.settings?.isStationChannel,
+                      c.type === "unit" &&
+                      (c.settings?.isStationChannel ||
+                        c.settings?.isStationMasterChannel),
                   )
+                  // Sort: Shift channels first, then Master
+                  .sort((a: any, b: any) => {
+                    if (
+                      a.settings?.isStationChannel &&
+                      !b.settings?.isStationChannel
+                    )
+                      return -1;
+                    if (
+                      !a.settings?.isStationChannel &&
+                      b.settings?.isStationChannel
+                    )
+                      return 1;
+                    return 0;
+                  })
                   .map((conv: any) => (
                     <ConversationListItem
                       key={conv.id}
@@ -135,7 +172,8 @@ function MessagesLayout() {
             {filteredConversations.some(
               (c: any) =>
                 (c.type === "unit" || c.type === "department") &&
-                !c.settings?.isStationChannel,
+                !c.settings?.isStationChannel &&
+                !c.settings?.isStationMasterChannel,
             ) && (
               <div className="space-y-1">
                 <h3 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -145,7 +183,8 @@ function MessagesLayout() {
                   .filter(
                     (c: any) =>
                       (c.type === "unit" || c.type === "department") &&
-                      !c.settings?.isStationChannel,
+                      !c.settings?.isStationChannel &&
+                      !c.settings?.isStationMasterChannel,
                   )
                   .map((conv: any) => (
                     <ConversationListItem

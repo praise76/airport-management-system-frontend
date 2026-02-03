@@ -68,10 +68,10 @@ function GroupsPage() {
                 </div>
               )}
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start pr-20">
+                <div className="flex justify-between items-start">
                   {" "}
                   {/* Add padding for badge */}
-                  <CardTitle className="text-lg">{group.groupName}</CardTitle>
+                  <CardTitle className="text-lg mt-4">{group.name}</CardTitle>
                 </div>
                 <CardDescription className="flex items-center gap-2">
                   {group.groupType === "department" && (

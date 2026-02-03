@@ -52,6 +52,7 @@ import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$
 import { Route as MessagesNewRouteImport } from './routes/messages/new'
 import { Route as MessagesConversationIdRouteImport } from './routes/messages/$conversationId'
 import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
+import { Route as DocumentsRegistryRouteImport } from './routes/documents/registry'
 import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
@@ -305,6 +306,11 @@ const GroupsGroupIdRoute = GroupsGroupIdRouteImport.update({
   path: '/groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocumentsRegistryRoute = DocumentsRegistryRouteImport.update({
+  id: '/documents/registry',
+  path: '/documents/registry',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocumentsNewRoute = DocumentsNewRouteImport.update({
   id: '/documents/new',
   path: '/documents/new',
@@ -490,6 +496,7 @@ export interface FileRoutesByFullPath {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/documents/registry': typeof DocumentsRegistryRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/messages/new': typeof MessagesNewRoute
@@ -567,6 +574,7 @@ export interface FileRoutesByTo {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/documents/registry': typeof DocumentsRegistryRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/messages/new': typeof MessagesNewRoute
@@ -647,6 +655,7 @@ export interface FileRoutesById {
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
+  '/documents/registry': typeof DocumentsRegistryRoute
   '/groups/$groupId': typeof GroupsGroupIdRoute
   '/messages/$conversationId': typeof MessagesConversationIdRoute
   '/messages/new': typeof MessagesNewRoute
@@ -728,6 +737,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
+    | '/documents/registry'
     | '/groups/$groupId'
     | '/messages/$conversationId'
     | '/messages/new'
@@ -805,6 +815,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
+    | '/documents/registry'
     | '/groups/$groupId'
     | '/messages/$conversationId'
     | '/messages/new'
@@ -884,6 +895,7 @@ export interface FileRouteTypes {
     | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
+    | '/documents/registry'
     | '/groups/$groupId'
     | '/messages/$conversationId'
     | '/messages/new'
@@ -964,6 +976,7 @@ export interface RootRouteChildren {
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   DocumentsDocIdRoute: typeof DocumentsDocIdRoute
   DocumentsNewRoute: typeof DocumentsNewRoute
+  DocumentsRegistryRoute: typeof DocumentsRegistryRoute
   GroupsGroupIdRoute: typeof GroupsGroupIdRoute
   OrganizationsOrgIdRoute: typeof OrganizationsOrgIdRouteWithChildren
   OrganizationsNewRoute: typeof OrganizationsNewRoute
@@ -1327,6 +1340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/documents/registry': {
+      id: '/documents/registry'
+      path: '/documents/registry'
+      fullPath: '/documents/registry'
+      preLoaderRoute: typeof DocumentsRegistryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/documents/new': {
       id: '/documents/new'
       path: '/documents/new'
@@ -1624,6 +1644,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   DocumentsDocIdRoute: DocumentsDocIdRoute,
   DocumentsNewRoute: DocumentsNewRoute,
+  DocumentsRegistryRoute: DocumentsRegistryRoute,
   GroupsGroupIdRoute: GroupsGroupIdRoute,
   OrganizationsOrgIdRoute: OrganizationsOrgIdRouteWithChildren,
   OrganizationsNewRoute: OrganizationsNewRoute,
