@@ -69,6 +69,13 @@ const primaryNav: NavItem[] = [
     roles: ["SUPER_ADMIN", "HR"],
   },
   { label: "Public Duty Board", to: "/public/duty-board" },
+  { label: "Self Service", to: "/self-service" },
+  { label: "Shift Swaps", to: "/swaps" },
+  {
+    label: "Leave Approvals",
+    to: "/admin/leave/approvals",
+    roles: ["SUPER_ADMIN", "ADMIN", "ORG_ADMIN", "HOD", "HOU"],
+  },
   { label: "RGM", to: "/rgm", roles: ["RGM"] },
   { label: "Security", to: "/security", roles: ["ACOS"] },
   //   { label: "Admin", to: "/admin", roles: ["SUPER_ADMIN"] },

@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as TerminalsIndexRouteImport } from './routes/terminals/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks/index'
+import { Route as SwapsIndexRouteImport } from './routes/swaps/index'
 import { Route as StakeholdersIndexRouteImport } from './routes/stakeholders/index'
 import { Route as SelfServiceIndexRouteImport } from './routes/self-service/index'
 import { Route as SecurityIndexRouteImport } from './routes/security/index'
@@ -81,6 +82,7 @@ import { Route as DemoApiMcpTodosRouteImport } from './routes/demo/api.mcp-todos
 import { Route as AdminStakeholdersVerificationRouteImport } from './routes/admin/stakeholders/verification'
 import { Route as AdminStaffNewRouteImport } from './routes/admin/staff/new'
 import { Route as AdminRosterPlannerRouteImport } from './routes/admin/roster/planner'
+import { Route as AdminLeaveApprovalsRouteImport } from './routes/admin/leave/approvals'
 import { Route as AdminAttendanceRegistryRouteImport } from './routes/admin/attendance/registry'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
@@ -111,6 +113,11 @@ const TerminalsIndexRoute = TerminalsIndexRouteImport.update({
 const TasksIndexRoute = TasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SwapsIndexRoute = SwapsIndexRouteImport.update({
+  id: '/swaps/',
+  path: '/swaps/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholdersIndexRoute = StakeholdersIndexRouteImport.update({
@@ -452,6 +459,11 @@ const AdminRosterPlannerRoute = AdminRosterPlannerRouteImport.update({
   path: '/admin/roster/planner',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLeaveApprovalsRoute = AdminLeaveApprovalsRouteImport.update({
+  id: '/admin/leave/approvals',
+  path: '/admin/leave/approvals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAttendanceRegistryRoute = AdminAttendanceRegistryRouteImport.update({
   id: '/admin/attendance/registry',
   path: '/admin/attendance/registry',
@@ -535,10 +547,12 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityIndexRoute
   '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
+  '/swaps': typeof SwapsIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/terminals': typeof TerminalsIndexRoute
   '/users': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
+  '/admin/leave/approvals': typeof AdminLeaveApprovalsRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
@@ -613,10 +627,12 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityIndexRoute
   '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
+  '/swaps': typeof SwapsIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/terminals': typeof TerminalsIndexRoute
   '/users': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
+  '/admin/leave/approvals': typeof AdminLeaveApprovalsRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
@@ -694,10 +710,12 @@ export interface FileRoutesById {
   '/security/': typeof SecurityIndexRoute
   '/self-service/': typeof SelfServiceIndexRoute
   '/stakeholders/': typeof StakeholdersIndexRoute
+  '/swaps/': typeof SwapsIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/terminals/': typeof TerminalsIndexRoute
   '/users/': typeof UsersIndexRoute
   '/admin/attendance/registry': typeof AdminAttendanceRegistryRoute
+  '/admin/leave/approvals': typeof AdminLeaveApprovalsRoute
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
@@ -776,10 +794,12 @@ export interface FileRouteTypes {
     | '/security'
     | '/self-service'
     | '/stakeholders'
+    | '/swaps'
     | '/tasks'
     | '/terminals'
     | '/users'
     | '/admin/attendance/registry'
+    | '/admin/leave/approvals'
     | '/admin/roster/planner'
     | '/admin/staff/new'
     | '/admin/stakeholders/verification'
@@ -854,10 +874,12 @@ export interface FileRouteTypes {
     | '/security'
     | '/self-service'
     | '/stakeholders'
+    | '/swaps'
     | '/tasks'
     | '/terminals'
     | '/users'
     | '/admin/attendance/registry'
+    | '/admin/leave/approvals'
     | '/admin/roster/planner'
     | '/admin/staff/new'
     | '/admin/stakeholders/verification'
@@ -934,10 +956,12 @@ export interface FileRouteTypes {
     | '/security/'
     | '/self-service/'
     | '/stakeholders/'
+    | '/swaps/'
     | '/tasks/'
     | '/terminals/'
     | '/users/'
     | '/admin/attendance/registry'
+    | '/admin/leave/approvals'
     | '/admin/roster/planner'
     | '/admin/staff/new'
     | '/admin/stakeholders/verification'
@@ -1012,10 +1036,12 @@ export interface RootRouteChildren {
   SecurityIndexRoute: typeof SecurityIndexRoute
   SelfServiceIndexRoute: typeof SelfServiceIndexRoute
   StakeholdersIndexRoute: typeof StakeholdersIndexRoute
+  SwapsIndexRoute: typeof SwapsIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
   TerminalsIndexRoute: typeof TerminalsIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   AdminAttendanceRegistryRoute: typeof AdminAttendanceRegistryRoute
+  AdminLeaveApprovalsRoute: typeof AdminLeaveApprovalsRoute
   AdminRosterPlannerRoute: typeof AdminRosterPlannerRoute
   AdminStakeholdersVerificationRoute: typeof AdminStakeholdersVerificationRoute
   DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
@@ -1072,6 +1098,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof TasksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/swaps/': {
+      id: '/swaps/'
+      path: '/swaps'
+      fullPath: '/swaps'
+      preLoaderRoute: typeof SwapsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholders/': {
@@ -1543,6 +1576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRosterPlannerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/leave/approvals': {
+      id: '/admin/leave/approvals'
+      path: '/admin/leave/approvals'
+      fullPath: '/admin/leave/approvals'
+      preLoaderRoute: typeof AdminLeaveApprovalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/attendance/registry': {
       id: '/admin/attendance/registry'
       path: '/admin/attendance/registry'
@@ -1680,10 +1720,12 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityIndexRoute: SecurityIndexRoute,
   SelfServiceIndexRoute: SelfServiceIndexRoute,
   StakeholdersIndexRoute: StakeholdersIndexRoute,
+  SwapsIndexRoute: SwapsIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
   TerminalsIndexRoute: TerminalsIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   AdminAttendanceRegistryRoute: AdminAttendanceRegistryRoute,
+  AdminLeaveApprovalsRoute: AdminLeaveApprovalsRoute,
   AdminRosterPlannerRoute: AdminRosterPlannerRoute,
   AdminStakeholdersVerificationRoute: AdminStakeholdersVerificationRoute,
   DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,

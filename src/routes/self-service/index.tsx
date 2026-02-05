@@ -21,11 +21,19 @@ import {
 } from "@/components/ui/dialog";
 import {
   useMyProfile,
-  useMyLeaveBalance,
   useMyRoster,
   useUpdateProfile,
 } from "@/hooks/self-service";
+import {
+  useMyLeaveBalances,
+  useMyApplications,
+  useApplyForLeave,
+} from "@/hooks/leave";
 import { Textarea } from "@/components/ui/textarea";
+import { LeaveBalanceCards } from "@/components/leave/LeaveBalanceCards";
+import { MyApplicationsTable } from "@/components/leave/MyApplicationsTable";
+import { ApplyLeaveForm } from "@/components/leave/ApplyLeaveForm"; // Assuming this is where it is
+import { CreateLeaveRequest } from "@/types/leave";
 
 export const Route = createFileRoute("/self-service/")({
   component: SelfServicePage,
@@ -169,9 +177,19 @@ function UpdateProfileModal({
 function SelfServicePage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isApplyLeaveModalOpen, setIsApplyLeaveModalOpen] = useState(false);
+
   const profileQuery = useMyProfile();
-  const leaveQuery = useMyLeaveBalance();
+  const leaveQuery = useMyLeaveBalances();
+  const applicationsQuery = useMyApplications();
   const rosterQuery = useMyRoster();
+  const applyLeaveMutation = useApplyForLeave();
+
+  const handleApplyLeave = (data: CreateLeaveRequest) => {
+    applyLeaveMutation.mutate(data, {
+      onSuccess: () => setIsApplyLeaveModalOpen(false),
+    });
+  };
 
   if (profileQuery.isLoading) {
     return (
@@ -289,29 +307,50 @@ function SelfServicePage() {
         />
 
         {activeTab === "leave" && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Palmtree className="h-5 w-5" /> Leave Balances
               </h3>
-              <Button>Apply for Leave</Button>
+              <Button onClick={() => setIsApplyLeaveModalOpen(true)}>
+                Apply for Leave
+              </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {leaveQuery.data?.data.map((bal) => (
-                <div
-                  key={bal.leaveType}
-                  className="border p-4 rounded-lg bg-card"
-                >
-                  <div className="text-sm font-medium text-muted-foreground mb-1">
-                    {bal.leaveType}
-                  </div>
-                  <div className="text-3xl font-bold">{bal.remaining}</div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    {bal.taken} taken / {bal.entitled} entitled
-                  </div>
-                </div>
-              ))}
+
+            <LeaveBalanceCards
+              balances={leaveQuery.data || []}
+              loading={leaveQuery.isLoading}
+            />
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="h-5 w-5" /> My Applications
+              </h3>
+              <MyApplicationsTable
+                applications={applicationsQuery.data || []}
+                loading={applicationsQuery.isLoading}
+              />
             </div>
+
+            <Dialog
+              open={isApplyLeaveModalOpen}
+              onOpenChange={setIsApplyLeaveModalOpen}
+            >
+              <DialogContent className="sm:max-w-[700px] h-[90vh] sm:h-auto overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Apply for Leave</DialogTitle>
+                  <DialogDescription>
+                    Submit a new leave request. Please ensure you have
+                    sufficient balance.
+                  </DialogDescription>
+                </DialogHeader>
+                <ApplyLeaveForm
+                  onSubmit={handleApplyLeave}
+                  isSubmitting={applyLeaveMutation.isPending}
+                  onCancel={() => setIsApplyLeaveModalOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
