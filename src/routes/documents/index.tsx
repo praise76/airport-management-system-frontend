@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { DepartmentSelector } from "@/components/departments";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/documents/")({
   beforeLoad: () => {
@@ -40,6 +41,7 @@ function DocumentsPage() {
   const [status, setStatus] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [direction, setDirection] = useState<DocumentDirection | "">("");
+  const [scope, setScope] = useState<"personal" | "department">("personal");
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useDocuments({
@@ -48,6 +50,7 @@ function DocumentsPage() {
     documentType: documentType || undefined,
     direction: direction || undefined,
     status: status || undefined,
+    scope,
   });
 
   const API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -75,6 +78,20 @@ function DocumentsPage() {
           </Link>
         </div>
       </div>
+
+      <Tabs
+        value={scope}
+        onValueChange={(val) => {
+          setScope(val as any);
+          setPage(1);
+        }}
+        className="w-full"
+      >
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsTrigger value="personal">My Assignments</TabsTrigger>
+          <TabsTrigger value="department">Department Records</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Filters */}
       <div className="flex gap-4 items-end">

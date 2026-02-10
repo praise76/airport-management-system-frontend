@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/documents/registry")({
@@ -49,10 +50,14 @@ export const Route = createFileRoute("/documents/registry")({
 
 function RegistryDeskPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
 
-  // Registry Officers look for documents in the 'forwarded_to_department' stage
+  // Fetch pending or historical documents
   const { data, isLoading } = useDocuments({
-    status: "forwarded_to_department",
+    status:
+      activeTab === "pending"
+        ? "forwarded_to_department"
+        : "dispatched_to_hod,approved,acknowledged",
     limit: 100,
   });
 
@@ -73,6 +78,13 @@ function RegistryDeskPage() {
           Unit.
         </p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsTrigger value="pending">Pending Dispatch</TabsTrigger>
+          <TabsTrigger value="history">Registry History</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-lg border">
         <div className="relative flex-1">
@@ -165,7 +177,9 @@ function DocumentCard({ document }: { document: any }) {
           </div>
 
           <div className="flex flex-col gap-2 items-end">
-            <DispatchDialog document={document} />
+            {document.status === "forwarded_to_department" && (
+              <DispatchDialog document={document} />
+            )}
             <Button variant="outline" size="sm" asChild>
               <a
                 href={`/documents/${document.id}`}

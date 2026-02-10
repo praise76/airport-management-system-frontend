@@ -1,14 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  Calendar as CalendarIcon,
-  Users,
-  ArrowRight,
-  Check,
-  Save,
-  Loader2,
-} from "lucide-react";
+import { Users, ArrowRight, Save, Loader2 } from "lucide-react";
+
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,9 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 
 import { listTemplates, generateRoster } from "@/api/roster";
 import { useUsers } from "@/hooks/users";
@@ -58,7 +50,7 @@ const teamSchema = z.object({
 });
 
 const generateSchema = z.object({
-  unitId: z.string().min(1, "Unit is required"),
+  unitDepartmentId: z.string().min(1, "Unit is required"),
   templateId: z.string().min(1, "Template is required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
@@ -73,12 +65,32 @@ function GenerateRosterPage() {
   const [previewData, setPreviewData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("config");
 
+  const form = useForm<GenerateFormValues>({
+    resolver: zodResolver(generateSchema),
+    defaultValues: {
+      unitDepartmentId: "",
+      templateId: search.templateId || "",
+      startDate: format(addDays(new Date(), 1), "yyyy-MM-dd"), // Tomorrow
+      endDate: format(addDays(new Date(), 30), "yyyy-MM-dd"), // 30 days
+      teams: [
+        { name: "Team A", memberIds: [], offsetDays: 0 },
+        { name: "Team B", memberIds: [], offsetDays: 2 }, // Example offset
+      ],
+    },
+  });
+
+  const selectedUnitId = form.watch("unitDepartmentId");
+
   // Fetch Data
   const { data: templates } = useQuery({
     queryKey: ["roster-templates"],
     queryFn: listTemplates,
   });
-  const { data: usersData } = useUsers({ limit: 100 });
+  const { data: usersData } = useUsers({
+    limit: 100,
+    departmentId: selectedUnitId || undefined,
+  });
+
   const users = usersData?.data || [];
   const { data: deptTree } = useDepartmentTree();
 
@@ -96,20 +108,6 @@ function GenerateRosterPage() {
     return collected;
   }, [deptTree]);
 
-  const form = useForm<GenerateFormValues>({
-    resolver: zodResolver(generateSchema),
-    defaultValues: {
-      unitId: "",
-      templateId: search.templateId || "",
-      startDate: format(addDays(new Date(), 1), "yyyy-MM-dd"), // Tomorrow
-      endDate: format(addDays(new Date(), 30), "yyyy-MM-dd"), // 30 days
-      teams: [
-        { name: "Team A", memberIds: [], offsetDays: 0 },
-        { name: "Team B", memberIds: [], offsetDays: 2 }, // Example offset
-      ],
-    },
-  });
-
   const {
     fields: teamFields,
     append: appendTeam,
@@ -118,6 +116,8 @@ function GenerateRosterPage() {
     control: form.control,
     name: "teams",
   });
+
+  // console.log("preview data", previewData);
 
   const selectedTemplate = useMemo(
     () => templates?.find((t) => t.id === form.watch("templateId")),
@@ -131,11 +131,13 @@ function GenerateRosterPage() {
         toast.success("Roster generated and saved successfully!");
         navigate({ to: "/roster" }); // Redirect to main roster list
       } else {
+        // console.log("data", data);
         setPreviewData(data);
         setActiveTab("preview");
         toast.success("Preview generated");
       }
     },
+
     onError: () => toast.error("Failed to generate roster"),
   });
 
@@ -173,15 +175,17 @@ function GenerateRosterPage() {
                 <div className="space-y-2">
                   <Label>Select Unit</Label>
                   <Select
-                    onValueChange={(val) => form.setValue("unitId", val)}
-                    value={form.watch("unitId")}
+                    onValueChange={(val) =>
+                      form.setValue("unitDepartmentId", val)
+                    }
+                    value={form.watch("unitDepartmentId")}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a unit" />
                     </SelectTrigger>
                     <SelectContent>
                       {units.length > 0 ? (
-                        units.map((u) => (
+                        units.map((u: any) => (
                           <SelectItem key={u.id} value={u.id}>
                             {u.name} ({u.code})
                           </SelectItem>
@@ -193,9 +197,9 @@ function GenerateRosterPage() {
                       )}
                     </SelectContent>
                   </Select>
-                  {form.formState.errors.unitId && (
+                  {form.formState.errors.unitDepartmentId && (
                     <p className="text-xs text-destructive">
-                      {form.formState.errors.unitId.message}
+                      {form.formState.errors.unitDepartmentId.message}
                     </p>
                   )}
                 </div>
@@ -310,7 +314,7 @@ function GenerateRosterPage() {
                           <SelectValue placeholder="Add member..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {users.map((u) => (
+                          {users.map((u: any) => (
                             <SelectItem key={u.id} value={u.id}>
                               {u.firstName} {u.lastName}
                             </SelectItem>
@@ -321,8 +325,10 @@ function GenerateRosterPage() {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {form
                           .watch(`teams.${index}.memberIds`)
-                          ?.map((userId) => {
-                            const user = users.find((u) => u.id === userId);
+                          ?.map((userId: string) => {
+                            const user = users.find(
+                              (u: any) => u.id === userId,
+                            );
                             return (
                               <Badge
                                 key={userId}
@@ -399,7 +405,7 @@ function GenerateRosterPage() {
             <CardHeader>
               <CardTitle>Roster Preview</CardTitle>
               <CardDescription>
-                Generated {previewData?.entries.length} entries. Review the
+                Generated {previewData?.entries?.length} entries. Review the
                 schedule below before saving.
               </CardDescription>
             </CardHeader>
@@ -417,8 +423,10 @@ function GenerateRosterPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {previewData?.entries.map((entry: any, i: number) => {
-                        const user = users.find((u) => u.id === entry.staffId);
+                      {previewData?.entries?.map((entry: any, i: number) => {
+                        const user = users.find(
+                          (u: any) => u.id === entry.staffId,
+                        );
                         return (
                           <tr key={i} className="hover:bg-muted/10">
                             <td className="p-3">
@@ -438,7 +446,7 @@ function GenerateRosterPage() {
                           </tr>
                         );
                       })}
-                      {(!previewData || previewData.entries.length === 0) && (
+                      {(!previewData || previewData?.entries?.length === 0) && (
                         <tr>
                           <td
                             colSpan={4}

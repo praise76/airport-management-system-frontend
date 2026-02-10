@@ -23,7 +23,9 @@ export type ListDocumentsParams = {
 	direction?: DocumentDirection;
 	status?: string;
 	documentType?: string;
+	scope?: "personal" | "department" | "all";
 };
+
 
 export async function listDocuments(
 	params: ListDocumentsParams = {},
@@ -78,10 +80,11 @@ export async function registerDocument(
 	return payload;
 }
 
-export async function getDocumentJourney(id: string): Promise<import("@/types/document").DocumentJourneyStep[]> {
+export async function getDocumentJourney(id: string): Promise<import("@/types/document").DocumentJourneyResponse> {
   const res = await api.get(`/documents/${id}/journey`);
-  return (res.data?.data ?? res.data) as import("@/types/document").DocumentJourneyStep[];
+  return (res.data?.data ?? res.data) as import("@/types/document").DocumentJourneyResponse;
 }
+
 
 export type ForwardDocumentRequest = {
 	toUserId?: string;

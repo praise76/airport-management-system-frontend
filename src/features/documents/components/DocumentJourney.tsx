@@ -1,13 +1,6 @@
 import { DocumentJourneyStep } from "@/types/document";
 import { cn } from "@/lib/utils";
-import {
-  Check,
-  Clock,
-  User,
-  Building,
-  ExternalLink,
-  XCircle,
-} from "lucide-react";
+import { Check, Clock, XCircle } from "lucide-react";
 
 interface DocumentJourneyProps {
   steps: DocumentJourneyStep[];
@@ -77,27 +70,33 @@ export function DocumentJourney({ steps }: DocumentJourneyProps) {
             <div className="flex-1 pb-8 pt-1">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                 <div>
-                  <h3 className="font-semibold text-sm">
-                    {step.actionTaken || `Step ${step.stepNumber}`}
+                  <h3 className="font-semibold text-sm capitalize">
+                    {step.action || `Step ${step.stepNumber}`}
                   </h3>
-                  <div className="text-sm text-muted-foreground mt-0.5">
-                    {getDestinationLabel(step)}
+                  <div
+                    className={cn(
+                      "text-xs font-medium px-2 py-0.5 rounded-full w-fit mt-1",
+                      step.location === "REGISTRY" &&
+                        "bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border border-orange-200 dark:border-orange-800",
+                      step.location === "RGM" &&
+                        "bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800",
+                      step.location.includes("HOD") &&
+                        "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800",
+                      !["REGISTRY", "RGM"].includes(step.location) &&
+                        !step.location.includes("HOD") &&
+                        "bg-muted text-muted-foreground border",
+                    )}
+                  >
+                    {step.location}
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground whitespace-nowrap text-right">
-                  {step.completedAt ? (
+                  {step.date ? (
                     <div>
                       <span className="block font-medium text-foreground">
-                        Completed
+                        {step.status === "completed" ? "Processed" : "Pending"}
                       </span>
-                      {new Date(step.completedAt).toLocaleString()}
-                    </div>
-                  ) : step.assignedAt ? (
-                    <div>
-                      <span className="block font-medium text-blue-600">
-                        Arrived
-                      </span>
-                      {new Date(step.assignedAt).toLocaleString()}
+                      {new Date(step.date).toLocaleString()}
                     </div>
                   ) : null}
                 </div>
@@ -108,37 +107,10 @@ export function DocumentJourney({ steps }: DocumentJourneyProps) {
                   "{step.comments}"
                 </div>
               )}
-
-              <div className="mt-2 flex items-center gap-2">
-                <BadgeForType type={step.destinationType} />
-              </div>
             </div>
           </div>
         );
       })}
     </div>
-  );
-}
-
-function getDestinationLabel(step: DocumentJourneyStep) {
-  if (step.finalDestinationName) return step.finalDestinationName;
-  if (step.departmentName) return step.departmentName;
-  if (step.assignedToUserFirstName)
-    return `${step.assignedToUserFirstName} ${step.assignedToUserLastName}`;
-  if (step.positionCode) return `Position: ${step.positionCode}`;
-  return "Unknown Destination";
-}
-
-function BadgeForType({ type }: { type: string }) {
-  if (!type) return null;
-
-  const formatted = type.charAt(0).toUpperCase() + type.slice(1);
-  return (
-    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-      {type === "user" && <User className="w-3 h-3 mr-1" />}
-      {type === "department" && <Building className="w-3 h-3 mr-1" />}
-      {type === "external" && <ExternalLink className="w-3 h-3 mr-1" />}
-      {formatted}
-    </span>
   );
 }

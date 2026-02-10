@@ -9,8 +9,9 @@ export interface Roster {
   rosterName: string; // "Security Team A - Jan 2024"
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
-  unitId: string;
+  unitDepartmentId: string;
   departmentId: string;
+
   approvalStatus: RosterStatus;
   notes?: string;
 }

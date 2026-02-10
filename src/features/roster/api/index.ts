@@ -5,14 +5,15 @@ import { Roster, RosterEntry, ShiftSwapRequest, ShiftPattern } from "../types";
 
 // --- Roster Management (Admin) ---
 
-export const useGetRosters = (filters?: { unitId?: string; departmentId?: string; status?: string }) => {
+export const useGetRosters = (filters?: { unitDepartmentId?: string; departmentId?: string; status?: string }) => {
   return useQuery({
     queryKey: ["rosters", filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.unitId) params.append("unitId", filters.unitId);
+      if (filters?.unitDepartmentId) params.append("unitDepartmentId", filters.unitDepartmentId);
       if (filters?.departmentId) params.append("departmentId", filters.departmentId);
       if (filters?.status) params.append("status", filters.status);
+
       
       const { data } = await api.get<Roster[]>(`/roster?${params.toString()}`);
       return data;
@@ -202,12 +203,13 @@ export const useReviewSwap = () => { // Supervisor
 // --- Shift Definitions ---
 import { ShiftDefinition } from "../types";
 
-export const useGetShiftDefinitions = (filters?: { unitId?: string }) => {
+export const useGetShiftDefinitions = (filters?: { unitDepartmentId?: string }) => {
   return useQuery({
     queryKey: ["shift-definitions", filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.unitId) params.append("unitId", filters.unitId);
+      if (filters?.unitDepartmentId) params.append("unitDepartmentId", filters.unitDepartmentId);
+
       
       const { data } = await api.get<{ data: ShiftDefinition[] }>(`/roster/shifts?${params.toString()}`);
       return data.data

@@ -13,7 +13,8 @@ export type RosterEntry = {
   id: string
   rosterId: string
   staffId: string
-  unitId: string
+  unitDepartmentId: string
+
   dutyDate: string
   shift: string
   shiftStartTime: string
@@ -32,7 +33,8 @@ export type SwapRequest = {
 }
 
 export type CreateRosterRequest = {
-  unitId: string
+  unitDepartmentId: string
+
   rosterName: string
   startDate: string
   endDate: string
@@ -75,7 +77,8 @@ export type RosterTeamConfig = {
 }
 
 export type GenerateRosterRequest = {
-  unitId: string
+  unitDepartmentId: string
+
   templateId: string
   startDate: string
   endDate: string

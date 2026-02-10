@@ -72,7 +72,7 @@ export function CreateRosterModal({
         rosterName: name,
         startDate,
         endDate,
-        unitId: stationId || unitId || undefined,
+        unitDepartmentId: stationId || unitId || undefined,
         departmentId: departmentId || undefined,
         approvalStatus: "draft" as any,
       },

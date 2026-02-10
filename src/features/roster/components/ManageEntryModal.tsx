@@ -36,7 +36,7 @@ interface ManageEntryModalProps {
   existingEntry?: RosterEntry;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  unitId?: string; // Passed to filter shifts
+  unitDepartmentId?: string; // Passed to filter shifts
 }
 
 export function ManageEntryModal({
@@ -46,7 +46,7 @@ export function ManageEntryModal({
   existingEntry,
   open,
   onOpenChange,
-  unitId,
+  unitDepartmentId,
 }: ManageEntryModalProps) {
   const [shift, setShift] = useState<ShiftType>("morning");
   const [shiftDefinitionId, setShiftDefinitionId] = useState<string>(""); // Selection state
@@ -56,7 +56,10 @@ export function ManageEntryModal({
   const [location, setLocation] = useState("");
   const [terminalId, setTerminalId] = useState<string>("");
 
-  const { data: shiftDefinitions } = useGetShiftDefinitions({ unitId });
+  const { data: shiftDefinitions } = useGetShiftDefinitions({
+    unitDepartmentId,
+  });
+
   const { data: terminals } = useTerminals();
   const { data: zones } = useGeofenceZones();
 
@@ -103,8 +106,9 @@ export function ManageEntryModal({
     e.preventDefault();
     const entryData: any = {
       staffId: userId,
-      unitDepartmentId: unitId,
+      unitDepartmentId: unitDepartmentId,
       dutyDate: format(date, "yyyy-MM-dd"), // Ensure correct format
+
       shift,
       shiftStartTime: startTime,
       shiftEndTime: endTime,

@@ -60,5 +60,5 @@ export async function createTemplate(input: CreateTemplateRequest): Promise<Shif
 
 export async function generateRoster(input: GenerateRosterRequest): Promise<GenerateRosterResponse> {
   const res = await api.post("/roster/templates/generate", input);
-  return res.data;
+  return res.data.data;
 }

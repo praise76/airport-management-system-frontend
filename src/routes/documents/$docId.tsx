@@ -44,7 +44,12 @@ function DocumentDetailsPage() {
     docId !== "null" &&
     docId.length > 5;
 
-  const { data: steps, isLoading, isError, error } = useDocumentJourney(docId);
+  const {
+    data: journeyData,
+    isLoading,
+    isError,
+    error,
+  } = useDocumentJourney(docId);
 
   // Handle invalid document ID
   if (!isValidDocId) {
@@ -68,7 +73,7 @@ function DocumentDetailsPage() {
     );
   }
 
-  if (isError || !steps) {
+  if (isError || !journeyData) {
     return (
       <div className="py-12 text-center text-destructive">
         Failed to load document journey
@@ -86,7 +91,9 @@ function DocumentDetailsPage() {
       <header className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Document Journey</p>
-          <h1 className="text-2xl font-semibold">Tracking History: {docId}</h1>
+          <h1 className="text-2xl font-semibold">
+            Tracking History: {journeyData.registryNumber || docId}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Track the complete journey and current status of this document.
           </p>
@@ -98,7 +105,7 @@ function DocumentDetailsPage() {
       </header>
 
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-        <DocumentJourney steps={steps} />
+        <DocumentJourney steps={journeyData.journey} />
       </div>
     </div>
   );

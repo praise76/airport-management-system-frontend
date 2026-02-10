@@ -17,21 +17,17 @@ export interface Document {
 export interface DocumentJourneyStep {
   stepNumber: number;
   status: "pending" | "completed" | "current" | "rejected";
-  actionTaken?: string;
+  action: string;
+  location: string;
+  date: string;
   comments?: string;
-  completedAt?: string;
-  assignedAt?: string;
-  
-  // Destination Info
-  departmentName?: string;
-  positionCode?: string;
-  assignedToUserFirstName?: string;
-  assignedToUserLastName?: string;
-  
-  // External
-  finalDestinationName?: string;
-  destinationType: string;
 }
+
+export interface DocumentJourneyResponse {
+  registryNumber: string;
+  journey: DocumentJourneyStep[];
+}
+
 
 export interface DocumentListResponse {
 	data: Document[];

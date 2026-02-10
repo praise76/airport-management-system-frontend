@@ -22,18 +22,21 @@ import { Plus, Trash2, Edit2, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface ShiftManagerProps {
-  unitId?: string;
+  unitDepartmentId?: string;
   trigger?: React.ReactNode;
 }
 
-export function ShiftManager({ unitId, trigger }: ShiftManagerProps) {
+export function ShiftManager({ unitDepartmentId, trigger }: ShiftManagerProps) {
   const [open, setOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<ShiftDefinition | null>(
     null,
   );
   const [isCreating, setIsCreating] = useState(false);
 
-  const { data: shifts, isLoading } = useGetShiftDefinitions({ unitId });
+  const { data: shifts, isLoading } = useGetShiftDefinitions({
+    unitDepartmentId,
+  });
+
   const createMutation = useCreateShiftDefinition();
   const updateMutation = useUpdateShiftDefinition();
   const deleteMutation = useDeleteShiftDefinition();
@@ -147,7 +150,7 @@ export function ShiftManager({ unitId, trigger }: ShiftManagerProps) {
               </h3>
               <ShiftForm
                 initialData={editingShift || undefined}
-                unitId={unitId}
+                unitDepartmentId={unitDepartmentId}
                 onSubmit={async (data) => {
                   try {
                     if (editingShift) {
@@ -184,13 +187,13 @@ export function ShiftManager({ unitId, trigger }: ShiftManagerProps) {
 
 function ShiftForm({
   initialData,
-  unitId,
+  unitDepartmentId,
   onSubmit,
   onCancel,
   isSubmitting,
 }: {
   initialData?: Partial<ShiftDefinition>;
-  unitId?: string;
+  unitDepartmentId?: string;
   onSubmit: (data: any) => Promise<void>;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -205,7 +208,7 @@ function ShiftForm({
       startTime: initialData?.startTime || "09:00",
       endTime: initialData?.endTime || "17:00",
       color: initialData?.color || "#3b82f6",
-      unitId: unitId || initialData?.unitId,
+      unitDepartmentId: unitDepartmentId || initialData?.unitId,
     },
   });
 
