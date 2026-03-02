@@ -214,34 +214,6 @@ export function CreateRosterModal({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label>Station (Optional)</Label>
-            <Select
-              value={stationId}
-              onValueChange={setStationId}
-              disabled={!unitId || stationsLoading}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue
-                  placeholder={
-                    !unitId
-                      ? "Select a unit first"
-                      : stationsLoading
-                        ? "Loading stations..."
-                        : "Select Station"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {stations?.data?.map((station: any) => (
-                  <SelectItem key={station.id} value={station.id}>
-                    {station.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <DialogFooter>
             <Button
               type="button"

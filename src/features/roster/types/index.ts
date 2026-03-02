@@ -44,6 +44,7 @@ export interface RosterEntry {
   shiftEndTime: string; // "16:00:00"
   dutyPosition?: string; // "Gate 1 Supervisor"
   dutyLocation?: string; // "Terminal 1"
+  shiftGroup?: string; // "Team 1", "Group A"
 
   // Actual (Synced from Attendance Module)
   checkedInAt?: string; // ISO DateTime

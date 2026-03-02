@@ -17,14 +17,16 @@ import {
   useGetRoster,
   useApproveRoster,
   useDeleteRoster,
+  useGetShiftPatterns,
+  useGetShiftDefinitions,
 } from "@/features/roster/api";
 import { RosterGrid } from "@/features/roster/components/RosterGrid";
 import { CreateRosterModal } from "@/features/roster/components/CreateRosterModal";
 import { ManageEntryModal } from "@/features/roster/components/ManageEntryModal";
 import { ShiftManager } from "@/features/roster/components/ShiftManager";
 import { ShiftGrid } from "@/features/roster/components/ShiftGrid";
+import { RotationCycleTable } from "@/features/roster/components/RotationCycleTable";
 import { ManageShiftStaffModal } from "@/features/roster/components/ManageShiftStaffModal";
-import { useGetShiftDefinitions } from "@/features/roster/api";
 import { useUsers } from "@/hooks/users";
 
 import { useAuthStore } from "@/stores/auth";
@@ -50,7 +52,9 @@ function RosterPlannerPage() {
     null,
   );
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"staff" | "shift">("shift");
+  const [viewMode, setViewMode] = useState<"staff" | "shift" | "rotation">(
+    "shift",
+  );
 
   // Shift Management State
   const [isShiftStaffModalOpen, setIsShiftStaffModalOpen] = useState(false);
@@ -66,6 +70,7 @@ function RosterPlannerPage() {
   const { data: shiftDefinitions } = useGetShiftDefinitions({
     unitDepartmentId: selectedRoster?.unitDepartmentId,
   });
+  const { data: shiftPatterns } = useGetShiftPatterns();
 
   const { data: usersData } = useUsers({ limit: 100 });
 
@@ -90,8 +95,18 @@ function RosterPlannerPage() {
     shiftDef: any,
     date: Date,
     entries: RosterEntry[],
+    shiftType?: string,
   ) => {
-    setSelectedShiftForModal(shiftDef);
+    const effectiveShift = shiftDef || {
+      id: shiftType || "custom",
+      name: shiftType
+        ? shiftType.charAt(0).toUpperCase() + shiftType.slice(1)
+        : "Shift",
+      startTime: "00:00",
+      endTime: "00:00",
+    };
+
+    setSelectedShiftForModal(effectiveShift);
     setSelectedDateForEntry(date);
     setSelectedEntriesForModal(entries);
     setIsShiftStaffModalOpen(true);
@@ -173,12 +188,18 @@ function RosterPlannerPage() {
                   <Users className="h-4 w-4" />
                   Staff View
                 </TabsTrigger>
+                <TabsTrigger value="rotation" className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Rotation Pattern
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <p className="text-xs text-muted-foreground italic">
               {viewMode === "shift"
                 ? "Manage multiple staff per shift"
-                : "Assign shifts to individual staff members"}
+                : viewMode === "staff"
+                  ? "Assign shifts to individual staff members"
+                  : "View and manage standard 8-day rotation cycles"}
             </p>
           </div>
 
@@ -190,11 +211,26 @@ function RosterPlannerPage() {
               users={usersData?.data || []}
               onCellClick={handleCellClick}
             />
-          ) : (
+          ) : viewMode === "shift" ? (
             <ShiftGrid
               roster={selectedRoster}
               shifts={shiftDefinitions || []}
               onCellClick={handleShiftCellClick}
+            />
+          ) : (
+            <RotationCycleTable
+              patterns={
+                shiftPatterns && shiftPatterns.length > 0
+                  ? shiftPatterns.map((p) => ({
+                      name: p.patternName,
+                      pattern: p.shiftSequenceJson
+                        .sort((a, b) => a.day - b.day)
+                        .map((s) => s.shift),
+                    }))
+                  : undefined
+              }
+              cycleLength={shiftPatterns?.[0]?.cycleLengthDays || 8}
+              shifts={shiftDefinitions || []}
             />
           )}
         </div>
