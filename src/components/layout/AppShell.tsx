@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
+import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
 
 type AppShellProps = {
   children?: React.ReactNode;
@@ -71,6 +72,7 @@ const primaryNav: NavItem[] = [
   { label: "Public Duty Board", to: "/public/duty-board" },
   { label: "Self Service", to: "/self-service" },
   { label: "Shift Swaps", to: "/swaps" },
+  { label: "Stations", to: "/stations" },
   {
     label: "Leave Approvals",
     to: "/admin/leave/approvals",
@@ -258,6 +260,7 @@ export function AppShell(props: AppShellProps) {
 
       {/* Main content */}
       <main className="row-start-2 col-start-1 lg:col-start-2 min-w-0 p-4 lg:p-6">
+        <ActingHODBanner />
         {props.children ?? <Outlet />}
       </main>
     </div>

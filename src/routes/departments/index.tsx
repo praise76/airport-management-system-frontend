@@ -44,6 +44,7 @@ import {
 } from "@/hooks/departments";
 import { useUsers } from "@/hooks/users";
 import { useUiStore } from "@/stores/ui";
+import { useAuthStore } from "@/stores/auth";
 import type {
   DepartmentFormData,
   DepartmentLevel,
@@ -91,9 +92,11 @@ const initialFormState: FormState = {
 
 function DepartmentsPage() {
   const { data: tree, isLoading, error } = useDepartmentTree();
-  const selectedOrganizationId = useUiStore(
-    (state) => state.selectedOrganizationId,
-  );
+  const selectedOrganizationId = useUiStore((s) => s.selectedOrganizationId);
+  const user = useAuthStore((s) => s.user);
+  
+  // Effective organization ID used for operations
+  const organizationId = selectedOrganizationId || user?.organizationId;
 
   // Users for HOD selection
   const { data: usersData } = useUsers({ limit: 100 });
@@ -183,8 +186,8 @@ function DepartmentsPage() {
       parentDepartmentId: node.parentDepartmentId,
       headUserId: node.headUserId,
       locationDetails: node.locationDetails,
-      airportCode: node.airportCode,
       terminalCodes: parseTerminalCodes(node.terminalCodes),
+      airportCode: node.airportCode,
       description: node.description,
       isRegistry: node.isRegistry,
       isEditing: true,
@@ -225,7 +228,7 @@ function DepartmentsPage() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedOrganizationId) {
+    if (!organizationId) {
       toast.error("Select an organization before creating a department.");
       return;
     }
@@ -239,7 +242,12 @@ function DepartmentsPage() {
     }
 
     // Create new
-    const request = prepareCreateRequest(formState, selectedOrganizationId);
+    if (!organizationId) {
+      toast.error("Organization ID is missing.");
+      return;
+    }
+
+    const request = prepareCreateRequest(formState, organizationId);
     await createMutation.mutateAsync(request);
     setFormDialogOpen(false);
     resetForm();
@@ -249,7 +257,7 @@ function DepartmentsPage() {
     if (!selectedDept) return;
     await assignMutation.mutateAsync({
       id: selectedDept.id,
-      input: { headUserId: hodUserId },
+      input: { hodUserId: hodUserId },
     });
     setAssignHODDialog(false);
     setHodUserId("");
@@ -424,7 +432,7 @@ function DepartmentsPage() {
         <Button
           type="button"
           onClick={() => openCreateDialog(1)}
-          disabled={!selectedOrganizationId}
+          disabled={!organizationId}
         >
           <Plus className="h-4 w-4" />
           Add Department
@@ -505,7 +513,7 @@ function DepartmentsPage() {
           if (!open) resetForm();
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="">
           <DialogHeader>
             <DialogTitle>
               {formState.isEditing
@@ -523,7 +531,7 @@ function DepartmentsPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            {!selectedOrganizationId && (
+            {!organizationId && (
               <p className="text-sm text-destructive">
                 Select an organization from the header first.
               </p>
@@ -682,7 +690,7 @@ function DepartmentsPage() {
               type="button"
               onClick={handleSubmit}
               disabled={
-                !selectedOrganizationId ||
+                !organizationId ||
                 !formState.name.trim() ||
                 !formState.code.trim() ||
                 (formState.departmentLevel > 1 &&

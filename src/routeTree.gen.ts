@@ -15,6 +15,7 @@ import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as TerminalsIndexRouteImport } from './routes/terminals/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks/index'
 import { Route as SwapsIndexRouteImport } from './routes/swaps/index'
+import { Route as StationsIndexRouteImport } from './routes/stations/index'
 import { Route as StakeholdersIndexRouteImport } from './routes/stakeholders/index'
 import { Route as SelfServiceIndexRouteImport } from './routes/self-service/index'
 import { Route as SecurityIndexRouteImport } from './routes/security/index'
@@ -118,6 +119,11 @@ const TasksIndexRoute = TasksIndexRouteImport.update({
 const SwapsIndexRoute = SwapsIndexRouteImport.update({
   id: '/swaps/',
   path: '/swaps/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationsIndexRoute = StationsIndexRouteImport.update({
+  id: '/stations/',
+  path: '/stations/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholdersIndexRoute = StakeholdersIndexRouteImport.update({
@@ -547,6 +553,7 @@ export interface FileRoutesByFullPath {
   '/security': typeof SecurityIndexRoute
   '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
+  '/stations': typeof StationsIndexRoute
   '/swaps': typeof SwapsIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/terminals': typeof TerminalsIndexRoute
@@ -627,6 +634,7 @@ export interface FileRoutesByTo {
   '/security': typeof SecurityIndexRoute
   '/self-service': typeof SelfServiceIndexRoute
   '/stakeholders': typeof StakeholdersIndexRoute
+  '/stations': typeof StationsIndexRoute
   '/swaps': typeof SwapsIndexRoute
   '/tasks': typeof TasksIndexRoute
   '/terminals': typeof TerminalsIndexRoute
@@ -710,6 +718,7 @@ export interface FileRoutesById {
   '/security/': typeof SecurityIndexRoute
   '/self-service/': typeof SelfServiceIndexRoute
   '/stakeholders/': typeof StakeholdersIndexRoute
+  '/stations/': typeof StationsIndexRoute
   '/swaps/': typeof SwapsIndexRoute
   '/tasks/': typeof TasksIndexRoute
   '/terminals/': typeof TerminalsIndexRoute
@@ -794,6 +803,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/self-service'
     | '/stakeholders'
+    | '/stations'
     | '/swaps'
     | '/tasks'
     | '/terminals'
@@ -874,6 +884,7 @@ export interface FileRouteTypes {
     | '/security'
     | '/self-service'
     | '/stakeholders'
+    | '/stations'
     | '/swaps'
     | '/tasks'
     | '/terminals'
@@ -956,6 +967,7 @@ export interface FileRouteTypes {
     | '/security/'
     | '/self-service/'
     | '/stakeholders/'
+    | '/stations/'
     | '/swaps/'
     | '/tasks/'
     | '/terminals/'
@@ -1036,6 +1048,7 @@ export interface RootRouteChildren {
   SecurityIndexRoute: typeof SecurityIndexRoute
   SelfServiceIndexRoute: typeof SelfServiceIndexRoute
   StakeholdersIndexRoute: typeof StakeholdersIndexRoute
+  StationsIndexRoute: typeof StationsIndexRoute
   SwapsIndexRoute: typeof SwapsIndexRoute
   TasksIndexRoute: typeof TasksIndexRoute
   TerminalsIndexRoute: typeof TerminalsIndexRoute
@@ -1105,6 +1118,13 @@ declare module '@tanstack/react-router' {
       path: '/swaps'
       fullPath: '/swaps'
       preLoaderRoute: typeof SwapsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stations/': {
+      id: '/stations/'
+      path: '/stations'
+      fullPath: '/stations'
+      preLoaderRoute: typeof StationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholders/': {
@@ -1720,6 +1740,7 @@ const rootRouteChildren: RootRouteChildren = {
   SecurityIndexRoute: SecurityIndexRoute,
   SelfServiceIndexRoute: SelfServiceIndexRoute,
   StakeholdersIndexRoute: StakeholdersIndexRoute,
+  StationsIndexRoute: StationsIndexRoute,
   SwapsIndexRoute: SwapsIndexRoute,
   TasksIndexRoute: TasksIndexRoute,
   TerminalsIndexRoute: TerminalsIndexRoute,
