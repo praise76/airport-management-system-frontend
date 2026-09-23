@@ -67,10 +67,15 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
 import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
 import { Route as RosterPatternsIndexRouteImport } from './routes/roster/patterns/index'
+import { Route as InventoryStockIndexRouteImport } from './routes/inventory/stock/index'
+import { Route as InventoryRequisitionsIndexRouteImport } from './routes/inventory/requisitions/index'
+import { Route as InventoryItemsIndexRouteImport } from './routes/inventory/items/index'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
 import { Route as AdminStaffIndexRouteImport } from './routes/admin/staff/index'
 import { Route as RosterTemplatesNewRouteImport } from './routes/roster/templates/new'
 import { Route as OrganizationsOrgIdEditRouteImport } from './routes/organizations/$orgId.edit'
+import { Route as InventoryRequisitionsNewRouteImport } from './routes/inventory/requisitions/new'
+import { Route as InventoryRequisitionsRequisitionIdRouteImport } from './routes/inventory/requisitions/$requisitionId'
 import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
@@ -384,6 +389,22 @@ const RosterPatternsIndexRoute = RosterPatternsIndexRouteImport.update({
   path: '/roster/patterns/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InventoryStockIndexRoute = InventoryStockIndexRouteImport.update({
+  id: '/inventory/stock/',
+  path: '/inventory/stock/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRequisitionsIndexRoute =
+  InventoryRequisitionsIndexRouteImport.update({
+    id: '/inventory/requisitions/',
+    path: '/inventory/requisitions/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InventoryItemsIndexRoute = InventoryItemsIndexRouteImport.update({
+  id: '/inventory/items/',
+  path: '/inventory/items/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
   id: '/example/guitars/',
   path: '/example/guitars/',
@@ -404,6 +425,18 @@ const OrganizationsOrgIdEditRoute = OrganizationsOrgIdEditRouteImport.update({
   path: '/edit',
   getParentRoute: () => OrganizationsOrgIdRoute,
 } as any)
+const InventoryRequisitionsNewRoute =
+  InventoryRequisitionsNewRouteImport.update({
+    id: '/inventory/requisitions/new',
+    path: '/inventory/requisitions/new',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InventoryRequisitionsRequisitionIdRoute =
+  InventoryRequisitionsRequisitionIdRouteImport.update({
+    id: '/inventory/requisitions/$requisitionId',
+    path: '/inventory/requisitions/$requisitionId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ExampleGuitarsGuitarIdRoute = ExampleGuitarsGuitarIdRouteImport.update({
   id: '/example/guitars/$guitarId',
   path: '/example/guitars/$guitarId',
@@ -572,10 +605,15 @@ export interface FileRoutesByFullPath {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
+  '/inventory/requisitions/$requisitionId': typeof InventoryRequisitionsRequisitionIdRoute
+  '/inventory/requisitions/new': typeof InventoryRequisitionsNewRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff/': typeof AdminStaffIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
+  '/inventory/items': typeof InventoryItemsIndexRoute
+  '/inventory/requisitions': typeof InventoryRequisitionsIndexRoute
+  '/inventory/stock': typeof InventoryStockIndexRoute
   '/roster/patterns': typeof RosterPatternsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
@@ -653,10 +691,15 @@ export interface FileRoutesByTo {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
+  '/inventory/requisitions/$requisitionId': typeof InventoryRequisitionsRequisitionIdRoute
+  '/inventory/requisitions/new': typeof InventoryRequisitionsNewRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff': typeof AdminStaffIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
+  '/inventory/items': typeof InventoryItemsIndexRoute
+  '/inventory/requisitions': typeof InventoryRequisitionsIndexRoute
+  '/inventory/stock': typeof InventoryStockIndexRoute
   '/roster/patterns': typeof RosterPatternsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
@@ -737,10 +780,15 @@ export interface FileRoutesById {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
+  '/inventory/requisitions/$requisitionId': typeof InventoryRequisitionsRequisitionIdRoute
+  '/inventory/requisitions/new': typeof InventoryRequisitionsNewRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff/': typeof AdminStaffIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
+  '/inventory/items/': typeof InventoryItemsIndexRoute
+  '/inventory/requisitions/': typeof InventoryRequisitionsIndexRoute
+  '/inventory/stock/': typeof InventoryStockIndexRoute
   '/roster/patterns/': typeof RosterPatternsIndexRoute
   '/roster/templates/': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
@@ -822,10 +870,15 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
+    | '/inventory/requisitions/$requisitionId'
+    | '/inventory/requisitions/new'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
     | '/admin/staff/'
     | '/example/guitars'
+    | '/inventory/items'
+    | '/inventory/requisitions'
+    | '/inventory/stock'
     | '/roster/patterns'
     | '/roster/templates'
     | '/admin/staff/$id/edit'
@@ -903,10 +956,15 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
+    | '/inventory/requisitions/$requisitionId'
+    | '/inventory/requisitions/new'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
     | '/admin/staff'
     | '/example/guitars'
+    | '/inventory/items'
+    | '/inventory/requisitions'
+    | '/inventory/stock'
     | '/roster/patterns'
     | '/roster/templates'
     | '/admin/staff/$id/edit'
@@ -986,10 +1044,15 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
+    | '/inventory/requisitions/$requisitionId'
+    | '/inventory/requisitions/new'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
     | '/admin/staff/'
     | '/example/guitars/'
+    | '/inventory/items/'
+    | '/inventory/requisitions/'
+    | '/inventory/stock/'
     | '/roster/patterns/'
     | '/roster/templates/'
     | '/admin/staff/$id/edit'
@@ -1066,8 +1129,13 @@ export interface RootRouteChildren {
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
   ExampleGuitarsGuitarIdRoute: typeof ExampleGuitarsGuitarIdRoute
+  InventoryRequisitionsRequisitionIdRoute: typeof InventoryRequisitionsRequisitionIdRoute
+  InventoryRequisitionsNewRoute: typeof InventoryRequisitionsNewRoute
   RosterTemplatesNewRoute: typeof RosterTemplatesNewRoute
   ExampleGuitarsIndexRoute: typeof ExampleGuitarsIndexRoute
+  InventoryItemsIndexRoute: typeof InventoryItemsIndexRoute
+  InventoryRequisitionsIndexRoute: typeof InventoryRequisitionsIndexRoute
+  InventoryStockIndexRoute: typeof InventoryStockIndexRoute
   RosterPatternsIndexRoute: typeof RosterPatternsIndexRoute
   RosterTemplatesIndexRoute: typeof RosterTemplatesIndexRoute
   DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
@@ -1484,6 +1552,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RosterPatternsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/inventory/stock/': {
+      id: '/inventory/stock/'
+      path: '/inventory/stock'
+      fullPath: '/inventory/stock'
+      preLoaderRoute: typeof InventoryStockIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/requisitions/': {
+      id: '/inventory/requisitions/'
+      path: '/inventory/requisitions'
+      fullPath: '/inventory/requisitions'
+      preLoaderRoute: typeof InventoryRequisitionsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/items/': {
+      id: '/inventory/items/'
+      path: '/inventory/items'
+      fullPath: '/inventory/items'
+      preLoaderRoute: typeof InventoryItemsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/example/guitars/': {
       id: '/example/guitars/'
       path: '/example/guitars'
@@ -1511,6 +1600,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/organizations/$orgId/edit'
       preLoaderRoute: typeof OrganizationsOrgIdEditRouteImport
       parentRoute: typeof OrganizationsOrgIdRoute
+    }
+    '/inventory/requisitions/new': {
+      id: '/inventory/requisitions/new'
+      path: '/inventory/requisitions/new'
+      fullPath: '/inventory/requisitions/new'
+      preLoaderRoute: typeof InventoryRequisitionsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory/requisitions/$requisitionId': {
+      id: '/inventory/requisitions/$requisitionId'
+      path: '/inventory/requisitions/$requisitionId'
+      fullPath: '/inventory/requisitions/$requisitionId'
+      preLoaderRoute: typeof InventoryRequisitionsRequisitionIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/example/guitars/$guitarId': {
       id: '/example/guitars/$guitarId'
@@ -1758,8 +1861,14 @@ const rootRouteChildren: RootRouteChildren = {
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
   ExampleGuitarsGuitarIdRoute: ExampleGuitarsGuitarIdRoute,
+  InventoryRequisitionsRequisitionIdRoute:
+    InventoryRequisitionsRequisitionIdRoute,
+  InventoryRequisitionsNewRoute: InventoryRequisitionsNewRoute,
   RosterTemplatesNewRoute: RosterTemplatesNewRoute,
   ExampleGuitarsIndexRoute: ExampleGuitarsIndexRoute,
+  InventoryItemsIndexRoute: InventoryItemsIndexRoute,
+  InventoryRequisitionsIndexRoute: InventoryRequisitionsIndexRoute,
+  InventoryStockIndexRoute: InventoryStockIndexRoute,
   RosterPatternsIndexRoute: RosterPatternsIndexRoute,
   RosterTemplatesIndexRoute: RosterTemplatesIndexRoute,
   DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
