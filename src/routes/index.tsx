@@ -10,6 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { StatTile } from "@/components/ui/stat-tile";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useAttendanceSummary } from "@/hooks/attendance";
 import { useCertificationTypes } from "@/hooks/certifications";
@@ -71,10 +72,11 @@ function Dashboard() {
 			</header>
 
 			<section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-				<SummaryCard
-					title="Documents in Workflow"
+				<StatTile
+					label="Documents in workflow"
 					description="Items moving through approvals"
-					icon={<FileText className="h-5 w-5 text-indigo-500" />}
+					icon={FileText}
+					tone="primary"
 					value={documentsQuery.data?.data?.length ?? 0}
 					footer={`${
 						documentsQuery.data?.pagination?.total ??
@@ -85,10 +87,11 @@ function Dashboard() {
 					linkTo="/documents"
 				/>
 
-				<SummaryCard
-					title="Attendance Today"
+				<StatTile
+					label="Attendance today"
 					description="Check-in status across zones"
-					icon={<Activity className="h-5 w-5 text-emerald-500" />}
+					icon={Activity}
+					tone="success"
 					value={`${attendanceSummary.data?.checkedIn ?? 0}/${
 						attendanceSummary.data?.totalEmployees ?? 0
 					}`}
@@ -99,10 +102,11 @@ function Dashboard() {
 					linkTo="/attendance"
 				/>
 
-				<SummaryCard
-					title="Certification Types"
+				<StatTile
+					label="Certification types"
 					description="Templates for compliance tracking"
-					icon={<Shield className="h-5 w-5 text-amber-500" />}
+					icon={Shield}
+					tone="accent"
 					value={certificationTypes.data?.length ?? 0}
 					footer={
 						certificationTypes.isLoading
@@ -113,10 +117,11 @@ function Dashboard() {
 					linkTo="/certifications"
 				/>
 
-				<SummaryCard
-					title="Unread Messages"
+				<StatTile
+					label="Unread messages"
 					description="Operations communications"
-					icon={<MessageSquare className="h-5 w-5 text-sky-500" />}
+					icon={MessageSquare}
+					tone="info"
 					value={0}
 					footer="New vendor inquiries awaiting response"
 					linkText="Go to messaging"
@@ -213,7 +218,9 @@ function Dashboard() {
 						</div>
 						<div className="flex items-center justify-between text-xs">
 							<span>Security broadcasts pending</span>
-							<span className="font-medium text-amber-500">2 urgent</span>
+							<span className="font-medium text-[var(--color-accent)]">
+								2 urgent
+							</span>
 						</div>
 					</div>
 				</div>
@@ -221,7 +228,7 @@ function Dashboard() {
 
 			<section className="border rounded-xl bg-(--color-surface)">
 				<div className="px-5 py-4 border-b flex items-center gap-3">
-					<Users className="h-5 w-5 text-indigo-500" />
+					<Users className="h-5 w-5 text-primary" />
 					<div>
 						<h2 className="text-base font-semibold">Certification catalog</h2>
 						<p className="text-sm text-muted-foreground">
@@ -258,51 +265,6 @@ function Dashboard() {
 					))}
 				</div>
 			</section>
-		</div>
-	);
-}
-
-type SummaryCardProps = {
-	title: string;
-	description: string;
-	icon: React.ReactNode;
-	value: string | number;
-	footer: string;
-	linkText: string;
-	linkTo: string;
-};
-
-function SummaryCard({
-	title,
-	description,
-	icon,
-	value,
-	footer,
-	linkText,
-	linkTo,
-}: SummaryCardProps) {
-	return (
-		<div className="border rounded-xl bg-(--color-surface) px-5 py-4 space-y-4">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-3">
-					<div className="rounded-lg bg-[color-mix(in_oklab,var(--color-primary)_12%,transparent)] p-2">
-						{icon}
-					</div>
-					<div>
-						<p className="text-sm font-medium">{title}</p>
-						<p className="text-xs text-muted-foreground">{description}</p>
-					</div>
-				</div>
-				<div className="text-2xl font-semibold">{value}</div>
-			</div>
-			<div className="flex items-center justify-between">
-				<p className="text-xs text-muted-foreground">{footer}</p>
-				<Link to={linkTo}>
-					<Button variant="link" className="px-0 text-xs">
-						{linkText}
-					</Button>
-				</Link>
-			</div>
 		</div>
 	);
 }

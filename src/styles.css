@@ -7,17 +7,18 @@
 body {
   @apply m-0;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
-    'Helvetica Neue', sans-serif;
+    'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
+code,
+.font-data {
   font-family:
-    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 :root {
@@ -139,22 +140,31 @@ code {
   }
 }
 
-/* Airport OMS Theme Overrides (design system) */
+/*
+ * NAMS design tokens.
+ *
+ * Grounded in the flight-information board / control-tower instrument panel rather
+ * than generic SaaS defaults: a deep taxiway/steel blue for interactive elements, a
+ * FIDS amber as the single signal accent (also used for "needs attention" states,
+ * so the color always means the same thing wherever it appears), and a semantic
+ * status ramp that maps directly onto the workflow states already in the data
+ * (approved/pending/rejected/escalated).
+ */
 :root {
-  --color-bg: #FFFFFF;
-  --color-surface: #F8FAFC;
-  --color-text: #0F172A;
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
-  --color-primary-ring: rgba(79, 70, 229, 0.35);
-  --color-secondary: #10B981;
-  --color-accent: #F59E0B;
-  --color-danger: #EF4444;
-  --color-warning: #F59E0B;
-  --color-success: #10B981;
-  --color-info: #0EA5E9;
-  --color-border: #E2E8F0;
-  --radius: 12px;
+  --color-bg: #F5F7FA;
+  --color-surface: #FFFFFF;
+  --color-text: #10151F;
+  --color-primary: #1B4F72;
+  --color-primary-hover: #163F5B;
+  --color-primary-ring: rgba(27, 79, 114, 0.35);
+  --color-secondary: #E7ECF1;
+  --color-accent: #D98E04;
+  --color-danger: #C0392B;
+  --color-warning: #D98E04;
+  --color-success: #1E8E5A;
+  --color-info: #2C6E9E;
+  --color-border: #E1E5EB;
+  --radius: 10px;
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);
@@ -163,12 +173,18 @@ code {
   --popover-foreground: var(--color-text);
   --primary: var(--color-primary);
   --primary-foreground: #ffffff;
-  --secondary: color-mix(in oklab, var(--color-secondary) 90%, white);
+  --secondary: var(--color-secondary);
   --secondary-foreground: var(--color-text);
-  --muted: #eef2f7;
-  --muted-foreground: #475569;
-  --accent: var(--color-accent);
-  --accent-foreground: #0b0d12;
+  --muted: #EEF1F5;
+  --muted-foreground: #4B5565;
+  /* shadcn's `accent`/`accent-foreground` mean "neutral hover/highlight surface"
+     (ghost button hover, dropdown/select item highlight, command palette selection) -
+     not the brand's signal amber. Keeping it a muted primary tint, rather than
+     reusing --color-accent, is what keeps every hover state in the app from turning
+     amber; deliberate amber usage (StatTile, badges, charts) reads var(--color-accent)
+     directly instead of this token. */
+  --accent: color-mix(in oklab, var(--color-primary) 8%, white);
+  --accent-foreground: var(--color-text);
   --destructive: var(--color-danger);
   --destructive-foreground: #ffffff;
   --border: var(--color-border);
@@ -178,25 +194,37 @@ code {
   --sidebar-foreground: var(--color-text);
   --sidebar-primary: var(--color-primary);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: color-mix(in oklab, var(--color-accent) 10%, white);
+  --sidebar-accent: color-mix(in oklab, var(--color-primary) 8%, transparent);
   --sidebar-accent-foreground: var(--color-text);
   --sidebar-border: var(--color-border);
   --sidebar-ring: var(--color-primary-ring);
+
+  /* Status chip pairs (tinted background + matching foreground), tuned per theme for
+     contrast rather than derived from the interactive color at render time - a
+     color-mix against the raw brand hue does not reliably clear 4.5:1 at badge sizes. */
+  --status-success-bg: #D9F0E3;
+  --status-success-fg: #146C43;
+  --status-warning-bg: #FBEBCF;
+  --status-warning-fg: #8A5A00;
+  --status-danger-bg: #F7DBD5;
+  --status-danger-fg: #8B2E1F;
+  --status-info-bg: #D7E6F0;
+  --status-info-fg: #1D4E6E;
 }
 .dark {
-  --color-bg: #0B0D12;
-  --color-surface: #121621;
-  --color-text: #E6EAF2;
-  --color-primary: #4F46E5;
-  --color-primary-hover: #4338CA;
-  --color-primary-ring: rgba(79, 70, 229, 0.35);
-  --color-secondary: #10B981;
-  --color-accent: #F59E0B;
-  --color-danger: #EF4444;
-  --color-warning: #F59E0B;
-  --color-success: #10B981;
-  --color-info: #0EA5E9;
-  --color-border: #334155;
+  --color-bg: #0B0F17;
+  --color-surface: #121826;
+  --color-text: #E7EAF0;
+  --color-primary: #5B9BD5;
+  --color-primary-hover: #74ABDC;
+  --color-primary-ring: rgba(91, 155, 213, 0.4);
+  --color-secondary: #1B2333;
+  --color-accent: #F2B84B;
+  --color-danger: #E2604A;
+  --color-warning: #F2B84B;
+  --color-success: #37B072;
+  --color-info: #5AA0D6;
+  --color-border: #232B3D;
   --background: var(--color-bg);
   --foreground: var(--color-text);
   --card: var(--color-surface);
@@ -204,24 +232,43 @@ code {
   --popover: var(--color-surface);
   --popover-foreground: var(--color-text);
   --primary: var(--color-primary);
-  --primary-foreground: #ffffff;
-  --secondary: #1f2937;
+  --primary-foreground: #0B0F17;
+  --secondary: var(--color-secondary);
   --secondary-foreground: var(--color-text);
-  --muted: #111827;
-  --muted-foreground: #94a3b8;
-  --accent: var(--color-accent);
-  --accent-foreground: #0b0d12;
+  --muted: #161D2B;
+  --muted-foreground: #93A0B4;
+  --accent: color-mix(in oklab, var(--color-primary) 16%, var(--color-surface));
+  --accent-foreground: var(--color-text);
   --destructive: var(--color-danger);
-  --destructive-foreground: #ffffff;
+  --destructive-foreground: #1A0805;
   --border: var(--color-border);
   --input: var(--color-border);
   --ring: var(--color-primary-ring);
   --sidebar: var(--color-surface);
   --sidebar-foreground: var(--color-text);
   --sidebar-primary: var(--color-primary);
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: color-mix(in oklab, var(--color-text) 8%, transparent);
+  --sidebar-primary-foreground: #0B0F17;
+  --sidebar-accent: color-mix(in oklab, var(--color-primary) 14%, transparent);
   --sidebar-accent-foreground: var(--color-text);
   --sidebar-border: var(--color-border);
   --sidebar-ring: var(--color-primary-ring);
+
+  --status-success-bg: #103823;
+  --status-success-fg: #4FCB8D;
+  --status-warning-bg: #3A2A05;
+  --status-warning-fg: #F2B84B;
+  --status-danger-bg: #3A1712;
+  --status-danger-fg: #F0917C;
+  --status-info-bg: #12283A;
+  --status-info-fg: #7FBBE8;
+}
+
+/* Flat, hairline-bordered elevation: resting surfaces (cards, sidebar, table rows)
+   carry a 1px border and no shadow, so the interface reads like an instrument panel
+   rather than a stack of floating SaaS cards. Shadow is reserved for true overlays -
+   dialogs, popovers, dropdowns - which still need to visually separate from the page. */
+.shadow-xs,
+.shadow-sm,
+.shadow {
+  box-shadow: none !important;
 }
