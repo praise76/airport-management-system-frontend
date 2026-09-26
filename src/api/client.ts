@@ -8,8 +8,13 @@ export type ApiError = {
 	details?: unknown;
 };
 
-// Base config for all API calls
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://airport-management-system-backend.onrender.com/api";
+// Base config for all API calls.
+// The fallback here only matters when VITE_API_BASE_URL isn't set at build time (local
+// dev should always set it via .env.local - see project memory / SESSION_HANDOFF.md).
+// Previously pointed at a since-deleted Render service; now the live one deployed
+// 2026-09-26 (Render web service + Neon Postgres, see SESSION_HANDOFF.md in the
+// backend repo for the full deployment record).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://airport-management-system-backend-ed7t.onrender.com/api";
 
 /**
  * Base axios instance WITHOUT the 401 interceptor.
