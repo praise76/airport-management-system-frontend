@@ -48,7 +48,10 @@ export type CheckInRequest = {
   terminalCode?: string // [NEW]
   zoneId?: string
   notes?: string
-  clockInMethod?: string
+  // Must match the backend's Zod enum exactly (src/modules/attendance/schemas.ts) -
+  // a bare `string` here let a typo'd value ("web") pass typecheck and only fail at
+  // runtime as a 400 on every check-in.
+  clockInMethod?: "qr" | "geofence" | "manual" | "biometric"
   deviceId?: string
 }
 

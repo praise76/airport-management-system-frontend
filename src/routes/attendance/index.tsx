@@ -90,7 +90,11 @@ function AttendancePage() {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
         terminalCode: terminalCode || undefined,
-        clockInMethod: "web",
+        // Backend only accepts qr/geofence/manual/biometric - this flow captures real
+        // GPS and checks it against geofence zones, so "geofence" is the accurate
+        // value (the literal "web" used here before isn't a valid enum member and
+        // made every check-in 400 with a Zod validation error).
+        clockInMethod: "geofence",
         deviceId:
           typeof navigator !== "undefined"
             ? navigator.userAgent
