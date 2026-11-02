@@ -2,18 +2,22 @@ import type {
 	Document,
 	DocumentDirection,
 	DocumentListResponse,
-	  DocumentWorkflowResponse,
-  Template,
-  CreateTemplateRequest,
-  PreviewTemplateRequest,
-  GenerateDocumentRequest,
-  BulkOperationRequest,
-  RgmForwardRequest,
-  InternalBroadcastRequest,
-  AcknowledgeDocumentRequest
+	DocumentWorkflowResponse,
+	Template,
+	CreateTemplateRequest,
+	PreviewTemplateRequest,
+	GenerateDocumentRequest,
+	BulkOperationRequest,
+	RgmForwardRequest,
+	InternalBroadcastRequest,
+	AcknowledgeDocumentRequest,
 } from "@/types/document";
 
-export type { RgmForwardRequest, InternalBroadcastRequest, AcknowledgeDocumentRequest };
+export type {
+	RgmForwardRequest,
+	InternalBroadcastRequest,
+	AcknowledgeDocumentRequest,
+};
 
 import { api } from "./client";
 
@@ -25,7 +29,6 @@ export type ListDocumentsParams = {
 	documentType?: string;
 	scope?: "personal" | "department" | "all";
 };
-
 
 export async function listDocuments(
 	params: ListDocumentsParams = {},
@@ -42,49 +45,51 @@ export type RegisterDocumentRequest = {
 	subject: string;
 	documentType: string;
 	priority?: string;
-  file?: File;
+	file?: File;
 
-  // Routing
-  destinationType: 'department' | 'user' | 'position' | 'external' | 'registry';
-  finalDestinationId?: string;
-  finalDestinationName?: string;
+	// Routing
+	destinationType: "department" | "user" | "position" | "external" | "registry";
+	finalDestinationId?: string;
+	finalDestinationName?: string;
 };
 
 export async function registerDocument(
 	input: RegisterDocumentRequest,
 ): Promise<Document> {
-  const formData = new FormData();
-  formData.append("organizationId", input.organizationId);
-  formData.append("registryNumber", input.registryNumber);
-  formData.append("direction", input.direction);
-  formData.append("subject", input.subject);
-  formData.append("documentType", input.documentType);
-  if (input.priority) formData.append("priority", input.priority);
-  if (input.file) formData.append("file", input.file);
+	const formData = new FormData();
+	formData.append("organizationId", input.organizationId);
+	formData.append("registryNumber", input.registryNumber);
+	formData.append("direction", input.direction);
+	formData.append("subject", input.subject);
+	formData.append("documentType", input.documentType);
+	if (input.priority) formData.append("priority", input.priority);
+	if (input.file) formData.append("file", input.file);
 
-  // Routing
-  formData.append("destinationType", input.destinationType);
-  if (input.finalDestinationId) {
-    formData.append("finalDestinationId", input.finalDestinationId);
-    // Legacy support for backend expecting destinationDepartmentId
-    if (input.destinationType === 'department') {
-       formData.append("destinationDepartmentId", input.finalDestinationId);
-    }
-  }
-  if (input.finalDestinationName) {
-    formData.append("finalDestinationName", input.finalDestinationName);
-  }
+	// Routing
+	formData.append("destinationType", input.destinationType);
+	if (input.finalDestinationId) {
+		formData.append("finalDestinationId", input.finalDestinationId);
+		// Legacy support for backend expecting destinationDepartmentId
+		if (input.destinationType === "department") {
+			formData.append("destinationDepartmentId", input.finalDestinationId);
+		}
+	}
+	if (input.finalDestinationName) {
+		formData.append("finalDestinationName", input.finalDestinationName);
+	}
 
 	const res = await api.post("/documents/register", formData);
 	const payload = (res.data?.data ?? res.data) as Document;
 	return payload;
 }
 
-export async function getDocumentJourney(id: string): Promise<import("@/types/document").DocumentJourneyResponse> {
-  const res = await api.get(`/documents/${id}/journey`);
-  return (res.data?.data ?? res.data) as import("@/types/document").DocumentJourneyResponse;
+export async function getDocumentJourney(
+	id: string,
+): Promise<import("@/types/document").DocumentJourneyResponse> {
+	const res = await api.get(`/documents/${id}/journey`);
+	return (res.data?.data ??
+		res.data) as import("@/types/document").DocumentJourneyResponse;
 }
-
 
 export type ForwardDocumentRequest = {
 	toUserId?: string;
@@ -152,78 +157,89 @@ export async function getDocumentWorkflow(
 // --- Phase 2: RGM & Registry Enhancements ---
 
 export async function rgmForwardDocument(
-  id: string,
-  input: RgmForwardRequest
+	id: string,
+	input: RgmForwardRequest,
 ): Promise<Document> {
-  // Now using the polymorphic forward endpoint
-  const res = await api.post(`/documents/${id}/forward`, {
-    targetDeptId: input.targetDeptId,
-    comments: input.comments,
-  });
-  return (res.data?.data ?? res.data) as Document;
+	const res = await api.post(`/documents/${id}/rgm-forward`, input);
+	return (res.data?.data ?? res.data) as Document;
 }
 
 export async function dispatchToHod(
-  id: string,
-  input: { comments?: string }
+	id: string,
+	input: { comments?: string },
 ): Promise<Document> {
-  const res = await api.post(`/documents/${id}/dispatch`, input);
-  return (res.data?.data ?? res.data) as Document;
+	const res = await api.post(`/documents/${id}/dispatch`, input);
+	return (res.data?.data ?? res.data) as Document;
 }
 
 export async function internalBroadcast(
-  input: InternalBroadcastRequest
+	input: InternalBroadcastRequest,
 ): Promise<Document> {
-  const formData = new FormData();
-  formData.append("subject", input.subject);
-  formData.append("priority", input.priority);
-  formData.append("content", input.content);
-  
-  input.targetDepartmentIds.forEach((id) => {
-    formData.append("targetDepartmentIds[]", id);
-  });
+	const formData = new FormData();
+	formData.append("subject", input.subject);
+	formData.append("priority", input.priority);
+	formData.append("content", input.content);
 
-  if (input.deadline) formData.append("deadline", input.deadline);
-  if (input.file) formData.append("file", input.file);
-  if (input.fileUrl) formData.append("fileUrl", input.fileUrl);
+	input.targetDepartmentIds.forEach((id) => {
+		formData.append("targetDepartmentIds[]", id);
+	});
 
-  const res = await api.post(`/documents/internal-broadcast`, formData);
-  return (res.data?.data ?? res.data) as Document;
+	if (input.deadline) formData.append("deadline", input.deadline);
+	if (input.file) formData.append("file", input.file);
+	if (input.fileUrl) formData.append("fileUrl", input.fileUrl);
+
+	const res = await api.post(`/documents/internal-broadcast`, formData);
+	return (res.data?.data ?? res.data) as Document;
 }
 
 export async function acknowledgeDocument(
-  id: string,
-  input: AcknowledgeDocumentRequest
+	id: string,
+	input: AcknowledgeDocumentRequest,
 ): Promise<Document> {
-  const res = await api.post(`/documents/${id}/acknowledge`, input);
-  return (res.data?.data ?? res.data) as Document;
+	const res = await api.post(`/documents/${id}/acknowledge`, input);
+	return (res.data?.data ?? res.data) as Document;
 }
 
 // Templates
 
-export async function listTemplates(params?: { categoryId?: string; templateType?: string }): Promise<Template[]> {
-  const res = await api.get("/templates", { params });
-  return res.data;
+export async function listTemplates(params?: {
+	categoryId?: string;
+	templateType?: string;
+}): Promise<Template[]> {
+	const res = await api.get("/templates", { params });
+	return res.data;
 }
 
-export async function createTemplate(input: CreateTemplateRequest): Promise<Template> {
-  const res = await api.post("/templates", input);
-  return res.data;
+export async function createTemplate(
+	input: CreateTemplateRequest,
+): Promise<Template> {
+	const res = await api.post("/templates", input);
+	return res.data;
 }
 
-export async function previewTemplate(id: string, input: PreviewTemplateRequest): Promise<void> {
-  await api.post(`/templates/${id}/preview`, input);
+export async function previewTemplate(
+	id: string,
+	input: PreviewTemplateRequest,
+): Promise<void> {
+	await api.post(`/templates/${id}/preview`, input);
 }
 
-export async function generateDocument(input: GenerateDocumentRequest): Promise<void> {
-  await api.post("/templates/generate", input);
+export async function generateDocument(
+	input: GenerateDocumentRequest,
+): Promise<void> {
+	await api.post("/templates/generate", input);
 }
 
-export async function listGeneratedDocuments(params?: { forUserId?: string; templateId?: string }): Promise<any> {
-    const res = await api.get("/templates/documents", { params });
-    return res.data;
+export async function listGeneratedDocuments(params?: {
+	forUserId?: string;
+	templateId?: string;
+}): Promise<any> {
+	const res = await api.get("/templates/documents", { params });
+	return res.data;
 }
 
-export async function createBulkOperation(input: BulkOperationRequest): Promise<void> {
-  await api.post("/templates/bulk", input);
+export async function createBulkOperation(
+	input: BulkOperationRequest,
+): Promise<void> {
+	await api.post("/templates/bulk", input);
 }

@@ -1,5 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Link,
+	redirect,
+	useNavigate,
+} from "@tanstack/react-router";
 import { useId } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -119,6 +124,21 @@ function LoginPage() {
 							{isPending ? "Signing in…" : "Sign in"}
 						</Button>
 					</form>
+
+					<div className="relative my-6">
+						<div className="absolute inset-0 flex items-center">
+							<div className="w-full border-t" />
+						</div>
+						<div className="relative flex justify-center text-xs uppercase">
+							<span className="bg-background px-3 text-muted-foreground">
+								External partners
+							</span>
+						</div>
+					</div>
+
+					<Button asChild variant="outline" className="w-full">
+						<Link to="/stakeholder/login">Concessionaire Login</Link>
+					</Button>
 				</div>
 			</div>
 		</div>

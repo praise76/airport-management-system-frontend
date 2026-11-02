@@ -21,7 +21,11 @@ interface LoginFormData {
 function StakeholderLoginPage() {
 	const navigate = useNavigate();
 	const [showPassword, setShowPassword] = useState(false);
-	const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<LoginFormData>();
 	const loginMutation = useStakeholderLogin();
 
 	const onSubmit = async (data: LoginFormData) => {
@@ -45,17 +49,21 @@ function StakeholderLoginPage() {
 						</div>
 						<div>
 							<h1 className="text-2xl font-bold">FAAN Portal</h1>
-							<p className="text-blue-200 text-sm">Stakeholder Access</p>
+							<p className="text-blue-200 text-sm">
+								Concessionaire & Stakeholder Access
+							</p>
 						</div>
 					</div>
 				</div>
 
 				<div className="space-y-6">
 					<h2 className="text-4xl font-bold leading-tight">
-						Welcome to the<br />Stakeholder Portal
+						Welcome to the
+						<br />
+						Partner Portal
 					</h2>
 					<p className="text-blue-200 text-lg max-w-md">
-						Access your organization's activities, permits, flight schedules, 
+						Access your organization's activities, permits, flight schedules,
 						invoices, and more through our secure partner portal.
 					</p>
 					<div className="flex gap-4">
@@ -89,7 +97,9 @@ function StakeholderLoginPage() {
 						</div>
 						<div>
 							<h1 className="text-xl font-bold">FAAN Portal</h1>
-							<p className="text-muted-foreground text-sm">Stakeholder Access</p>
+							<p className="text-muted-foreground text-sm">
+								Concessionaire & Stakeholder Access
+							</p>
 						</div>
 					</div>
 
@@ -118,7 +128,9 @@ function StakeholderLoginPage() {
 									className={errors.email ? "border-destructive" : ""}
 								/>
 								{errors.email && (
-									<p className="text-sm text-destructive">{errors.email.message}</p>
+									<p className="text-sm text-destructive">
+										{errors.email.message}
+									</p>
 								)}
 							</div>
 
@@ -144,7 +156,9 @@ function StakeholderLoginPage() {
 												message: "Password must be at least 6 characters",
 											},
 										})}
-										className={errors.password ? "border-destructive pr-10" : "pr-10"}
+										className={
+											errors.password ? "border-destructive pr-10" : "pr-10"
+										}
 									/>
 									<button
 										type="button"
@@ -159,7 +173,9 @@ function StakeholderLoginPage() {
 									</button>
 								</div>
 								{errors.password && (
-									<p className="text-sm text-destructive">{errors.password.message}</p>
+									<p className="text-sm text-destructive">
+										{errors.password.message}
+									</p>
 								)}
 							</div>
 

@@ -83,7 +83,7 @@ const navGroups: NavGroup[] = [
 				label: "Registry desk",
 				to: "/documents/registry",
 				icon: Inbox,
-				roles: ["REGISTRY_OFFICER", "SUPER_ADMIN"],
+				roles: ["REGISTRY_CLERK", "SUPER_ADMIN", "ORG_ADMIN"],
 			},
 			{ label: "Tasks", to: "/tasks", icon: ClipboardList },
 			{ label: "Messages", to: "/messages", icon: MessageSquare },
