@@ -78,7 +78,8 @@ type Variant = (typeof statusConfig)[string]["variant"];
 const TONE_BY_WORD: [RegExp, Variant][] = [
   [/(inactive|offline|archived)/, "secondary"],
   [/(unpaid|not_paid)/, "warning"],
-  [/(reject|absent|expired|blacklist|suspend|cancel|fail|critical|overdue|revoked)/, "destructive"],
+  [/(reject|absent|expired|blacklist|suspend|cancel|fail|critical|overdue|revoked|urgent)/, "destructive"],
+  [/high_priority/, "warning"],
   [/(approv|verified|present|active|complete|paid|closed|acknowledg|on_duty|adequate)/, "success"],
   [/(pending|late|review|submitted|waiting|understaff|draft_review|expiring)/, "warning"],
   [/(forward|dispatch|progress|assigned|in_transit|registered|scheduled)/, "info"],

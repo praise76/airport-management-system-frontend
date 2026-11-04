@@ -1,17 +1,12 @@
-import {
-  createFileRoute,
-  Link,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, Plus, Paperclip, Radio } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { StatusPill } from "@/components/ui/status-pill";
+import { fileUrl } from "@/api/client";
+import { label } from "@/lib/labels";
 import { useDocuments, useInternalBroadcast } from "@/hooks/documents";
 import type { DocumentDirection } from "@/types/document";
-import { getAccessToken } from "@/utils/auth";
 import {
   Dialog,
   DialogContent,
@@ -27,14 +22,43 @@ import { DepartmentSelector } from "@/components/departments";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Sign-in is checked for every page in __root.tsx.
 export const Route = createFileRoute("/documents/")({
-  beforeLoad: () => {
-    const token = getAccessToken();
-    if (!token && typeof window !== "undefined")
-      throw redirect({ to: "/auth/login" });
-  },
   component: DocumentsPage,
 });
+
+/** A plain dropdown. (The styled Select needs SelectItem children, which these filters didn't use.) */
+function FilterSelect({
+  label: text,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: [string, string][];
+}) {
+  return (
+    <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      {text}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-9 min-w-[150px] rounded-md border bg-background px-2 text-sm text-foreground"
+      >
+        {options.map(([v, t]) => (
+          <option key={v} value={v}>
+            {t}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+const isOverdue = (d?: string, status?: string) =>
+  !!d && new Date(d) < new Date() && !/closed|approved|rejected|acknowledged/i.test(status ?? "");
 
 function DocumentsPage() {
   const navigate = useNavigate();
@@ -53,22 +77,17 @@ function DocumentsPage() {
     scope,
   });
 
-  const API_URL = import.meta.env.VITE_API_BASE_URL;
-  const IMAGE_BASE_URL = API_URL.replace("/api", "");
-
-  console.log("IMAGE_BASE_URL", IMAGE_BASE_URL);
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Document Registry</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Manage incoming, outgoing, and internal documents
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <InternalBroadcastDialog />
           <Link to="/documents/new">
             <Button>
@@ -94,33 +113,55 @@ function DocumentsPage() {
       </Tabs>
 
       {/* Filters */}
-      <div className="flex gap-4 items-end">
-        <Select
+      <div className="flex flex-wrap gap-4 items-end">
+        <FilterSelect
+          label="Direction"
           value={direction}
-          onValueChange={(val) => setDirection(val as DocumentDirection | "")}
-        >
-          <option value="">All Directions</option>
-          <option value="incoming">Incoming</option>
-          <option value="outgoing">Outgoing</option>
-          <option value="internal">Internal</option>
-        </Select>
-        <Select
+          onChange={(v) => {
+            setDirection(v as DocumentDirection | "");
+            setPage(1);
+          }}
+          options={[
+            ["", "All directions"],
+            ["incoming", "Incoming"],
+            ["outgoing", "Outgoing"],
+            ["internal", "Internal"],
+          ]}
+        />
+        <FilterSelect
+          label="Type"
           value={documentType}
-          onValueChange={(val) => setDocumentType(val)}
-        >
-          <option value="">All Types</option>
-          <option value="memo">Memo</option>
-          <option value="letter">Letter</option>
-          <option value="report">Report</option>
-        </Select>
-        <Select value={status} onValueChange={(val) => setStatus(val)}>
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="in_progress">In Progress</option>
-          <option value="submitted">Submitted</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </Select>
+          onChange={(v) => {
+            setDocumentType(v);
+            setPage(1);
+          }}
+          options={[
+            ["", "All types"],
+            ["letter", "Letter"],
+            ["memo", "Memo"],
+            ["report", "Report"],
+            ["proposal", "Proposal"],
+            ["contract", "Contract"],
+          ]}
+        />
+        <FilterSelect
+          label="Status"
+          value={status}
+          onChange={(v) => {
+            setStatus(v);
+            setPage(1);
+          }}
+          options={[
+            ["", "All statuses"],
+            ["registered", "Registered"],
+            ["forwarded_to_department", "Forwarded to department"],
+            ["dispatched_to_hod", "With HOD"],
+            ["in_progress", "In progress"],
+            ["approved", "Approved"],
+            ["rejected", "Rejected"],
+            ["acknowledged", "Acknowledged"],
+          ]}
+        />
       </div>
 
       {/* Content */}
@@ -155,27 +196,18 @@ function DocumentsPage() {
       )}
 
       {data && data.data.length > 0 && (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
+        <div className="border rounded-lg overflow-x-auto">
+          <table className="w-full min-w-[760px]">
             <thead className="bg-muted/50 border-b">
               <tr>
                 <th className="text-left p-3 font-semibold text-sm">
                   Registry #
                 </th>
                 <th className="text-left p-3 font-semibold text-sm">Subject</th>
-                <th className="text-left p-3 font-semibold text-sm">
-                  Direction
-                </th>
-                <th className="text-left p-3 font-semibold text-sm">
-                  Document Type
-                </th>
-                <th className="text-left p-3 font-semibold text-sm">
-                  Priority
-                </th>
+                <th className="text-left p-3 font-semibold text-sm">Type</th>
+                <th className="text-left p-3 font-semibold text-sm">From</th>
                 <th className="text-left p-3 font-semibold text-sm">Status</th>
-                <th className="text-left p-3 font-semibold text-sm">
-                  Workflow Stage
-                </th>
+                <th className="text-left p-3 font-semibold text-sm">Due</th>
                 <th className="text-left p-3 font-semibold text-sm">File</th>
               </tr>
             </thead>
@@ -194,22 +226,40 @@ function DocumentsPage() {
                   <td className="p-3 font-mono text-sm">
                     {doc.registryNumber}
                   </td>
-                  <td className="p-3">{doc.subject}</td>
-                  <td className="p-3 text-sm capitalize">{doc.direction}</td>
-                  <td className="p-3 text-sm">{doc.documentType}</td>
+                  <td className="p-3">
+                    <div>{doc.subject}</div>
+                    {doc.priority && doc.priority !== "normal" && (
+                      <StatusPill status={`${doc.priority}_priority`} className="mt-1 text-[10px]" />
+                    )}
+                  </td>
                   <td className="p-3 text-sm">
-                    {doc.priority ? (
-                      <Badge className="text-xs">{doc.priority}</Badge>
+                    {label(doc.direction)} {label(doc.documentType).toLowerCase()}
+                  </td>
+                  <td className="p-3 text-sm">
+                    {(doc as any).senderOrganization || (doc as any).senderName || "—"}
+                  </td>
+                  <td className="p-3 text-sm">
+                    <StatusPill status={doc.status} />
+                  </td>
+                  <td className="p-3 text-sm whitespace-nowrap">
+                    {(doc as any).responseDeadline ? (
+                      <span
+                        className={
+                          isOverdue((doc as any).responseDeadline, doc.status)
+                            ? "font-semibold text-red-600"
+                            : ""
+                        }
+                      >
+                        {new Date((doc as any).responseDeadline).toLocaleDateString("en-GB")}
+                      </span>
                     ) : (
                       "—"
                     )}
                   </td>
-                  <td className="p-3 text-sm capitalize">{doc.status}</td>
-                  <td className="p-3 text-sm">{doc.workflowStage}</td>
                   <td className="p-3 text-sm">
                     {doc.fileUrl ? (
                       <a
-                        href={`${IMAGE_BASE_URL}${doc.fileUrl}`}
+                        href={fileUrl(doc.fileUrl)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-blue-600 hover:text-blue-800 flex items-center gap-1"

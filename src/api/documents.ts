@@ -40,7 +40,19 @@ export async function listDocuments(
 
 export type RegisterDocumentRequest = {
 	organizationId: string;
-	registryNumber: string;
+	/** Optional: leave empty and the server numbers the document. */
+	registryNumber?: string;
+	/** Who sent it, e.g. "Engr. A. Bello" */
+	senderName?: string;
+	/** Their organisation, e.g. "NCAA" */
+	senderOrganization?: string;
+	/** The sender's own reference number on the letter */
+	senderReference?: string;
+	/** Date written on the letter (YYYY-MM-DD) */
+	dateReceived?: string;
+	/** By when a reply or action is needed (YYYY-MM-DD) */
+	responseDeadline?: string;
+	terminalCode?: string;
 	direction: DocumentDirection;
 	subject: string;
 	documentType: string;
@@ -58,7 +70,20 @@ export async function registerDocument(
 ): Promise<Document> {
 	const formData = new FormData();
 	formData.append("organizationId", input.organizationId);
-	formData.append("registryNumber", input.registryNumber);
+	if (input.registryNumber?.trim())
+		formData.append("registryNumber", input.registryNumber.trim());
+	const optional = [
+		"senderName",
+		"senderOrganization",
+		"senderReference",
+		"dateReceived",
+		"responseDeadline",
+		"terminalCode",
+	] as const;
+	for (const key of optional) {
+		const v = input[key]?.trim();
+		if (v) formData.append(key, v);
+	}
 	formData.append("direction", input.direction);
 	formData.append("subject", input.subject);
 	formData.append("documentType", input.documentType);
@@ -92,10 +117,30 @@ export async function getDocumentJourney(
 }
 
 export type ForwardDocumentRequest = {
-	toUserId?: string;
+	toUserId: string;
 	toRole?: string;
 	comments?: string;
+	/** ISO date-time by which the recipient should act */
+	deadline?: string;
 };
+
+/** Full details of one document (GET /documents/:id). */
+export type DocumentDetails = import("@/types/document").Document & {
+	senderName?: string;
+	senderOrganization?: string;
+	senderReference?: string;
+	dateReceived?: string;
+	responseDeadline?: string;
+	terminalCode?: string;
+	createdAt?: string;
+	updatedAt?: string;
+	currentHolder?: { firstName?: string; lastName?: string } | null;
+};
+
+export async function getDocument(id: string): Promise<DocumentDetails> {
+	const res = await api.get(`/documents/${id}`);
+	return (res.data?.data ?? res.data) as DocumentDetails;
+}
 
 export type ReturnDocumentRequest = {
 	toRole?: string;

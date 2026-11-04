@@ -1,4 +1,5 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { label } from "@/lib/labels";
 import { useState } from "react";
 import {
 	FileText,
@@ -134,47 +135,47 @@ function DocumentCard({ document }: { document: any }) {
 	return (
 		<Card className="hover:border-primary/50 transition-colors">
 			<CardContent className="p-6">
-				<div className="flex justify-between items-start gap-4">
+				<div className="flex flex-wrap justify-between items-start gap-4">
 					<div className="flex-1 space-y-3">
 						<div className="flex items-center gap-2">
 							<Badge variant="outline" className="font-mono">
 								{document.registryNumber}
 							</Badge>
-							<Badge variant="secondary" className="capitalize">
-								{document.documentType}
+							<Badge variant="secondary">
+								{label(document.documentType)}
 							</Badge>
-							{document.priority === "high" && (
-								<Badge variant="destructive">High Priority</Badge>
+							{(document.priority === "high" || document.priority === "urgent") && (
+								<Badge variant="destructive">{label(document.priority)} priority</Badge>
 							)}
 						</div>
 
 						<h3 className="text-lg font-semibold">{document.subject}</h3>
 
-						<div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
 							<div className="flex items-center gap-2 text-sm text-muted-foreground">
 								<User className="h-4 w-4" />
-								<span>From: {document.senderName || "Anonymous"}</span>
+								<span>From: {document.senderName || "Not recorded"}</span>
 							</div>
 							<div className="flex items-center gap-2 text-sm text-muted-foreground">
 								<Building2 className="h-4 w-4" />
-								<span>Org: {document.senderOrganization || "N/A"}</span>
+								<span>Org: {document.senderOrganization || "Not recorded"}</span>
 							</div>
 							<div className="flex items-center gap-2 text-sm text-muted-foreground">
 								<Calendar className="h-4 w-4" />
 								<span>
-									Date:{" "}
+									Letter dated:{" "}
 									{document.dateReceived
-										? format(new Date(document.dateReceived), "MMM d, yyyy")
-										: "N/A"}
+										? format(new Date(document.dateReceived), "d MMM yyyy")
+										: "Not recorded"}
 								</span>
 							</div>
 							<div className="flex items-center gap-2 text-sm text-muted-foreground">
 								<Clock className="h-4 w-4" />
 								<span>
-									Received At:{" "}
+									Registered:{" "}
 									{document.createdAt
-										? format(new Date(document.createdAt), "HH:mm")
-										: "N/A"}
+										? format(new Date(document.createdAt), "d MMM, HH:mm")
+										: "—"}
 								</span>
 							</div>
 						</div>
@@ -185,13 +186,14 @@ function DocumentCard({ document }: { document: any }) {
 							<DispatchDialog document={document} />
 						)}
 						<Button variant="outline" size="sm" asChild>
-							<a
-								href={`/documents/${document.id}`}
+							<Link
+								to="/documents/$docId"
+								params={{ docId: document.id }}
 								className="flex items-center gap-2"
 							>
-								View Details
+								Open
 								<ArrowRight className="h-4 w-4" />
-							</a>
+							</Link>
 						</Button>
 					</div>
 				</div>

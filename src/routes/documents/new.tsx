@@ -73,9 +73,7 @@ function NewDocumentPage() {
     if (
       !formData.subject ||
       !formData.documentType ||
-      !formData.registryNumber ||
       !formData.direction ||
-      !formData.organizationId ||
       !formData.destinationType
     ) {
       toast.error("Please fill in all required fields");
@@ -91,6 +89,15 @@ function NewDocumentPage() {
         !formData.finalDestinationName)
     ) {
       toast.error("Please specify the destination details");
+      return;
+    }
+
+    if (!formData.organizationId) {
+      toast.error("Your account isn't linked to an organisation. Ask an administrator to fix this.");
+      return;
+    }
+    if (formData.direction === "incoming" && !formData.senderName && !formData.senderOrganization) {
+      toast.error("Please say who sent this letter (a name or an organisation).");
       return;
     }
 
@@ -129,30 +136,91 @@ function NewDocumentPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-            {/* Top Row: Reg Num & Org ID */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Registry Number *</Label>
-                <Input
-                  value={formData.registryNumber || ""}
-                  onChange={(e) =>
-                    updateForm({ registryNumber: e.target.value })
-                  }
-                  placeholder="e.g. DOC-2024-001"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Organization ID *</Label>
-                <Input
-                  value={formData.organizationId || ""}
-                  onChange={(e) =>
-                    updateForm({ organizationId: e.target.value })
-                  }
-                  placeholder="Organization UUID"
-                  required
-                />
-              </div>
+            {/* The organisation comes from the signed-in user; the registry number from the server. */}
+            <div className="space-y-2">
+              <Label htmlFor="regno">Registry number</Label>
+              <Input
+                id="regno"
+                value={formData.registryNumber || ""}
+                onChange={(e) => updateForm({ registryNumber: e.target.value })}
+                placeholder="Leave blank to number it automatically"
+              />
+              <p className="text-xs text-muted-foreground">
+                Only fill this in if the document already has a registry number on paper.
+              </p>
+            </div>
+
+            {formData.direction !== "internal" && (
+              <fieldset className="space-y-4 rounded-lg border p-4">
+                <legend className="px-1 text-sm font-medium">
+                  {formData.direction === "outgoing" ? "Recipient" : "Sender"}
+                </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="senderOrg">Organisation</Label>
+                    <Input
+                      id="senderOrg"
+                      list="known-orgs"
+                      value={formData.senderOrganization || ""}
+                      onChange={(e) => updateForm({ senderOrganization: e.target.value })}
+                      placeholder="e.g. NCAA, Nigeria Customs Service"
+                    />
+                    <datalist id="known-orgs">
+                      {[
+                        "NCAA",
+                        "Nigeria Customs Service",
+                        "Nigeria Immigration Service",
+                        "Nigeria Police Force",
+                        "NAMA",
+                        "NiMet",
+                        "Federal Ministry of Aviation",
+                        "Bi-Courtney Aviation Services (MMA2)",
+                        "NAHCO",
+                        "SAHCO",
+                      ].map((o) => (
+                        <option key={o} value={o} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="senderName">Name / office</Label>
+                    <Input
+                      id="senderName"
+                      value={formData.senderName || ""}
+                      onChange={(e) => updateForm({ senderName: e.target.value })}
+                      placeholder="e.g. Director, Airport Standards"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="senderRef">Their reference number</Label>
+                    <Input
+                      id="senderRef"
+                      value={formData.senderReference || ""}
+                      onChange={(e) => updateForm({ senderReference: e.target.value })}
+                      placeholder="As written on the letter"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="letterDate">Date on the letter</Label>
+                    <Input
+                      id="letterDate"
+                      type="date"
+                      value={formData.dateReceived || ""}
+                      onChange={(e) => updateForm({ dateReceived: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            )}
+
+            <div className="space-y-2 sm:max-w-xs">
+              <Label htmlFor="deadline">Reply or action needed by</Label>
+              <Input
+                id="deadline"
+                type="date"
+                value={formData.responseDeadline || ""}
+                onChange={(e) => updateForm({ responseDeadline: e.target.value })}
+              />
             </div>
 
             {/* Subject */}
@@ -177,7 +245,7 @@ function NewDocumentPage() {
             </div>
 
             {/* Config Row */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Direction *</Label>
                 <Select

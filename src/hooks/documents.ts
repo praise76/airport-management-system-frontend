@@ -61,7 +61,53 @@ export function useForwardDocument(id: string) {
   });
 }
 
-// ... other actions (approve, reject, return) would follow similar pattern
+export function useDocument(id: string) {
+  return useQuery({
+    queryKey: ["documents", id, "details"],
+    queryFn: () => DocsApi.getDocument(id),
+    enabled: isValidDocumentId(id),
+  });
+}
+
+function useDocumentAction<T>(
+  fn: (input: T) => Promise<unknown>,
+  done: string,
+  failed: string,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      toast.success(done);
+    },
+    onError: (error: any) => toast.error(error.message || failed),
+  });
+}
+
+export function useApproveDocument(id: string) {
+  return useDocumentAction(
+    (input: DocsApi.ApproveDocumentRequest) => DocsApi.approveDocument(id, input),
+    "Document approved",
+    "Couldn't approve the document",
+  );
+}
+
+export function useRejectDocument(id: string) {
+  return useDocumentAction(
+    (input: DocsApi.RejectDocumentRequest) => DocsApi.rejectDocument(id, input),
+    "Document rejected",
+    "Couldn't reject the document",
+  );
+}
+
+export function useReturnDocument(id: string) {
+  return useDocumentAction(
+    (input: DocsApi.ReturnDocumentRequest) => DocsApi.returnDocument(id, input),
+    "Document returned",
+    "Couldn't return the document",
+  );
+}
 
 export function useRgmForwardDocument(id: string) {
   const qc = useQueryClient();
