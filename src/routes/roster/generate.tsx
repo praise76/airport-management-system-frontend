@@ -35,8 +35,10 @@ import { useUsers } from "@/hooks/users";
 import { useDepartmentTree } from "@/hooks/departments";
 import { MemberPicker } from "@/features/roster/components/MemberPicker";
 import { RosterPreviewGrid } from "@/features/roster/components/RosterPreviewGrid";
+import { RosterConflictsPanel } from "@/features/roster/components/RosterConflicts";
 import { RosterWarnings } from "@/features/roster/components/RosterWarnings";
 import { checkRoster } from "@/features/roster/rosterChecks";
+import type { RosterConflict } from "@/types/roster";
 import { fullName, staffForUnit, type RosterPerson } from "@/features/roster/staffForUnit";
 
 export const Route = createFileRoute("/roster/generate")({
@@ -69,6 +71,9 @@ function GenerateRosterPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
   const [previewData, setPreviewData] = useState<any>(null);
+  // Days the server will refuse (approved leave, already rostered elsewhere, twice in this run).
+  const [conflicts, setConflicts] = useState<RosterConflict[]>([]);
+  const conflictDays = new Set(conflicts.map((c) => `${c.staffId}|${c.dutyDate}`)).size;
   const [activeTab, setActiveTab] = useState("config");
 
   const form = useForm<GenerateFormValues>({
@@ -142,24 +147,43 @@ function GenerateRosterPage() {
     mutationFn: generateRoster,
     onSuccess: (data, variables) => {
       if (variables.saveRoster) {
-        toast.success("Roster generated and saved successfully!");
+        toast.success(
+          data.skipped
+            ? `Roster saved. ${data.skipped} ${data.skipped === 1 ? "day was" : "days were"} left out because of leave or existing shifts.`
+            : "Roster generated and saved successfully!",
+        );
         navigate({ to: "/roster" }); // Redirect to main roster list
       } else {
-        // console.log("data", data);
         setPreviewData(data);
+        setConflicts(data.conflicts ?? []);
         setActiveTab("preview");
-        toast.success("Preview generated");
+        toast.success(
+          data.conflicts?.length ? "Preview generated. Some days can't be rostered." : "Preview generated",
+        );
       }
     },
 
-    onError: (err: any) =>
-      toast.error(err?.message || "Couldn't generate the roster. Please try again."),
+    onError: (err: any) => {
+      // A conflict can appear between the preview and the save (leave approved, another roster
+      // saved). The server returns the full list, so refresh the panel instead of just a toast.
+      const fresh = err?.status === 409 ? err?.details?.conflicts : undefined;
+      if (Array.isArray(fresh)) {
+        setConflicts(fresh);
+        setActiveTab("preview");
+      }
+      toast.error(err?.message || "Couldn't generate the roster. Please try again.");
+    },
   });
+
+  const browserWarnings = checkRoster(previewData?.entries ?? [], { nameOf });
 
   const handleGenerate = (data: GenerateFormValues, save: boolean) => {
     generateMutation.mutate({
       ...data,
       saveRoster: save,
+      // With conflicts the save leaves those days out; otherwise stay strict so a conflict that
+      // appears after the preview still stops the save.
+      conflictResolution: save && conflicts.length > 0 ? "skip" : "error",
     });
   };
 
@@ -390,14 +414,18 @@ function GenerateRosterPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <RosterWarnings
-                  warnings={checkRoster(previewData?.entries ?? [], { nameOf })}
-                />
+                <RosterConflictsPanel conflicts={conflicts} />
+                {/* The all-clear banner only knows the browser-side checks; don't show it
+                    under a red panel that says the server found problems. */}
+                {(browserWarnings.length > 0 || conflicts.length === 0) && (
+                  <RosterWarnings warnings={browserWarnings} />
+                )}
                 <RosterPreviewGrid
                   entries={previewData?.entries ?? []}
                   startDate={form.watch("startDate")}
                   endDate={form.watch("endDate")}
                   nameOf={nameOf}
+                  conflicts={conflicts}
                 />
               </div>
             </CardContent>
@@ -416,7 +444,9 @@ function GenerateRosterPage() {
                 ) : (
                   <Save className="mr-2 h-4 w-4" />
                 )}
-                Commit & Save Roster
+                {conflictDays > 0
+                  ? `Save and skip ${conflictDays} ${conflictDays === 1 ? "day" : "days"}`
+                  : "Commit & Save Roster"}
               </Button>
             </CardFooter>
           </Card>

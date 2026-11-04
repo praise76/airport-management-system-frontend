@@ -1,6 +1,8 @@
 import { eachDayOfInterval, format, parseISO } from "date-fns";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import type { RosterConflict } from "@/types/roster";
+import { CONFLICT_TITLES, conflictsByCell } from "./RosterConflicts";
 
 export interface PreviewEntry {
 	staffId: string;
@@ -25,12 +27,16 @@ export function RosterPreviewGrid({
 	startDate,
 	endDate,
 	nameOf,
+	conflicts,
 }: {
 	entries: PreviewEntry[];
 	startDate: string;
 	endDate: string;
 	nameOf: (staffId: string) => string;
+	/** Days the server will refuse; shown with a red fill and the reason on hover. */
+	conflicts?: RosterConflict[];
 }) {
+	const conflictAt = useMemo(() => conflictsByCell(conflicts), [conflicts]);
 	const dates = useMemo(() => {
 		try {
 			return eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) });
@@ -84,8 +90,16 @@ export function RosterPreviewGrid({
 							{dates.map((d) => {
 								const key = format(d, "yyyy-MM-dd");
 								const list = cell(id, key);
+								const problems = conflictAt.get(`${id}|${key}`);
 								return (
-									<td key={key} className="border-b p-0.5 text-center">
+									<td
+										key={key}
+										className={cn(
+											"border-b p-0.5 text-center",
+											problems && "bg-red-100 dark:bg-red-950/60",
+										)}
+										title={problems?.map((c) => CONFLICT_TITLES[c.type]).join("; ")}
+									>
 										{list.map((e, i) => (
 											<div
 												key={i}
@@ -93,7 +107,7 @@ export function RosterPreviewGrid({
 												className={cn(
 													"rounded px-1 py-1 font-semibold uppercase",
 													COLOURS[e.shift?.toLowerCase()] ?? "bg-muted",
-													list.length > 1 && "ring-2 ring-red-500",
+													(list.length > 1 || problems) && "ring-2 ring-red-500",
 												)}
 											>
 												{e.shift?.slice(0, 3)}
@@ -107,7 +121,7 @@ export function RosterPreviewGrid({
 				</tbody>
 			</table>
 			<p className="p-2 text-xs text-muted-foreground border-t">
-				MOR = morning, AFT = afternoon, NIG = night. Empty = day off. Red outline = two shifts on one day.
+				MOR = morning, AFT = afternoon, NIG = night. Empty = day off. Red = two shifts on one day, or a day the server will refuse (leave or already booked).
 			</p>
 		</div>
 	);

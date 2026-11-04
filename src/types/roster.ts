@@ -87,10 +87,27 @@ export type GenerateRosterRequest = {
   endDate: string
   teams: RosterTeamConfig[]
   saveRoster: boolean // true = commit to DB, false = preview only
+  /** What to do when someone is on leave or already booked: refuse (default) or skip those days. */
+  conflictResolution?: 'error' | 'skip'
+}
+
+/** Why the server will not roster a person on a day. */
+export type RosterConflictType = 'on_leave' | 'double_booked' | 'duplicate_in_request'
+
+export type RosterConflict = {
+  staffId: string
+  staffName: string
+  dutyDate: string // YYYY-MM-DD
+  type: RosterConflictType
+  message: string
+  leaveType?: string
+  existingShift?: string
 }
 
 export type GenerateRosterResponse = {
   rosterId?: string // If saved
   entriesCount?: number
+  skipped?: number // days left out because of conflicts (conflictResolution 'skip')
   entries: RosterEntry[] // For preview
+  conflicts?: RosterConflict[]
 }
