@@ -131,13 +131,29 @@ interface ApiErrorResponse {
 	errors?: Record<string, string[]>;
 }
 
+/**
+ * The most useful human-readable reason from an error response. Handles the documented
+ * { success: false, error: "..." }, plus { message }, field maps { errors: { field: ["..."] } }
+ * and lists { errors: [{ message }] }, so the server's own reason reaches the screen.
+ */
 const extractErrorMessage = (error: AxiosError<any>): string => {
 	const data = error.response?.data;
-	if (data?.success === false) {
-		const errors = data.errors;
-		const message = data.error;
-		return errors ? errors[Object.keys(errors)[0]][0] : message;
+	const errors = data?.errors;
+	if (Array.isArray(errors) && errors.length) {
+		const first = errors[0];
+		if (typeof first === "string") return first;
+		if (first?.message) return String(first.message);
 	}
+	if (errors && typeof errors === "object" && !Array.isArray(errors)) {
+		const firstKey = Object.keys(errors)[0];
+		const v = firstKey ? errors[firstKey] : undefined;
+		if (Array.isArray(v) && v.length) return String(v[0]);
+		if (typeof v === "string") return v;
+	}
+	if (typeof data?.error === "string" && data.error) return data.error;
+	if (typeof data?.message === "string" && data.message) return data.message;
+	if (error.code === "ECONNABORTED") return "The server took too long to respond. Please try again.";
+	if (!error.response) return "Can't reach the server. Check your internet connection.";
 	return error.message ?? "";
 };
 

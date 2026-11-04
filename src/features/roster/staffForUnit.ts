@@ -36,7 +36,8 @@ export function staffForUnit(
 	const inDept = fetched.filter((u) => deptId && deptOf(u) === deptId);
 
 	const byId = new Map<string, RosterPerson>();
-	for (const u of [...(opts.alreadyRostered ?? []), ...inUnit, ...inDept]) {
+	// Full staff records first (they have position etc.); roster copies only fill gaps.
+	for (const u of [...inUnit, ...inDept, ...(opts.alreadyRostered ?? [])]) {
 		if (u?.id && !byId.has(u.id)) byId.set(u.id, u);
 	}
 
