@@ -1,17 +1,18 @@
 import {
 	createFileRoute,
 	Outlet,
-	useNavigate,
 	useLocation,
+	useNavigate,
 } from "@tanstack/react-router";
+import { Search, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useMessagingStore } from "@/stores/messages";
 import { ConversationListItem } from "@/components/messaging/ConversationListItem";
 import { Button } from "@/components/ui/button";
-import { Search, UsersRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
+import { useMessagingStore } from "@/stores/messages";
+import type { Conversation } from "@/types/messaging";
 
 export const Route = createFileRoute("/messages")({
 	component: MessagesLayout,
@@ -27,9 +28,8 @@ function MessagesLayout() {
 	const { data: conversationsResponse, isLoading: isLoadingConversations } =
 		useConversations({ page: 1, limit: 20, type: "all" });
 
-	console.log("conversationsResponse", conversationsResponse);
-
-	const conversations = conversationsResponse?.data?.conversations || [];
+	const conversations = (conversationsResponse?.data?.conversations ||
+		[]) as Conversation[];
 
 	const { initializeSocket, cleanupSocket } = useMessagingStore();
 	const user = useAuthStore((s) => s.user);
@@ -41,7 +41,7 @@ function MessagesLayout() {
 		return () => {
 			cleanupSocket();
 		};
-	}, [user, queryClient]);
+	}, [user, queryClient, initializeSocket, cleanupSocket]);
 
 	// Check if we are selecting a conversation (for mobile view logic)
 	const isDetailView =
@@ -51,16 +51,22 @@ function MessagesLayout() {
 
 	const [searchQuery, setSearchQuery] = useState("");
 
-	// Auto-switch to active shift channel if no channel selected
+	// On a wide screen, open the current shift channel when nothing is selected. Not on a
+	// phone: there the chat list is its own screen, and jumping away from it meant staff
+	// could never get back to their other chats (Back landed here and jumped again).
 	useEffect(() => {
+		const wide = window.matchMedia("(min-width: 768px)").matches;
 		if (
+			wide &&
 			!isLoadingConversations &&
 			conversations.length > 0 &&
 			(location.pathname === "/messages" || location.pathname === "/messages/")
 		) {
 			// Prioritize "Station Channel" (Shift Channel)
 			const shiftChannel = conversations.find(
-				(c: any) => c.type === "unit" && c.settings?.isStationChannel,
+				(conversation) =>
+					conversation.type === "unit" &&
+					conversation.settings?.isStationChannel,
 			);
 
 			if (shiftChannel) {
@@ -69,7 +75,7 @@ function MessagesLayout() {
 		}
 	}, [conversations, isLoadingConversations, location.pathname, navigate]);
 
-	const filteredConversations = conversations.filter((c: any) => {
+	const filteredConversations = conversations.filter((c) => {
 		if (!searchQuery) return true;
 		const query = searchQuery.toLowerCase();
 		const name = c.name?.toLowerCase() || "";
@@ -124,14 +130,27 @@ function MessagesLayout() {
 						)}
 
 						{!isLoadingConversations && filteredConversations.length === 0 && (
-							<div className="p-4 text-center text-sm opacity-50">
-								{searchQuery ? "No filtered results" : "No conversations yet"}
+							<div className="p-4 text-center text-sm text-muted-foreground space-y-2">
+								{searchQuery ? (
+									<p>No chats match "{searchQuery}".</p>
+								) : (
+									<>
+										<p className="font-medium text-(--color-text)">
+											No chats yet
+										</p>
+										<p>
+											Your station and unit channels appear here when you check
+											in for a rostered shift. You can also message a colleague
+											or start a group with "New group".
+										</p>
+									</>
+								)}
 							</div>
 						)}
 
 						{/* Station Channels (Shift + Master) */}
 						{filteredConversations.some(
-							(c: any) =>
+							(c) =>
 								c.type === "unit" &&
 								(c.settings?.isStationChannel ||
 									c.settings?.isStationMasterChannel),
@@ -142,13 +161,13 @@ function MessagesLayout() {
 								</h3>
 								{filteredConversations
 									.filter(
-										(c: any) =>
+										(c) =>
 											c.type === "unit" &&
 											(c.settings?.isStationChannel ||
 												c.settings?.isStationMasterChannel),
 									)
 									// Sort: Shift channels first, then Master
-									.sort((a: any, b: any) => {
+									.sort((a, b) => {
 										if (
 											a.settings?.isStationChannel &&
 											!b.settings?.isStationChannel
@@ -161,7 +180,7 @@ function MessagesLayout() {
 											return 1;
 										return 0;
 									})
-									.map((conv: any) => (
+									.map((conv) => (
 										<ConversationListItem
 											key={conv.id}
 											conversation={conv}
@@ -174,7 +193,7 @@ function MessagesLayout() {
 
 						{/* Unit & Department Channels */}
 						{filteredConversations.some(
-							(c: any) =>
+							(c) =>
 								(c.type === "unit" || c.type === "department") &&
 								!c.settings?.isStationChannel &&
 								!c.settings?.isStationMasterChannel,
@@ -185,12 +204,12 @@ function MessagesLayout() {
 								</h3>
 								{filteredConversations
 									.filter(
-										(c: any) =>
+										(c) =>
 											(c.type === "unit" || c.type === "department") &&
 											!c.settings?.isStationChannel &&
 											!c.settings?.isStationMasterChannel,
 									)
-									.map((conv: any) => (
+									.map((conv) => (
 										<ConversationListItem
 											key={conv.id}
 											conversation={conv}
@@ -203,15 +222,15 @@ function MessagesLayout() {
 
 						{/* Direct Messages */}
 						{filteredConversations.some(
-							(c: any) => c.type === "direct" || c.type === "group",
+							(c) => c.type === "direct" || c.type === "group",
 						) && (
 							<div className="space-y-1">
 								<h3 className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
 									Direct & Group Messages
 								</h3>
 								{filteredConversations
-									.filter((c: any) => c.type === "direct" || c.type === "group")
-									.map((conv: any) => (
+									.filter((c) => c.type === "direct" || c.type === "group")
+									.map((conv) => (
 										<ConversationListItem
 											key={conv.id}
 											conversation={conv}
