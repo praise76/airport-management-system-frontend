@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { label } from "@/lib/labels";
 import { Badge } from "./badge";
 
 export type DocumentStatus =
@@ -68,15 +69,35 @@ const statusConfig: Record<
   PENDING_REVIEW: { variant: "warning", label: "Pending Review" },
 };
 
+type Variant = (typeof statusConfig)[string]["variant"];
+
+// Colours for statuses that aren't listed above, matched on words in the status.
+// Order matters: "inactive" and "unpaid" must be caught before "active" and "paid".
+const TONE_BY_WORD: [RegExp, Variant][] = [
+  [/(inactive|offline|archived)/, "secondary"],
+  [/(unpaid|not_paid)/, "warning"],
+  [/(reject|absent|expired|blacklist|suspend|cancel|fail|critical|overdue|revoked)/, "destructive"],
+  [/(approv|verified|present|active|complete|paid|closed|acknowledg|on_duty|adequate)/, "success"],
+  [/(pending|late|review|submitted|waiting|understaff|draft_review|expiring)/, "warning"],
+  [/(forward|dispatch|progress|assigned|in_transit|registered|scheduled)/, "info"],
+];
+
 export function StatusPill({ status, className }: StatusPillProps) {
-  const config = statusConfig[status] || {
-    variant: "default" as const,
-    label: status,
-  };
+  const raw = status == null ? "" : String(status);
+  const config =
+    statusConfig[raw] ||
+    statusConfig[raw.toUpperCase()] || {
+      variant:
+        TONE_BY_WORD.find(([re]) => re.test(raw.toLowerCase()))?.[1] ??
+        ("secondary" as const),
+      label: label(raw),
+    };
+
+  if (!raw) return null;
 
   return (
     <Badge variant={config.variant} className={cn("font-medium", className)}>
-      {config.label || status}
+      {config.label || label(raw)}
     </Badge>
   );
 }

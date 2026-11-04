@@ -1,4 +1,4 @@
-import { requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { hasAnyRole, requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,18 @@ import { ManageShiftStaffModal } from "@/features/roster/components/ManageShiftS
 import { useUsers } from "@/hooks/users";
 
 import { useAuthStore } from "@/stores/auth";
+import { checkRoster } from "@/features/roster/rosterChecks";
+import { RosterWarnings } from "@/features/roster/components/RosterWarnings";
+import { staffForUnit, type RosterPerson } from "@/features/roster/staffForUnit";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { eachDayOfInterval } from "date-fns";
 import { StatusPill } from "@/components/ui/status-pill";
 import { format, parseISO } from "date-fns";
 import { RosterEntry } from "@/features/roster/types";
@@ -74,17 +86,63 @@ function RosterPlannerPage() {
   });
   const { data: shiftPatterns } = useGetShiftPatterns();
 
-  const { data: usersData } = useUsers({ limit: 100 });
+  // Staff for the selected roster's unit (filtered again below, in case the API ignores the filter).
+  const { data: usersData } = useUsers({
+    limit: 500,
+    departmentId: selectedRoster?.unitDepartmentId || undefined,
+  });
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const approveMutation = useApproveRoster();
   const deleteMutation = useDeleteRoster();
 
   const user = useAuthStore((s) => s.user);
-  const canCreateRoster = useMemo(() => {
-    if (!user?.role) return false;
-    const role = user.role.toUpperCase();
-    return ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN", "HOD", "HOU"].includes(role);
-  }, [user?.role]);
+  const canCreateRoster = hasAnyRole(user, ROLE_GROUPS.rosterPlanners);
+
+  const rosterStaff = useMemo(() => {
+    const fromEntries = (selectedRoster?.entries ?? [])
+      .map((e: any) => (e.user ? { ...e.user, id: e.user.id ?? e.staffId } : null))
+      .filter(Boolean) as RosterPerson[];
+    return staffForUnit((usersData?.data ?? []) as unknown as RosterPerson[], {
+      unitId: selectedRoster?.unitDepartmentId,
+      departmentId: selectedRoster?.departmentId,
+      alreadyRostered: fromEntries,
+    });
+  }, [usersData, selectedRoster]);
+
+  const rosterDates = useMemo(() => {
+    if (!selectedRoster?.startDate || !selectedRoster?.endDate) return [];
+    try {
+      return eachDayOfInterval({
+        start: parseISO(selectedRoster.startDate),
+        end: parseISO(selectedRoster.endDate),
+      }).map((d) => format(d, "yyyy-MM-dd"));
+    } catch {
+      return [];
+    }
+  }, [selectedRoster?.startDate, selectedRoster?.endDate]);
+
+  const warnings = useMemo(() => {
+    if (!selectedRoster) return [];
+    const names = new Map(
+      rosterStaff.staff.map((u) => [u.id, `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()]),
+    );
+    return checkRoster(selectedRoster.entries ?? [], {
+      nameOf: (id) => names.get(id) || "A staff member",
+      requiredShifts: (shiftDefinitions ?? []).map((d) => ({ id: d.id, name: d.name })),
+      dates: rosterDates,
+    });
+  }, [selectedRoster, rosterStaff, shiftDefinitions, rosterDates]);
+
+  const prettyRange = (start?: string, end?: string) => {
+    try {
+      if (!start || !end) return "";
+      return `${format(parseISO(start), "d MMM")} – ${format(parseISO(end), "d MMM yyyy")}`;
+    } catch {
+      return `${start ?? ""} – ${end ?? ""}`;
+    }
+  };
 
   const handleCellClick = (userId: string, date: Date, entry?: RosterEntry) => {
     setSelectedUserForEntry(userId);
@@ -114,30 +172,72 @@ function RosterPlannerPage() {
     setIsShiftStaffModalOpen(true);
   };
 
-  const handleApprove = () => {
+  const publish = () => {
     if (!selectedRosterId) return;
     approveMutation.mutate(selectedRosterId, {
-      onSuccess: () => toast.success("Roster published successfully"),
+      onSuccess: () => {
+        setPublishConfirmOpen(false);
+        toast.success("Roster published");
+      },
+      onError: (err: any) =>
+        toast.error(err?.message || "Couldn't publish the roster. Please try again."),
     });
+  };
+
+  // With problems found, ask first; otherwise publish straight away.
+  const handleApprove = () => {
+    if (warnings.length > 0) setPublishConfirmOpen(true);
+    else publish();
   };
 
   const handleDeleteRoster = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this roster?")) {
-      deleteMutation.mutate(id, {
-        onSuccess: () => {
-          toast.success("Roster deleted");
-          if (selectedRosterId === id) setSelectedRosterId(null);
-        },
-      });
-    }
+    setDeleteTarget(id);
   };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const id = deleteTarget;
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success("Roster deleted");
+        setDeleteTarget(null);
+        if (selectedRosterId === id) setSelectedRosterId(null);
+      },
+      onError: (err: any) => toast.error(err?.message || "Couldn't delete the roster."),
+    });
+  };
+
+  const deleteDialog = (
+    <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete this draft roster?</DialogTitle>
+          <DialogDescription>
+            All shifts in it will be removed. This can't be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={confirmDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? "Deleting…" : "Delete roster"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 
   if (selectedRosterId && selectedRoster) {
     return (
       <div className="space-y-6 h-full flex flex-col">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
             <Button
               variant="ghost"
               size="icon"
@@ -146,19 +246,18 @@ function RosterPlannerPage() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-xl md:text-2xl font-bold text-foreground break-words">
                 {selectedRoster.rosterName}
               </h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <span>
-                  {selectedRoster?.startDate || ""} -{" "}
-                  {selectedRoster?.endDate || ""}
+                  {prettyRange(selectedRoster?.startDate, selectedRoster?.endDate)}
                 </span>
                 <StatusPill status={selectedRoster?.approvalStatus} />
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <ShiftManager unitDepartmentId={selectedRoster.unitDepartmentId} />
 
             {selectedRoster.approvalStatus === "draft" && (
@@ -174,8 +273,10 @@ function RosterPlannerPage() {
           </div>
         </div>
 
+        {selectedRoster.approvalStatus === "draft" && <RosterWarnings warnings={warnings} />}
+
         <div className="flex-1 min-h-0 overflow-auto space-y-4">
-          <div className="flex items-center justify-between px-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <Tabs
               value={viewMode}
               onValueChange={(v) => setViewMode(v as any)}
@@ -205,12 +306,17 @@ function RosterPlannerPage() {
             </p>
           </div>
 
+          {viewMode === "staff" && !rosterStaff.filtered && (
+            <p className="text-xs text-muted-foreground px-1">
+              Showing all staff: their records don't say which unit they belong to.
+            </p>
+          )}
           {rosterLoading ? (
             <p>Loading details...</p>
           ) : viewMode === "staff" ? (
             <RosterGrid
               roster={selectedRoster}
-              users={usersData?.data || []}
+              users={rosterStaff.staff}
               onCellClick={handleCellClick}
             />
           ) : viewMode === "shift" ? (
@@ -249,6 +355,28 @@ function RosterPlannerPage() {
           />
         )}
 
+        <Dialog open={publishConfirmOpen} onOpenChange={setPublishConfirmOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Publish with {warnings.length} problems?</DialogTitle>
+              <DialogDescription>
+                Staff will see this roster once it's published. You can fix these first, or
+                publish anyway if they're intended.
+              </DialogDescription>
+            </DialogHeader>
+            <RosterWarnings warnings={warnings} className="max-h-72 overflow-auto" />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPublishConfirmOpen(false)}>
+                Go back and fix
+              </Button>
+              <Button onClick={publish} disabled={approveMutation.isPending}>
+                {approveMutation.isPending ? "Publishing…" : "Publish anyway"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {deleteDialog}
+
         {isShiftStaffModalOpen &&
           selectedDateForEntry &&
           selectedShiftForModal && (
@@ -268,7 +396,7 @@ function RosterPlannerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Roster Planner</h1>
           <p className="text-muted-foreground">
@@ -297,8 +425,7 @@ function RosterPlannerPage() {
                 <StatusPill status={roster.approvalStatus} />
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                {format(roster?.startDate, "MMM d")} -{" "}
-                {format(roster?.endDate, "MMM d, yyyy")}
+                {prettyRange(roster?.startDate, roster?.endDate)}
               </p>
               <div className="flex justify-between items-center text-sm">
                 <div className="text-muted-foreground">
@@ -330,6 +457,7 @@ function RosterPlannerPage() {
           )}
       </div>
 
+      {deleteDialog}
       <CreateRosterModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}

@@ -1,5 +1,5 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Users, ArrowRight, Save, Loader2 } from "lucide-react";
@@ -28,12 +28,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { listTemplates, generateRoster } from "@/api/roster";
 import { useUsers } from "@/hooks/users";
 import { useDepartmentTree } from "@/hooks/departments";
+import { MemberPicker } from "@/features/roster/components/MemberPicker";
+import { RosterPreviewGrid } from "@/features/roster/components/RosterPreviewGrid";
+import { RosterWarnings } from "@/features/roster/components/RosterWarnings";
+import { checkRoster } from "@/features/roster/rosterChecks";
+import { fullName, staffForUnit, type RosterPerson } from "@/features/roster/staffForUnit";
 
 export const Route = createFileRoute("/roster/generate")({
   beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
@@ -89,11 +93,19 @@ function GenerateRosterPage() {
     queryFn: listTemplates,
   });
   const { data: usersData } = useUsers({
-    limit: 100,
+    limit: 500,
     departmentId: selectedUnitId || undefined,
   });
 
-  const users = usersData?.data || [];
+  // Only the selected unit's staff (filtered here too, in case the API ignores the filter).
+  const unitStaff = useMemo(() => {
+    if (!selectedUnitId) return { staff: [] as RosterPerson[], filtered: true };
+    return staffForUnit((usersData?.data ?? []) as unknown as RosterPerson[], {
+      unitId: selectedUnitId,
+    });
+  }, [usersData, selectedUnitId]);
+  const users = unitStaff.staff as any[];
+  const nameOf = (id: string) => fullName(users.find((u: any) => u.id === id)) || "Unknown";
   const { data: deptTree } = useDepartmentTree();
 
   // Extract units (departments level 2?) from tree - simplifying for now
@@ -140,7 +152,8 @@ function GenerateRosterPage() {
       }
     },
 
-    onError: () => toast.error("Failed to generate roster"),
+    onError: (err: any) =>
+      toast.error(err?.message || "Couldn't generate the roster. Please try again."),
   });
 
   const handleGenerate = (data: GenerateFormValues, save: boolean) => {
@@ -298,65 +311,27 @@ function GenerateRosterPage() {
 
                     <div className="space-y-2">
                       <Label>Team Members</Label>
-                      {/* Simple multi-select using native select for simplicity, or we could build a fancier one */}
-                      <Select
-                        onValueChange={(val) => {
-                          const current = form.getValues(
-                            `teams.${index}.memberIds`,
-                          );
-                          if (!current.includes(val)) {
-                            form.setValue(`teams.${index}.memberIds`, [
-                              ...current,
-                              val,
-                            ]);
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add member..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {users.map((u: any) => (
-                            <SelectItem key={u.id} value={u.id}>
-                              {u.firstName} {u.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {form
-                          .watch(`teams.${index}.memberIds`)
-                          ?.map((userId: string) => {
-                            const user = users.find(
-                              (u: any) => u.id === userId,
-                            );
-                            return (
-                              <Badge
-                                key={userId}
-                                variant="secondary"
-                                className="pr-1"
-                              >
-                                {user?.firstName} {user?.lastName}
-                                <button
-                                  type="button"
-                                  className="ml-1 hover:text-destructive"
-                                  onClick={() => {
-                                    const current = form.getValues(
-                                      `teams.${index}.memberIds`,
-                                    );
-                                    form.setValue(
-                                      `teams.${index}.memberIds`,
-                                      current.filter((id) => id !== userId),
-                                    );
-                                  }}
-                                >
-                                  ×
-                                </button>
-                              </Badge>
-                            );
-                          })}
-                      </div>
+                      <MemberPicker
+                        people={users as RosterPerson[]}
+                        selected={form.watch(`teams.${index}.memberIds`) ?? []}
+                        onChange={(ids) =>
+                          form.setValue(`teams.${index}.memberIds`, ids, {
+                            shouldValidate: form.formState.isSubmitted,
+                          })
+                        }
+                        takenBy={(() => {
+                          const m = new Map<string, string>();
+                          form.watch("teams").forEach((t, i) => {
+                            if (i !== index) t.memberIds?.forEach((id) => m.set(id, t.name || `Team ${i + 1}`));
+                          });
+                          return m;
+                        })()}
+                      />
+                      {selectedUnitId && !unitStaff.filtered && (
+                        <p className="text-xs text-muted-foreground">
+                          Showing all staff: their records don't say which unit they belong to.
+                        </p>
+                      )}
                       {form.formState.errors.teams?.[index]?.memberIds && (
                         <p className="text-xs text-destructive">
                           {
@@ -407,61 +382,22 @@ function GenerateRosterPage() {
             <CardHeader>
               <CardTitle>Roster Preview</CardTitle>
               <CardDescription>
-                Generated {previewData?.entries?.length} entries. Review the
-                schedule below before saving.
+                {previewData?.entries?.length ?? 0} shifts generated for{" "}
+                {new Set((previewData?.entries ?? []).map((e: any) => e.staffId)).size} staff.
+                Check the grid and any problems below before saving.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Simple Table Preview */}
-              <div className="border rounded-md overflow-hidden">
-                <div className="max-h-[500px] overflow-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-muted text-muted-foreground font-medium">
-                      <tr>
-                        <th className="p-3 sticky top-0 bg-muted">Date</th>
-                        <th className="p-3 sticky top-0 bg-muted">Staff</th>
-                        <th className="p-3 sticky top-0 bg-muted">Shift</th>
-                        <th className="p-3 sticky top-0 bg-muted">Time</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {previewData?.entries?.map((entry: any, i: number) => {
-                        const user = users.find(
-                          (u: any) => u.id === entry.staffId,
-                        );
-                        return (
-                          <tr key={i} className="hover:bg-muted/10">
-                            <td className="p-3">
-                              {format(new Date(entry.dutyDate), "EEE, MMM d")}
-                            </td>
-                            <td className="p-3 font-medium">
-                              {user
-                                ? `${user.firstName} ${user.lastName}`
-                                : entry.staffId}
-                            </td>
-                            <td className="p-3">
-                              <Badge variant="outline">{entry.shift}</Badge>
-                            </td>
-                            <td className="p-3 text-muted-foreground">
-                              {entry.shiftStartTime} - {entry.shiftEndTime}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                      {(!previewData || previewData?.entries?.length === 0) && (
-                        <tr>
-                          <td
-                            colSpan={4}
-                            className="p-8 text-center text-muted-foreground"
-                          >
-                            No entries generated. Check your dates and
-                            configuration.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="space-y-4">
+                <RosterWarnings
+                  warnings={checkRoster(previewData?.entries ?? [], { nameOf })}
+                />
+                <RosterPreviewGrid
+                  entries={previewData?.entries ?? []}
+                  startDate={form.watch("startDate")}
+                  endDate={form.watch("endDate")}
+                  nameOf={nameOf}
+                />
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	Activity,
 	Award,
@@ -15,18 +15,12 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { useAttendanceSummary } from "@/hooks/attendance";
 import { useCertificationTypes } from "@/hooks/certifications";
 import { useDocuments } from "@/hooks/documents";
+import { useUnreadCounts } from "@/hooks/messaging";
+import { label } from "@/lib/labels";
 import { useAuthStore } from "@/stores/auth";
-import { getAccessToken } from "@/utils/auth";
 
+// Sign-in is checked for every page in __root.tsx.
 export const Route = createFileRoute("/")({
-	beforeLoad: () => {
-		const token = getAccessToken();
-		if (!token) {
-			if (typeof window !== "undefined") {
-				throw redirect({ to: "/auth/login" });
-			}
-		}
-	},
 	component: Dashboard,
 });
 
@@ -35,6 +29,9 @@ function Dashboard() {
 	const documentsQuery = useDocuments({ page: 1, limit: 5 });
 	const attendanceSummary = useAttendanceSummary();
 	const certificationTypes = useCertificationTypes();
+	const unread = useUnreadCounts();
+	const firstName =
+		user?.firstName || user?.name?.trim().split(/\s+/)[0] || "";
 
 	const quickLinks = [
 		{
@@ -63,7 +60,7 @@ function Dashboard() {
 		<div className="space-y-8">
 			<header className="flex flex-col gap-2">
 				<h1 className="text-3xl font-semibold">
-					Welcome back, {user?.name?.split(" ")[0] ?? "Operations Lead"}!
+					{firstName ? `Welcome back, ${firstName}!` : "Welcome back!"}
 				</h1>
 				<p className="text-sm text-muted-foreground">
 					Monitor today's operations, workflow and compliance status across the
@@ -122,8 +119,12 @@ function Dashboard() {
 					description="Operations communications"
 					icon={MessageSquare}
 					tone="info"
-					value={0}
-					footer="New vendor inquiries awaiting response"
+					value={unread.data?.total ?? 0}
+					footer={
+						unread.isLoading
+							? "Checking…"
+							: `${unread.data?.byConversation?.length ?? 0} conversations with new messages`
+					}
 					linkText="Go to messaging"
 					linkTo="/messages"
 				/>
@@ -169,12 +170,12 @@ function Dashboard() {
 											</Link>
 										</div>
 										<div className="text-xs text-muted-foreground">
-											{doc.workflowStage}
+											{label(doc.workflowStage)}
 										</div>
 									</div>
 									<p className="text-xs text-muted-foreground mt-1">
-										Direction: {doc.direction} • Type: {doc.documentType} •
-										Priority: {doc.priority || "normal"}
+										{label(doc.direction)} {label(doc.documentType).toLowerCase()}{" "}
+										• {label(doc.priority || "normal")} priority
 									</p>
 								</div>
 							</div>
@@ -206,22 +207,17 @@ function Dashboard() {
 						))}
 					</div>
 
-					<div className="px-5 py-4 border-t space-y-3">
-						<h3 className="text-sm font-semibold">Department highlights</h3>
-						<div className="flex items-center justify-between text-xs">
-							<span>Operations center staffing</span>
-							<span className="font-medium">92% coverage</span>
-						</div>
-						<div className="flex items-center justify-between text-xs">
-							<span>Field inspections scheduled</span>
-							<span className="font-medium">14 this week</span>
-						</div>
-						<div className="flex items-center justify-between text-xs">
-							<span>Security broadcasts pending</span>
-							<span className="font-medium text-[var(--color-accent)]">
-								2 urgent
-							</span>
-						</div>
+					{/* Replaces figures that were typed into the code rather than loaded. */}
+					<div className="px-5 py-4 border-t space-y-2">
+						<h3 className="text-sm font-semibold">Today on duty</h3>
+						<p className="text-xs text-muted-foreground">
+							Live staffing per post, late arrivals and contractors on site.
+						</p>
+						<Link to="/public/duty-board">
+							<Button variant="outline" size="sm" className="w-full">
+								Open duty board
+							</Button>
+						</Link>
 					</div>
 				</div>
 			</section>

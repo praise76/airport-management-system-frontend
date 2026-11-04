@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { getAccessToken } from "@/utils/auth";
 import { useDutyBoardData } from "@/hooks/useDutyBoard";
 import { format } from "date-fns";
 import {
@@ -6,7 +7,6 @@ import {
   Users,
   Shield,
   Briefcase,
-  Clock,
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
@@ -65,6 +65,7 @@ function PublicDutyBoardPage() {
 
   const handleTerminalChange = (val: string) => {
     navigate({
+      to: "/public/duty-board",
       search: {
         terminalId: val === "all" ? undefined : val,
       },
@@ -103,18 +104,22 @@ function PublicDutyBoardPage() {
     );
   }
 
+  // Missing lists from the server show as empty instead of crashing the board.
+  const departments = data.departments ?? [];
+  const contractors = data.contractors ?? [];
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-6 overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6 lg:overflow-hidden flex flex-col">
       <style>{coverageStyles}</style>
 
       {/* Header */}
-      <header className="flex justify-between items-center mb-8 pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
+      <header className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center mb-6 md:mb-8 pb-4 border-b border-slate-800">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="h-12 w-12 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
             <Shield className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
               Airport Operations
             </h1>
             <p className="text-slate-400">
@@ -124,12 +129,20 @@ function PublicDutyBoardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-8">
-          <div className="text-right">
-            <div className="text-3xl font-mono font-bold tracking-widest">
+        <div className="flex items-center justify-between gap-4 md:gap-8">
+          {getAccessToken() && (
+            <Link
+              to="/"
+              className="text-sm text-slate-400 hover:text-slate-100 underline-offset-4 hover:underline"
+            >
+              ← Staff app
+            </Link>
+          )}
+          <div className="md:text-right">
+            <div className="text-2xl md:text-3xl font-mono font-bold tracking-wider md:tracking-widest">
               {format(currentTime, "HH:mm:ss")}
             </div>
-            <div className="text-sm text-slate-400 uppercase tracking-widest">
+            <div className="text-xs md:text-sm text-slate-400 uppercase tracking-wider md:tracking-widest">
               {format(currentTime, "EEEE, MMM d, yyyy")}
             </div>
           </div>
@@ -176,7 +189,7 @@ function PublicDutyBoardPage() {
       </header>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
         <StatCard
           label="Total On Duty"
           value={data.totalOnDuty}
@@ -186,7 +199,7 @@ function PublicDutyBoardPage() {
         <StatCard
           label="Security Staff"
           value={
-            data.departments.find((d) => d.name.includes("Security"))
+            departments.find((d) => d.name.includes("Security"))
               ?.onDutyCount || 0
           }
           icon={<Shield className="h-5 w-5 text-emerald-400" />}
@@ -194,15 +207,15 @@ function PublicDutyBoardPage() {
         <StatCard
           label="Operations Staff"
           value={
-            data.departments.find((d) => d.name.includes("Operations"))
+            departments.find((d) => d.name.includes("Operations"))
               ?.onDutyCount || 0
           }
           icon={<Briefcase className="h-5 w-5 text-amber-400" />}
         />
         <StatCard
           label="Contractors"
-          value={data.contractors.reduce(
-            (acc, c) => acc + c.onDutyPersonnel.length,
+          value={contractors.reduce(
+            (acc, c) => acc + (c.onDutyPersonnel?.length ?? 0),
             0,
           )}
           icon={<Users className="h-5 w-5 text-purple-400" />}
@@ -210,13 +223,13 @@ function PublicDutyBoardPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-12 gap-8 flex-1 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden">
         {/* Left: Department Units */}
-        <div className="col-span-8 overflow-y-auto pr-2 space-y-8 no-scrollbar">
-          {data.departments.map((dept) => (
+        <div className="lg:col-span-8 lg:overflow-y-auto lg:pr-2 space-y-8 no-scrollbar">
+          {departments.map((dept) => (
             <div key={dept.id} className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-blue-100 flex items-center gap-2">
+                <h2 className="text-lg md:text-xl font-semibold text-blue-100 flex flex-wrap items-center gap-2">
                   {dept.name}
                   <Badge
                     variant="outline"
@@ -227,8 +240,8 @@ function PublicDutyBoardPage() {
                 </h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {dept.units.map((unit) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(dept.units ?? []).map((unit) => (
                   <UnitCard key={unit.id} unit={unit} />
                 ))}
               </div>
@@ -237,7 +250,7 @@ function PublicDutyBoardPage() {
         </div>
 
         {/* Right: Contractors & Notices */}
-        <div className="col-span-4 space-y-6 flex flex-col">
+        <div className="lg:col-span-4 space-y-6 flex flex-col">
           <Card className="bg-slate-900/50 border-slate-800 flex-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-purple-200">
@@ -246,7 +259,10 @@ function PublicDutyBoardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {data.contractors.map((org) => (
+              {contractors.length === 0 && (
+                <p className="text-sm text-slate-500">No contractors checked in.</p>
+              )}
+              {contractors.map((org) => (
                 <div key={org.orgId}>
                   <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
                     {org.organizationName} ({org.contractType})
@@ -263,7 +279,7 @@ function PublicDutyBoardPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
+                          <p className="text-sm font-medium truncate text-slate-100">
                             {person.name}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -292,11 +308,14 @@ function PublicDutyBoardPage() {
               <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
               <div>
                 <h4 className="font-semibold text-emerald-100 text-sm">
-                  System Status: Nominal
+                  Live data
                 </h4>
                 <p className="text-xs text-emerald-400/70 mt-1">
-                  All sync services operational. Last updated:{" "}
-                  {format(new Date(), "HH:mm")}
+                  Refreshes every minute. Last updated:{" "}
+                  {format(
+                    data.lastUpdated ? new Date(data.lastUpdated) : new Date(),
+                    "HH:mm",
+                  )}
                 </p>
               </div>
             </div>
@@ -319,9 +338,9 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-      <div>
-        <p className="text-sm text-slate-400 font-medium mb-1">{label}</p>
+    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 md:p-4 flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <p className="text-xs md:text-sm text-slate-400 font-medium mb-1 truncate">{label}</p>
         <div className="flex items-baseline gap-2">
           <span className="text-2xl font-bold">{value}</span>
           {total !== undefined && (
@@ -329,7 +348,7 @@ function StatCard({
           )}
         </div>
       </div>
-      <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
+      <div className="hidden sm:block shrink-0 p-3 bg-slate-950 rounded-lg border border-slate-800">
         {icon}
       </div>
     </div>
@@ -354,8 +373,8 @@ function UnitCard({ unit }: { unit: any }) {
   return (
     <Card className={`border ${statusColor} transition-colors`}>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
+        <div className="flex flex-wrap justify-between items-start gap-2">
+          <div className="min-w-0">
             <CardTitle className="text-base text-slate-100">
               {unit.name}
             </CardTitle>
@@ -363,7 +382,7 @@ function UnitCard({ unit }: { unit: any }) {
           </div>
           <Badge
             variant="outline"
-            className={`bg-slate-950 uppercase text-[10px] tracking-wider ${statusText} border-opacity-20`}
+            className={`shrink-0 bg-slate-950 uppercase text-[10px] tracking-wider ${statusText} border-opacity-20`}
           >
             {unit.coverageStatus}
           </Badge>
@@ -372,7 +391,7 @@ function UnitCard({ unit }: { unit: any }) {
       <CardContent>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            {unit.onDutyStaff.map((staff: any) => (
+            {(unit.onDutyStaff ?? []).map((staff: any) => (
               <div
                 key={staff.id}
                 className="flex items-center gap-2 p-1.5 rounded bg-slate-950/50 border border-slate-800/50"
@@ -394,7 +413,7 @@ function UnitCard({ unit }: { unit: any }) {
               </div>
             ))}
           </div>
-          {unit.onDutyStaff.length === 0 && (
+          {(unit.onDutyStaff ?? []).length === 0 && (
             <div className="text-center py-4 text-xs text-slate-600">
               No staff currently logged at this post.
             </div>
