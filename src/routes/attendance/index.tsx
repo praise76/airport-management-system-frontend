@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { format, isAfter, parse } from "date-fns";
 import {
@@ -29,7 +29,7 @@ import { SubmitShiftReportModal } from "@/features/shift-reports/SubmitShiftRepo
 import {
 	useAttendance,
 	useCheckIn,
-	useCheckLocation,
+	useLocationStatus,
 	useCheckOut,
 	useGeofenceZones,
 	useMyAttendanceToday,
@@ -71,9 +71,14 @@ function AttendancePage() {
 	const [fix, setFix] = useState<Fix | null>(null);
 	const [locationProblem, setLocationProblem] = useState<string | null>(null);
 	const [lastError, setLastError] = useState<string | null>(null);
+	const [errorWasCheckedIn, setErrorWasCheckedIn] = useState<boolean | null>(null);
 
 	const activeZones = useMemo(() => (zones ?? []).filter((z) => z.isActive !== false), [zones]);
-	const { data: locStatus } = useCheckLocation(fix?.lat, fix?.lng);
+	const queryClient = useQueryClient();
+	const { data: locStatus } = useLocationStatus(fix?.lat, fix?.lng);
+	// After a refused tap the screen may be out of step with the server (someone else, another device, or an
+	// automatic action changed it), so refetch the day's status.
+	const refreshStatus = () => queryClient.invalidateQueries({ queryKey: ["attendance"] });
 
 	// Read the location as soon as the page opens, then every 30 seconds.
 	const readLocation = useCallback(async () => {
@@ -136,6 +141,8 @@ function AttendancePage() {
 					? locationErrorMessage(error)
 					: error?.message || "The check-in wasn't accepted. Please try again.",
 			);
+			setErrorWasCheckedIn(false);
+			refreshStatus();
 		} finally {
 			setBusy(false);
 		}
@@ -157,6 +164,8 @@ function AttendancePage() {
 					? locationErrorMessage(error)
 					: error?.message || "The check-out wasn't accepted. Please try again.",
 			);
+			setErrorWasCheckedIn(true);
+			refreshStatus();
 		} finally {
 			setBusy(false);
 		}
@@ -183,6 +192,17 @@ function AttendancePage() {
 				: "not_checked_in";
 
 	const insideZone = !!locStatus?.inside;
+
+	// If the server says one thing and the screen another, refetch rather than leave a button that won't work.
+	const serverCheckedIn = locStatus?.checkedIn;
+	useEffect(() => {
+		if (serverCheckedIn !== undefined && serverCheckedIn !== isCheckedIn) {
+			queryClient.invalidateQueries({ queryKey: ["attendance"] });
+		}
+	}, [serverCheckedIn, isCheckedIn, queryClient]);
+
+	// An error belongs to the state it happened in; once the status has changed it no longer applies.
+	const visibleError = lastError !== null && errorWasCheckedIn === isCheckedIn ? lastError : null;
 
 	return (
 		<div className="space-y-6">
@@ -261,7 +281,7 @@ function AttendancePage() {
 									</Select>
 								</div>
 
-								{lastError && <ErrorBox message={lastError} />}
+								{visibleError && <ErrorBox message={visibleError} />}
 
 								<Button
 									onClick={handleCheckIn}
@@ -293,7 +313,7 @@ function AttendancePage() {
 										place={todayRecord.checkOutZone?.name}
 									/>
 								)}
-								{lastError && <ErrorBox message={lastError} />}
+								{visibleError && <ErrorBox message={visibleError} />}
 								{isCheckedIn && (
 									<Button
 										onClick={handleCheckOut}

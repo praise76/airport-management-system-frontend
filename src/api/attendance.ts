@@ -71,7 +71,20 @@ export async function checkOut(input: CheckOutRequest): Promise<CheckOutResponse
   return res.data.data
 }
 
-export async function checkLocation(lat: number, lng: number): Promise<CheckLocationResponse> {
+/**
+ * Where is this position, and is the person checked in? READ-ONLY: it never opens or closes a session, so
+ * it is what a screen should poll to show "you're at Terminal 1".
+ */
+export async function getLocationStatus(lat: number, lng: number): Promise<CheckLocationResponse> {
+  const res = await api.post('/attendance/location-status', { lat, lng })
+  return res.data.data
+}
+
+/**
+ * Automatic clock-in/out: it CHANGES attendance (inside a zone clocks you in, outside clocks you out).
+ * Do not poll this to display a status; use getLocationStatus. Kept for a deliberate background geofence.
+ */
+export async function checkLocation(lat: number, lng: number): Promise<{ status: string }> {
   const res = await api.post('/attendance/check-location', { lat, lng })
   return res.data.data
 }

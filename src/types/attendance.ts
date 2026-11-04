@@ -90,12 +90,15 @@ export interface CheckOutResponse {
   sessionId: string
 }
 
+/** What the server says about a position, without changing anything (see getLocationStatus). */
 export interface CheckLocationResponse {
   inside: boolean
-  zone?: {
+  zone: {
     id: string
     name: string
-  }
+  } | null
+  /** The person already has an open session. */
+  checkedIn: boolean
 }
 
 export interface AttendanceLog {

@@ -6,7 +6,7 @@ import {
   getAttendanceSummary,
   checkIn,
   checkOut,
-  checkLocation,
+  getLocationStatus,
   listGeofenceZones,
   createGeofenceZone,
   updateGeofenceZone,
@@ -55,10 +55,11 @@ export function useGeofenceZones() {
   })
 }
 
-export function useCheckLocation(lat?: number, lng?: number) {
+/** Read-only: where the person is relative to the check-in zones, and whether they are checked in. */
+export function useLocationStatus(lat?: number, lng?: number) {
   return useQuery({
-    queryKey: ['attendance', 'check-location', lat, lng],
-    queryFn: () => checkLocation(lat!, lng!),
+    queryKey: ['attendance', 'location-status', lat, lng],
+    queryFn: () => getLocationStatus(lat!, lng!),
     enabled: !!lat && !!lng,
     refetchInterval: 60000, // Poll every 1 minute
   })
