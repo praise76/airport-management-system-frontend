@@ -1,3 +1,4 @@
+import { TerminalCheckboxes } from "@/components/staff/TerminalCheckboxes";
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
@@ -64,7 +65,7 @@ function EditStaffPage() {
         phone: staff.phone,
         employeeId: staff.employeeId,
         role: staff.role,
-        departmentId: staff.departmentId,
+        departmentId: (staff as { departmentId?: string }).departmentId ?? staff.department?.id,
         reportsToUserId: staff.reportsToUserId,
         isActive: staff.isActive,
         canAssignDocuments: staff.canAssignDocuments,
@@ -278,7 +279,7 @@ function EditStaffPage() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {units?.map((unit) => (
+                      {(units?.data ?? []).map((unit) => (
                         <SelectItem key={unit.id} value={unit.id}>
                           {unit.name}
                         </SelectItem>
@@ -299,14 +300,11 @@ function EditStaffPage() {
                   <Input id="airportCode" {...register("airportCode")} />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="assignedTerminals">
-                    Assigned Terminals (JSON)
-                  </Label>
-                  <Input
-                    id="assignedTerminals"
-                    placeholder='["IT1", "IT2"]'
-                    {...register("assignedTerminals")}
+                <div className="space-y-2 col-span-2">
+                  <Label>Assigned terminals</Label>
+                  <TerminalCheckboxes
+                    value={watch("assignedTerminals")}
+                    onChange={(json) => setValue("assignedTerminals", json)}
                   />
                 </div>
               </div>

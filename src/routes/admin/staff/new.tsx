@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { TerminalCheckboxes } from "@/components/staff/TerminalCheckboxes";
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
@@ -25,6 +27,15 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
 import type { CreateStaffInput } from "@/types/staff";
 
+/** A 12-character password with letters, digits and a symbol, avoiding look-alike characters. */
+function generatePassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = new Uint32Array(12);
+  crypto.getRandomValues(bytes);
+  const body = Array.from(bytes, (b) => chars[b % chars.length]).join("");
+  return `${body.slice(0, 6)}-${body.slice(6)}`;
+}
+
 export const Route = createFileRoute("/admin/staff/new")({
   beforeLoad: requireStaff(ROLE_GROUPS.staffAdmins),
   component: NewStaffPage,
@@ -51,6 +62,7 @@ function NewStaffPage() {
   });
 
   const selectedRole = watch("role");
+  const [showPassword, setShowPassword] = useState(false);
   const selectedRoleInfo = roles?.find((r) => r.value === selectedRole);
 
   const selectedDeptId = watch("departmentId");
@@ -166,9 +178,11 @@ function NewStaffPage() {
                 <Label htmlFor="password">
                   Password <span className="text-destructive">*</span>
                 </Label>
+                <div className="flex gap-2">
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   {...register("password", {
                     required: "Password is required",
                     minLength: {
@@ -177,6 +191,21 @@ function NewStaffPage() {
                     },
                   })}
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setValue("password", generatePassword(), { shouldValidate: true });
+                    setShowPassword(true);
+                  }}
+                >
+                  Generate
+                </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Give this to the staff member in person or by SMS, never by email copy to others.
+                  They should change it after their first sign-in.
+                </p>
                 {errors.password && (
                   <p className="text-sm text-destructive">
                     {errors.password.message}
@@ -316,14 +345,11 @@ function NewStaffPage() {
                   <Input id="airportCode" {...register("airportCode")} />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="assignedTerminals">
-                    Assigned Terminals (JSON)
-                  </Label>
-                  <Input
-                    id="assignedTerminals"
-                    placeholder='["IT1", "IT2"]'
-                    {...register("assignedTerminals")}
+                <div className="space-y-2 col-span-2">
+                  <Label>Assigned terminals</Label>
+                  <TerminalCheckboxes
+                    value={watch("assignedTerminals")}
+                    onChange={(json) => setValue("assignedTerminals", json)}
                   />
                 </div>
               </div>

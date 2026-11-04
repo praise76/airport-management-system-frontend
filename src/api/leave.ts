@@ -1,97 +1,158 @@
 import { api } from "./client";
-import { CalculateDaysRequest, CalculateDaysResponse, CreateLeaveRequest, LeaveApplication, LeaveBalance } from "@/types/leave";
+import type {
+	ApprovalLevel,
+	CalculateDaysRequest,
+	CalculateDaysResponse,
+	CreateLeaveRequest,
+	LeaveApplication,
+	LeaveBalance,
+	LeaveType,
+} from "@/types/leave";
 
-export const calculateWorkingDays = async (data: CalculateDaysRequest): Promise<CalculateDaysResponse> => {
-    const response = await api.post("/leave/calculate-days", data);
-    return response.data;
+/*
+ * Leave goes through the backend's self-service endpoints (see api.json):
+ *   GET  /self-service/leave                     my requests
+ *   GET  /self-service/leave/balance             my balance
+ *   POST /self-service/leave/apply               apply
+ *   GET  /self-service/leave/pending/{level}     requests waiting at supervisor | hod | hr
+ *   POST /self-service/leave/{id}/review/{level} { decision: "approve" | "reject", comments }
+ *
+ * Before this change the lists were sample data written into this file and approving did
+ * nothing. The functions below translate between the server's format (lower-case leave types,
+ * multi-level statuses) and the shapes the existing screens use.
+ */
+
+const TYPE_LABEL: Record<string, LeaveType> = {
+	annual: "Annual",
+	sick: "Sick",
+	compassionate: "Compassionate",
+	unpaid: "Unpaid",
+	maternity: "Maternity",
+	paternity: "Paternity",
+};
+
+const unwrap = <T>(res: { data: any }): T => (res.data?.data ?? res.data) as T;
+
+/** Working days (Mon–Fri) between two dates, inclusive. Used when the server can't calculate. */
+export function countWeekdays(start: string, end: string): number {
+	const a = new Date(`${start}T12:00:00`);
+	const b = new Date(`${end}T12:00:00`);
+	if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime()) || b < a) return 0;
+	let n = 0;
+	for (const d = new Date(a); d <= b; d.setDate(d.getDate() + 1)) {
+		const day = d.getDay();
+		if (day !== 0 && day !== 6) n++;
+	}
+	return n;
+}
+
+function toApplication(r: any, level?: ApprovalLevel): LeaveApplication {
+	const first = r.user?.firstName ?? r.staff?.firstName ?? r.firstName;
+	const last = r.user?.lastName ?? r.staff?.lastName ?? r.lastName;
+	return {
+		id: r.id,
+		applicationNumber: r.applicationNumber ?? r.requestNumber ?? `LV-${String(r.id).slice(0, 8).toUpperCase()}`,
+		leaveType: TYPE_LABEL[String(r.leaveType).toLowerCase()] ?? r.leaveType,
+		startDate: r.startDate,
+		endDate: r.endDate,
+		days: r.days ?? r.totalDays ?? countWeekdays(r.startDate, r.endDate),
+		reason: r.reason ?? "",
+		status: r.status,
+		createdAt: r.createdAt,
+		handoverToUserId: r.handoverToUserId,
+		handoverToName: r.handoverTo
+			? `${r.handoverTo.firstName ?? ""} ${r.handoverTo.lastName ?? ""}`.trim()
+			: r.handoverToName,
+		handoverNotes: r.handoverNotes,
+		rejectionReason: r.rejectionReason ?? r.reviewComments,
+		staffName: r.staffName ?? ([first, last].filter(Boolean).join(" ") || undefined),
+		staffId: r.userId ?? r.staffId,
+		level,
+	};
+}
+
+export const calculateWorkingDays = async (
+	data: CalculateDaysRequest,
+): Promise<CalculateDaysResponse> => {
+	try {
+		const response = await api.post("/leave/calculate-days", data);
+		const days = response.data?.days ?? response.data?.data?.days;
+		if (typeof days === "number") return { days };
+	} catch {
+		// Not every backend has this endpoint; fall back to counting weekdays.
+	}
+	return { days: countWeekdays(data.startDate, data.endDate) };
 };
 
 export const applyForLeave = async (data: CreateLeaveRequest): Promise<LeaveApplication> => {
-    const response = await api.post("/leave/apply", data);
-    return response.data;
+	const res = await api.post("/self-service/leave/apply", {
+		...data,
+		leaveType: String(data.leaveType).toLowerCase(),
+	});
+	return toApplication(unwrap(res));
 };
 
 export const getMyApplications = async (): Promise<LeaveApplication[]> => {
-    // const response = await api.get("/leave/my-applications");
-    // return response.data;
-    
-    // Mocking data for now as per plan
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve([
-                {
-                    id: "1",
-                    applicationNumber: "LV/2023/0010",
-                    leaveType: "Sick",
-                    startDate: "2023-08-01",
-                    endDate: "2023-08-03",
-                    days: 3,
-                    status: "approved",
-                    reason: "Flu",
-                    createdAt: "2023-07-28T10:00:00Z"
-                },
-                {
-                    id: "2",
-                    applicationNumber: "LV/2023/0042",
-                    leaveType: "Annual",
-                    startDate: "2023-11-01",
-                    endDate: "2023-11-05",
-                    days: 5,
-                    status: "pending",
-                    reason: "Personal vacation",
-                    createdAt: "2023-10-25T14:30:00Z"
-                }
-            ]);
-        }, 500);
-    });
+	const res = await api.get("/self-service/leave");
+	const list = unwrap<any[] | { items?: any[] }>(res);
+	const items = Array.isArray(list) ? list : (list?.items ?? []);
+	return items.map((r) => toApplication(r));
 };
 
+/** Accepts either { annual: {total,used,remaining}, ... } (documented) or a list. */
 export const getMyLeaveBalances = async (): Promise<LeaveBalance[]> => {
-    // const response = await api.get("/leave/balances");
-    // return response.data;
-
-    // Mocking data for now
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve([
-                { leaveType: "Annual", entitled: 20, taken: 5, remaining: 15 },
-                { leaveType: "Sick", entitled: 10, taken: 0, remaining: 10 },
-                { leaveType: "Compassionate", entitled: 5, taken: 0, remaining: 5 }
-            ]);
-        }, 500);
-    });
+	const res = await api.get("/self-service/leave/balance");
+	const data = unwrap<any>(res);
+	if (Array.isArray(data)) {
+		return data.map((b) => ({
+			leaveType: TYPE_LABEL[String(b.leaveType).toLowerCase()] ?? b.leaveType,
+			entitled: b.entitled ?? b.total ?? 0,
+			taken: b.taken ?? b.used ?? 0,
+			remaining: b.remaining ?? 0,
+		}));
+	}
+	return Object.entries(data ?? {})
+		.filter(([, v]) => v && typeof v === "object")
+		.map(([k, v]: [string, any]) => ({
+			leaveType: TYPE_LABEL[k.toLowerCase()] ?? (k as LeaveType),
+			entitled: v.total ?? v.entitled ?? 0,
+			taken: v.used ?? v.taken ?? 0,
+			remaining: v.remaining ?? 0,
+		}));
 };
 
-// Manager APIs
-export const getPendingApprovals = async (): Promise<LeaveApplication[]> => {
-     // Mocking data for now
-     return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve([
-                {
-                   id: "3",
-                    applicationNumber: "LV/2023/0055",
-                    leaveType: "Annual",
-                    startDate: "2023-12-20",
-                    endDate: "2023-12-30",
-                    days: 10,
-                    status: "pending",
-                    reason: "Christmas Break",
-                    staffName: "John Doe",
-                    staffId: "user-123",
-                    createdAt: "2023-11-01T09:00:00Z"
-                }
-            ]);
-        }, 500);
-    });
+/** Requests waiting at each of the given approval levels, newest first. */
+export const getPendingApprovals = async (
+	levels: ApprovalLevel[],
+): Promise<LeaveApplication[]> => {
+	const lists = await Promise.all(
+		levels.map(async (level) => {
+			try {
+				const res = await api.get(`/self-service/leave/pending/${level}`);
+				const data = unwrap<any[] | { items?: any[] }>(res);
+				const items = Array.isArray(data) ? data : (data?.items ?? []);
+				return items.map((r) => toApplication(r, level));
+			} catch (err: any) {
+				// A 403 just means this user can't approve at that level.
+				if (err?.status === 403) return [];
+				throw err;
+			}
+		}),
+	);
+	const byId = new Map<string, LeaveApplication>();
+	for (const a of lists.flat()) if (!byId.has(a.id)) byId.set(a.id, a);
+	return [...byId.values()].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
 };
 
-export const processApproval = async (id: string, status: "approved" | "rejected", comments?: string) => {
-    // const response = await api.post(`/leave/${id}/${status}`, { comments });
-    // return response.data;
-     return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({ success: true });
-        }, 500);
-    });
+export const processApproval = async (
+	id: string,
+	level: ApprovalLevel,
+	decision: "approve" | "reject",
+	comments?: string,
+) => {
+	const res = await api.post(`/self-service/leave/${id}/review/${level}`, {
+		decision,
+		comments,
+	});
+	return unwrap(res);
 };

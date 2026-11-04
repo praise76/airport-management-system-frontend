@@ -2,7 +2,10 @@ import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useStaff, useDeactivateStaff } from "@/hooks/staff";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Edit, UserX } from "lucide-react";
+import { Plus, Loader2, Edit, UserX, Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { label } from "@/lib/labels";
 import {
   Table,
   TableBody,
@@ -38,9 +41,30 @@ function StaffListPage() {
     deactivateMutation.mutate(id);
   };
 
+  const [q, setQ] = useState("");
+  const [dept, setDept] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
+  const departments = useMemo(
+    () =>
+      [...new Set((staff ?? []).map((m) => m.department?.name).filter(Boolean) as string[])].sort(),
+    [staff],
+  );
+  const shown = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return (staff ?? []).filter(
+      (m) =>
+        (showInactive || m.isActive) &&
+        (!dept || m.department?.name === dept) &&
+        (!needle ||
+          `${m.firstName} ${m.lastName} ${m.email} ${m.employeeId ?? ""}`
+            .toLowerCase()
+            .includes(needle)),
+    );
+  }, [staff, q, dept, showInactive]);
+
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Staff Management</h1>
           <p className="text-muted-foreground">
@@ -53,12 +77,48 @@ function StaffListPage() {
         </Button>
       </div>
 
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name, email or staff ID"
+            className="pl-8"
+          />
+        </div>
+        <select
+          value={dept}
+          onChange={(e) => setDept(e.target.value)}
+          className="h-9 rounded-md border bg-background px-2 text-sm"
+          aria-label="Department"
+        >
+          <option value="">All departments</option>
+          {departments.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showInactive}
+            onChange={(e) => setShowInactive(e.target.checked)}
+          />
+          Show deactivated
+        </label>
+        <span className="ml-auto text-sm text-muted-foreground">
+          {shown.length} of {staff?.length ?? 0} staff
+        </span>
+      </div>
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="border rounded-lg">
+        <div className="border rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -72,14 +132,21 @@ function StaffListPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {staff?.map((member) => (
+              {shown.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                    No staff match.
+                  </TableCell>
+                </TableRow>
+              )}
+              {shown.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell className="font-medium">
                     {member.firstName} {member.lastName}
                   </TableCell>
                   <TableCell>{member.email}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{member.role}</Badge>
+                    <Badge variant="secondary">{label(member.role)}</Badge>
                   </TableCell>
                   <TableCell>{member.employeeId || "-"}</TableCell>
                   <TableCell>{member.department?.name || "-"}</TableCell>
@@ -95,8 +162,9 @@ function StaffListPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Edit"
                         onClick={() =>
-                          navigate({ to: `/admin/staff/${member.id}/edit` })
+                          navigate({ to: "/admin/staff/$id/edit", params: { id: member.id } })
                         }
                       >
                         <Edit className="h-4 w-4" />
@@ -104,7 +172,7 @@ function StaffListPage() {
                       {member.isActive && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Deactivate">
                               <UserX className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>

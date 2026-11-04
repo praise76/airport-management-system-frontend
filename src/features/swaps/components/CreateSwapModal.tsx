@@ -20,7 +20,8 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCreateSwap } from "@/hooks/swaps";
 // import { useMyRoster } from "@/features/roster/api"; // Assuming this exists or using the one from hooks
-import { useUsers } from "@/hooks/users"; // You might need to adjust this import based on actual project structure
+import { useUsers } from "@/hooks/users";
+import { useAuthStore } from "@/stores/auth";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -57,9 +58,15 @@ export function CreateSwapModal({ open, onOpenChange }: CreateSwapModalProps) {
 
   const { mutate: createSwap, isPending } = useCreateSwap();
   const { data: shifts } = useUpcomingShifts();
-  const { data: users } = useUsers({ limit: 50 });
-
-  console.log("shifts", shifts);
+  // Swaps only make sense within your own unit: same posts, same qualifications.
+  const me = useAuthStore((st) => st.user);
+  const { data: users } = useUsers({ limit: 500, departmentId: me?.departmentId || undefined });
+  const colleagues = (users?.data ?? []).filter(
+    (u: any) =>
+      u.id !== me?.userId &&
+      u.id !== me?.id &&
+      (!me?.departmentId || !u.departmentId || u.departmentId === me.departmentId),
+  );
 
   const handleSubmit = () => {
     if (!selectedShiftId || !reason) {
@@ -159,13 +166,16 @@ export function CreateSwapModal({ open, onOpenChange }: CreateSwapModalProps) {
 
           {swapType === "direct_swap" && (
             <div className="space-y-2">
-              <Label>Target Colleague</Label>
+              <Label>Colleague in your unit</Label>
               <Select value={targetUserId} onValueChange={setTargetUserId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select colleague" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users?.data?.map((u: any) => (
+                  {colleagues.length === 0 && (
+                    <div className="p-2 text-sm text-muted-foreground">No colleagues found in your unit</div>
+                  )}
+                  {colleagues.map((u: any) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.firstName} {u.lastName}
                     </SelectItem>

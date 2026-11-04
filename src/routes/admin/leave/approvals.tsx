@@ -1,6 +1,9 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
-import { usePendingApprovals, useProcessApproval } from "@/hooks/leave";
+import { approvalLevelsFor, usePendingApprovals, useProcessApproval } from "@/hooks/leave";
+import { useUsers } from "@/hooks/users";
+import { useAuthStore } from "@/stores/auth";
+import { label } from "@/lib/labels";
 import {
   Card,
   CardContent,
@@ -23,8 +26,15 @@ export const Route = createFileRoute("/admin/leave/approvals")({
 });
 
 function LeaveApprovalsPage() {
-  const { data: approvals, isLoading } = usePendingApprovals();
+  const user = useAuthStore((s) => s.user);
+  const levels = approvalLevelsFor(user);
+  const { data: approvals, isLoading, isError } = usePendingApprovals();
   const processMutation = useProcessApproval();
+  const { data: staff } = useUsers({ limit: 500 });
+  const nameOf = (id?: string) => {
+    const u = (staff?.data ?? []).find((x: any) => x.id === id);
+    return u ? `${u.firstName} ${u.lastName}` : undefined;
+  };
 
   const [selectedApp, setSelectedApp] = useState<LeaveApplication | null>(null);
   const [action, setAction] = useState<"approve" | "reject" | null>(null);
@@ -37,7 +47,12 @@ function LeaveApprovalsPage() {
   const handleConfirmAction = (comments: string) => {
     if (selectedApp && action) {
       processMutation.mutate(
-        { id: selectedApp.id, status: action, comments },
+        {
+          id: selectedApp.id,
+          level: selectedApp.level ?? levels[0] ?? "supervisor",
+          decision: action,
+          comments,
+        },
         {
           onSuccess: () => {
             setSelectedApp(null);
@@ -48,8 +63,22 @@ function LeaveApprovalsPage() {
     }
   };
 
+  if (levels.length === 0) {
+    return (
+      <div className="p-8 text-muted-foreground">
+        Your role doesn't approve leave. Supervisors, heads of unit or department, and HR do.
+      </div>
+    );
+  }
   if (isLoading) {
-    return <div className="p-8">Loading approvals...</div>;
+    return <div className="p-8">Loading approvals…</div>;
+  }
+  if (isError) {
+    return (
+      <div className="p-8 text-destructive">
+        Couldn't load leave requests. Please refresh the page.
+      </div>
+    );
   }
 
   return (
@@ -57,7 +86,7 @@ function LeaveApprovalsPage() {
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Leave Approvals</h2>
         <p className="text-muted-foreground">
-          Manaage pending leave requests from your team.
+          Leave requests waiting for your decision.
         </p>
       </div>
 
@@ -89,10 +118,19 @@ function LeaveApprovalsPage() {
                       <CardTitle className="text-base">
                         {app.staffName || "Unknown Staff"}
                       </CardTitle>
-                      <CardDescription>{app.staffId}</CardDescription>
+                      <CardDescription>
+                        Applied {app.createdAt ? format(new Date(app.createdAt), "d MMM") : ""}
+                      </CardDescription>
                     </div>
                   </div>
-                  <Badge variant="outline">{app.leaveType}</Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <Badge variant="outline">{app.leaveType}</Badge>
+                    {app.level && (
+                      <span className="text-[11px] text-muted-foreground">
+                        {label(app.level)} approval
+                      </span>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 space-y-4">
@@ -100,22 +138,25 @@ function LeaveApprovalsPage() {
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {format(new Date(app.startDate), "MMM dd")} -{" "}
-                      {format(new Date(app.endDate), "MMM dd")}
+                      {format(new Date(app.startDate), "d MMM")} – {format(new Date(app.endDate), "d MMM yyyy")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-4 w-4" />
-                    <span>{app.days} Days</span>
+                    <span>
+                      {app.days} working {app.days === 1 ? "day" : "days"}
+                    </span>
                   </div>
                 </div>
 
-                {app.handoverToUserId && (
+                {(app.handoverToName || app.handoverToUserId) && (
                   <div className="text-sm bg-muted/30 p-2 rounded">
                     <span className="font-semibold text-xs uppercase text-muted-foreground">
                       Handover:
                     </span>
-                    <div className="truncate">{app.handoverToUserId}</div>
+                    <div className="truncate">
+                      {app.handoverToName || nameOf(app.handoverToUserId) || "Colleague (name not available)"}
+                    </div>
                   </div>
                 )}
 
@@ -124,7 +165,7 @@ function LeaveApprovalsPage() {
                     Reason:
                   </span>
                   <p className="text-foreground/90 line-clamp-3 italic">
-                    "{app.reason}"
+                    {app.reason ? `"${app.reason}"` : "No reason given."}
                   </p>
                 </div>
               </CardContent>

@@ -1,6 +1,17 @@
 export type LeaveType = "Annual" | "Sick" | "Compassionate" | "Unpaid" | "Maternity" | "Paternity";
 
-export type LeaveStatus = "pending" | "approved" | "rejected";
+/** pending → supervisor_approved → hod_approved → hr_approved, or rejected / cancelled. */
+export type LeaveStatus =
+    | "pending"
+    | "supervisor_approved"
+    | "hod_approved"
+    | "hr_approved"
+    | "approved"
+    | "rejected"
+    | "cancelled";
+
+/** The approval step a manager is acting at. */
+export type ApprovalLevel = "supervisor" | "hod" | "hr";
 
 export interface LeaveBalance {
     leaveType: LeaveType;
@@ -20,10 +31,12 @@ export interface LeaveApplication {
     status: LeaveStatus;
     createdAt: string;
     handoverToUserId?: string;
+    handoverToName?: string;
     handoverNotes?: string;
     rejectionReason?: string;
     staffName?: string; // For manager view
     staffId?: string; // For manager view
+    level?: ApprovalLevel; // For manager view: the step this request is waiting at
 }
 
 export interface CreateLeaveRequest {
