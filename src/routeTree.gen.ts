@@ -44,6 +44,7 @@ import { Route as StakeholderPermitsRouteImport } from './routes/stakeholder/per
 import { Route as StakeholderLoginRouteImport } from './routes/stakeholder/login'
 import { Route as StakeholderInvoicesRouteImport } from './routes/stakeholder/invoices'
 import { Route as StakeholderFlightsRouteImport } from './routes/stakeholder/flights'
+import { Route as StakeholderDocumentsRouteImport } from './routes/stakeholder/documents'
 import { Route as StakeholderDashboardRouteImport } from './routes/stakeholder/dashboard'
 import { Route as StakeholderActivitiesRouteImport } from './routes/stakeholder/activities'
 import { Route as RosterMyShiftsRouteImport } from './routes/roster/my-shifts'
@@ -255,6 +256,11 @@ const StakeholderFlightsRoute = StakeholderFlightsRouteImport.update({
   path: '/stakeholder/flights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StakeholderDocumentsRoute = StakeholderDocumentsRouteImport.update({
+  id: '/stakeholder/documents',
+  path: '/stakeholder/documents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StakeholderDashboardRoute = StakeholderDashboardRouteImport.update({
   id: '/stakeholder/dashboard',
   path: '/stakeholder/dashboard',
@@ -439,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
+  '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
@@ -506,6 +513,7 @@ export interface FileRoutesByTo {
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
+  '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
@@ -576,6 +584,7 @@ export interface FileRoutesById {
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
+  '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
@@ -647,6 +656,7 @@ export interface FileRouteTypes {
     | '/roster/my-shifts'
     | '/stakeholder/activities'
     | '/stakeholder/dashboard'
+    | '/stakeholder/documents'
     | '/stakeholder/flights'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
@@ -714,6 +724,7 @@ export interface FileRouteTypes {
     | '/roster/my-shifts'
     | '/stakeholder/activities'
     | '/stakeholder/dashboard'
+    | '/stakeholder/documents'
     | '/stakeholder/flights'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
@@ -783,6 +794,7 @@ export interface FileRouteTypes {
     | '/roster/my-shifts'
     | '/stakeholder/activities'
     | '/stakeholder/dashboard'
+    | '/stakeholder/documents'
     | '/stakeholder/flights'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
@@ -851,6 +863,7 @@ export interface RootRouteChildren {
   RosterMyShiftsRoute: typeof RosterMyShiftsRoute
   StakeholderActivitiesRoute: typeof StakeholderActivitiesRoute
   StakeholderDashboardRoute: typeof StakeholderDashboardRoute
+  StakeholderDocumentsRoute: typeof StakeholderDocumentsRoute
   StakeholderFlightsRoute: typeof StakeholderFlightsRoute
   StakeholderInvoicesRoute: typeof StakeholderInvoicesRoute
   StakeholderLoginRoute: typeof StakeholderLoginRoute
@@ -1144,6 +1157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholderFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholder/documents': {
+      id: '/stakeholder/documents'
+      path: '/stakeholder/documents'
+      fullPath: '/stakeholder/documents'
+      preLoaderRoute: typeof StakeholderDocumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stakeholder/dashboard': {
       id: '/stakeholder/dashboard'
       path: '/stakeholder/dashboard'
@@ -1431,6 +1451,7 @@ const rootRouteChildren: RootRouteChildren = {
   RosterMyShiftsRoute: RosterMyShiftsRoute,
   StakeholderActivitiesRoute: StakeholderActivitiesRoute,
   StakeholderDashboardRoute: StakeholderDashboardRoute,
+  StakeholderDocumentsRoute: StakeholderDocumentsRoute,
   StakeholderFlightsRoute: StakeholderFlightsRoute,
   StakeholderInvoicesRoute: StakeholderInvoicesRoute,
   StakeholderLoginRoute: StakeholderLoginRoute,

@@ -13,7 +13,6 @@ import {
 	Mail,
 	Phone,
 	MapPin,
-	ExternalLink,
 	CheckCircle,
 	Ban,
 	AlertTriangle,
@@ -22,6 +21,8 @@ import {
 	XCircle,
 } from "lucide-react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
+import { CompanyDocumentsReview } from "@/components/stakeholders/documents/CompanyDocumentsReview";
+import { VerificationDocumentsNotice } from "@/components/stakeholders/documents/VerificationDocumentsNotice";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -249,7 +250,7 @@ function StakeholderDetailPage() {
 					<OverviewTab stakeholder={stakeholder} />
 				)}
 				{activeTab === "documents" && (
-					<DocumentsTab stakeholder={stakeholder} />
+					<CompanyDocumentsReview orgId={stakeholderId} />
 				)}
 				{activeTab === "users" && (
 					<UsersTab users={users ?? []} />
@@ -294,6 +295,13 @@ function StakeholderDetailPage() {
 					<p className="text-sm">
 						This will mark the stakeholder as verified and allow them full portal access.
 					</p>
+					<VerificationDocumentsNotice
+						orgId={stakeholderId}
+						onOpenDocuments={() => {
+							setVerifyDialog(false);
+							setActiveTab("documents");
+						}}
+					/>
 					<DialogFooter>
 						<Button variant="outline" onClick={() => setVerifyDialog(false)}>
 							Cancel
@@ -584,117 +592,6 @@ function TypeSpecificDetails({ stakeholder }: { stakeholder: StakeholderOrganiza
 	}
 }
 
-import { DocumentViewer, useDocumentViewer } from "@/components/ui/document-viewer";
-import type { StakeholderDocument } from "@/types/stakeholder-portal";
-
-function DocumentsTab({ stakeholder }: { stakeholder: StakeholderOrganization }) {
-	const documents = stakeholder.documents ?? [];
-	const viewer = useDocumentViewer();
-
-	if (documents.length === 0) {
-		return (
-			<div className="text-center py-12">
-				<FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-				<h3 className="font-semibold mb-2">No Documents</h3>
-				<p className="text-muted-foreground">
-					No documents have been uploaded for this stakeholder.
-				</p>
-			</div>
-		);
-	}
-
-	const handleOpenDocument = (doc: StakeholderDocument) => {
-		viewer.openDocument({
-			name: doc.name,
-			url: doc.url,
-			type: doc.url.toLowerCase().includes('.pdf') ? 'pdf' : 'image',
-		});
-	};
-
-	return (
-		<>
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-				{documents.map((doc) => (
-					<div
-						key={doc.id}
-						className="border rounded-lg p-4 hover:border-primary/50 hover:bg-muted/30 transition-colors cursor-pointer group"
-						onClick={() => handleOpenDocument(doc)}
-					>
-						<div className="flex items-start justify-between">
-							<div className="flex items-center gap-3">
-								<div
-									className={cn(
-										"h-10 w-10 rounded-lg flex items-center justify-center",
-										doc.url.toLowerCase().includes('.pdf')
-											? "bg-red-100 dark:bg-red-900/30"
-											: "bg-blue-100 dark:bg-blue-900/30"
-									)}
-								>
-									<FileText
-										className={cn(
-											"h-5 w-5",
-											doc.url.toLowerCase().includes('.pdf')
-												? "text-red-600 dark:text-red-400"
-												: "text-blue-600 dark:text-blue-400"
-										)}
-									/>
-								</div>
-								<div>
-									<p className="font-medium">{doc.name}</p>
-									<p className="text-sm text-muted-foreground">{doc.documentType}</p>
-								</div>
-							</div>
-							{doc.isVerified && (
-								<Badge variant="outline" className="bg-green-50 text-green-700 shrink-0">
-									Verified
-								</Badge>
-							)}
-						</div>
-						{doc.expiryDate && (
-							<p className="text-xs text-muted-foreground mt-2">
-								Expires: {new Date(doc.expiryDate).toLocaleDateString()}
-							</p>
-						)}
-						<div className="flex items-center gap-1 text-primary text-sm mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-							<ExternalLink className="h-3 w-3" />
-							Click to preview
-						</div>
-					</div>
-				))}
-			</div>
-
-			{/* Document Viewer Modal */}
-			<DocumentViewer
-				open={viewer.isOpen}
-				onOpenChange={viewer.setIsOpen}
-				document={viewer.document}
-				sideInfo={
-					viewer.document && (
-						<div className="space-y-4">
-							<h4 className="font-semibold">Document Details</h4>
-							<div className="space-y-2 text-sm">
-								<div>
-									<p className="text-muted-foreground">Document Name</p>
-									<p className="font-medium">{viewer.document.name}</p>
-								</div>
-								<div>
-									<p className="text-muted-foreground">Organization</p>
-									<p className="font-medium">{stakeholder.organizationName}</p>
-								</div>
-								<div>
-									<p className="text-muted-foreground">Verification Status</p>
-									<Badge variant="outline" className="mt-1">
-										{stakeholder.verificationStatus.replace(/_/g, " ")}
-									</Badge>
-								</div>
-							</div>
-						</div>
-					)
-				}
-			/>
-		</>
-	);
-}
 
 function UsersTab({
 	users,

@@ -164,7 +164,8 @@ export function normalizeError(err: AxiosError<any>): ApiError {
 			status: err.response?.status ?? 0,
 			code: data?.error,
 			message: extractErrorMessage(err),
-			details: data?.errors,
+			// `details` is the structured payload some 409s carry (document checklist, roster conflicts)
+			details: data?.details ?? data?.errors,
 		};
 	}
 	return { status: 0, message: "Unknown error" };

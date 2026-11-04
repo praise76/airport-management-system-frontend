@@ -390,6 +390,16 @@ function StakeholderDashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               ...config.quickActions,
+              // Every company must keep documents on file with FAAN.
+              ...(config.quickActions.some((a) => a.href === "/stakeholder/documents")
+                ? []
+                : [
+                    {
+                      label: "Documents",
+                      href: "/stakeholder/documents",
+                      icon: <FileText className="h-4 w-4" />,
+                    },
+                  ]),
               // Every company can reach invoices; add it only if its type doesn't list it already.
               ...(config.quickActions.some((a) => a.href === "/stakeholder/invoices")
                 ? []
