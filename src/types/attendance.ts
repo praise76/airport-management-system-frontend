@@ -126,6 +126,12 @@ export interface DailyAttendance {
 export interface AttendanceSummary {
   activeUsers: number
   checkedInToday: number
+  // Read by the dashboard tile; GET /attendance/summary isn't in api.json, so these are
+  // optional until the backend's format is confirmed.
+  checkedIn?: number
+  totalEmployees?: number
+  absent?: number
+  onLeave?: number
 }
 
 export interface Paginated<T> {

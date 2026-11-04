@@ -1,5 +1,5 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import {
 	Building2,
@@ -54,7 +54,6 @@ import {
 	VerificationBadge,
 	RatingStars,
 } from "@/components/stakeholders";
-import { getAccessToken } from "@/utils/auth";
 
 export const Route = createFileRoute("/stakeholders/")({
 	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers),

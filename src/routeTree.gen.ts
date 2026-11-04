@@ -57,11 +57,6 @@ import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as DocumentsRegistryRouteImport } from './routes/documents/registry'
 import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
-import { Route as DemoTanchatRouteImport } from './routes/demo/tanchat'
-import { Route as DemoTableRouteImport } from './routes/demo/table'
-import { Route as DemoStoreRouteImport } from './routes/demo/store'
-import { Route as DemoMcpTodosRouteImport } from './routes/demo/mcp-todos'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
@@ -70,30 +65,16 @@ import { Route as RosterPatternsIndexRouteImport } from './routes/roster/pattern
 import { Route as InventoryStockIndexRouteImport } from './routes/inventory/stock/index'
 import { Route as InventoryRequisitionsIndexRouteImport } from './routes/inventory/requisitions/index'
 import { Route as InventoryItemsIndexRouteImport } from './routes/inventory/items/index'
-import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
 import { Route as AdminStaffIndexRouteImport } from './routes/admin/staff/index'
 import { Route as RosterTemplatesNewRouteImport } from './routes/roster/templates/new'
 import { Route as OrganizationsOrgIdEditRouteImport } from './routes/organizations/$orgId.edit'
 import { Route as InventoryRequisitionsNewRouteImport } from './routes/inventory/requisitions/new'
 import { Route as InventoryRequisitionsRequisitionIdRouteImport } from './routes/inventory/requisitions/$requisitionId'
-import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
-import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
-import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
-import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
-import { Route as DemoFormAddressRouteImport } from './routes/demo/form.address'
-import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
-import { Route as DemoApiTanchatRouteImport } from './routes/demo/api.tanchat'
-import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
-import { Route as DemoApiMcpTodosRouteImport } from './routes/demo/api.mcp-todos'
 import { Route as AdminStakeholdersVerificationRouteImport } from './routes/admin/stakeholders/verification'
 import { Route as AdminStaffNewRouteImport } from './routes/admin/staff/new'
 import { Route as AdminRosterPlannerRouteImport } from './routes/admin/roster/planner'
 import { Route as AdminLeaveApprovalsRouteImport } from './routes/admin/leave/approvals'
 import { Route as AdminAttendanceRegistryRouteImport } from './routes/admin/attendance/registry'
-import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
-import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
-import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
-import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 import { Route as AdminStaffIdEditRouteImport } from './routes/admin/staff/$id.edit'
 
 const MessagesRoute = MessagesRouteImport.update({
@@ -339,31 +320,6 @@ const DocumentsDocIdRoute = DocumentsDocIdRouteImport.update({
   path: '/documents/$docId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoTanchatRoute = DemoTanchatRouteImport.update({
-  id: '/demo/tanchat',
-  path: '/demo/tanchat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoTableRoute = DemoTableRouteImport.update({
-  id: '/demo/table',
-  path: '/demo/table',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStoreRoute = DemoStoreRouteImport.update({
-  id: '/demo/store',
-  path: '/demo/store',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoMcpTodosRoute = DemoMcpTodosRouteImport.update({
-  id: '/demo/mcp-todos',
-  path: '/demo/mcp-todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/auth/register',
   path: '/auth/register',
@@ -405,11 +361,6 @@ const InventoryItemsIndexRoute = InventoryItemsIndexRouteImport.update({
   path: '/inventory/items/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
-  id: '/example/guitars/',
-  path: '/example/guitars/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminStaffIndexRoute = AdminStaffIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -437,51 +388,6 @@ const InventoryRequisitionsRequisitionIdRoute =
     path: '/inventory/requisitions/$requisitionId',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ExampleGuitarsGuitarIdRoute = ExampleGuitarsGuitarIdRouteImport.update({
-  id: '/example/guitars/$guitarId',
-  path: '/example/guitars/$guitarId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
-  id: '/demo/start/server-funcs',
-  path: '/demo/start/server-funcs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
-  id: '/demo/start/api-request',
-  path: '/demo/start/api-request',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
-  id: '/demo/form/simple',
-  path: '/demo/form/simple',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
-  id: '/demo/form/address',
-  path: '/demo/form/address',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoApiTqTodosRoute = DemoApiTqTodosRouteImport.update({
-  id: '/demo/api/tq-todos',
-  path: '/demo/api/tq-todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoApiTanchatRoute = DemoApiTanchatRouteImport.update({
-  id: '/demo/api/tanchat',
-  path: '/demo/api/tanchat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
-  id: '/demo/api/names',
-  path: '/demo/api/names',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoApiMcpTodosRoute = DemoApiMcpTodosRouteImport.update({
-  id: '/demo/api/mcp-todos',
-  path: '/demo/api/mcp-todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminStakeholdersVerificationRoute =
   AdminStakeholdersVerificationRouteImport.update({
     id: '/admin/stakeholders/verification',
@@ -508,26 +414,6 @@ const AdminAttendanceRegistryRoute = AdminAttendanceRegistryRouteImport.update({
   path: '/admin/attendance/registry',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
-  id: '/demo/start/ssr/',
-  path: '/demo/start/ssr/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
-  id: '/demo/start/ssr/spa-mode',
-  path: '/demo/start/ssr/spa-mode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrFullSsrRoute = DemoStartSsrFullSsrRouteImport.update({
-  id: '/demo/start/ssr/full-ssr',
-  path: '/demo/start/ssr/full-ssr',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
-  id: '/demo/start/ssr/data-only',
-  path: '/demo/start/ssr/data-only',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminStaffIdEditRoute = AdminStaffIdEditRouteImport.update({
   id: '/$id/edit',
   path: '/$id/edit',
@@ -540,11 +426,6 @@ export interface FileRoutesByFullPath {
   '/admin/staff': typeof AdminStaffRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
-  '/demo/mcp-todos': typeof DemoMcpTodosRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
-  '/demo/tanchat': typeof DemoTanchatRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/registry': typeof DocumentsRegistryRoute
@@ -596,41 +477,22 @@ export interface FileRoutesByFullPath {
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
-  '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tanchat': typeof DemoApiTanchatRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/inventory/requisitions/$requisitionId': typeof InventoryRequisitionsRequisitionIdRoute
   '/inventory/requisitions/new': typeof InventoryRequisitionsNewRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff/': typeof AdminStaffIndexRoute
-  '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/inventory/items': typeof InventoryItemsIndexRoute
   '/inventory/requisitions': typeof InventoryRequisitionsIndexRoute
   '/inventory/stock': typeof InventoryStockIndexRoute
   '/roster/patterns': typeof RosterPatternsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
-  '/demo/mcp-todos': typeof DemoMcpTodosRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
-  '/demo/tanchat': typeof DemoTanchatRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/registry': typeof DocumentsRegistryRoute
@@ -682,31 +544,17 @@ export interface FileRoutesByTo {
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
-  '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tanchat': typeof DemoApiTanchatRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/inventory/requisitions/$requisitionId': typeof InventoryRequisitionsRequisitionIdRoute
   '/inventory/requisitions/new': typeof InventoryRequisitionsNewRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff': typeof AdminStaffIndexRoute
-  '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/inventory/items': typeof InventoryItemsIndexRoute
   '/inventory/requisitions': typeof InventoryRequisitionsIndexRoute
   '/inventory/stock': typeof InventoryStockIndexRoute
   '/roster/patterns': typeof RosterPatternsIndexRoute
   '/roster/templates': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -715,11 +563,6 @@ export interface FileRoutesById {
   '/admin/staff': typeof AdminStaffRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
-  '/demo/mcp-todos': typeof DemoMcpTodosRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
-  '/demo/tanchat': typeof DemoTanchatRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/registry': typeof DocumentsRegistryRoute
@@ -771,31 +614,17 @@ export interface FileRoutesById {
   '/admin/roster/planner': typeof AdminRosterPlannerRoute
   '/admin/staff/new': typeof AdminStaffNewRoute
   '/admin/stakeholders/verification': typeof AdminStakeholdersVerificationRoute
-  '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
-  '/demo/api/names': typeof DemoApiNamesRoute
-  '/demo/api/tanchat': typeof DemoApiTanchatRoute
-  '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/inventory/requisitions/$requisitionId': typeof InventoryRequisitionsRequisitionIdRoute
   '/inventory/requisitions/new': typeof InventoryRequisitionsNewRoute
   '/organizations/$orgId/edit': typeof OrganizationsOrgIdEditRoute
   '/roster/templates/new': typeof RosterTemplatesNewRoute
   '/admin/staff/': typeof AdminStaffIndexRoute
-  '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/inventory/items/': typeof InventoryItemsIndexRoute
   '/inventory/requisitions/': typeof InventoryRequisitionsIndexRoute
   '/inventory/stock/': typeof InventoryStockIndexRoute
   '/roster/patterns/': typeof RosterPatternsIndexRoute
   '/roster/templates/': typeof RosterTemplatesIndexRoute
   '/admin/staff/$id/edit': typeof AdminStaffIdEditRoute
-  '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
-  '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
-  '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -805,11 +634,6 @@ export interface FileRouteTypes {
     | '/admin/staff'
     | '/auth/login'
     | '/auth/register'
-    | '/demo/mcp-todos'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanchat'
-    | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
     | '/documents/registry'
@@ -861,41 +685,22 @@ export interface FileRouteTypes {
     | '/admin/roster/planner'
     | '/admin/staff/new'
     | '/admin/stakeholders/verification'
-    | '/demo/api/mcp-todos'
-    | '/demo/api/names'
-    | '/demo/api/tanchat'
-    | '/demo/api/tq-todos'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/example/guitars/$guitarId'
     | '/inventory/requisitions/$requisitionId'
     | '/inventory/requisitions/new'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
     | '/admin/staff/'
-    | '/example/guitars'
     | '/inventory/items'
     | '/inventory/requisitions'
     | '/inventory/stock'
     | '/roster/patterns'
     | '/roster/templates'
     | '/admin/staff/$id/edit'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth/login'
     | '/auth/register'
-    | '/demo/mcp-todos'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanchat'
-    | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
     | '/documents/registry'
@@ -947,31 +752,17 @@ export interface FileRouteTypes {
     | '/admin/roster/planner'
     | '/admin/staff/new'
     | '/admin/stakeholders/verification'
-    | '/demo/api/mcp-todos'
-    | '/demo/api/names'
-    | '/demo/api/tanchat'
-    | '/demo/api/tq-todos'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/example/guitars/$guitarId'
     | '/inventory/requisitions/$requisitionId'
     | '/inventory/requisitions/new'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
     | '/admin/staff'
-    | '/example/guitars'
     | '/inventory/items'
     | '/inventory/requisitions'
     | '/inventory/stock'
     | '/roster/patterns'
     | '/roster/templates'
     | '/admin/staff/$id/edit'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr'
   id:
     | '__root__'
     | '/'
@@ -979,11 +770,6 @@ export interface FileRouteTypes {
     | '/admin/staff'
     | '/auth/login'
     | '/auth/register'
-    | '/demo/mcp-todos'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanchat'
-    | '/demo/tanstack-query'
     | '/documents/$docId'
     | '/documents/new'
     | '/documents/registry'
@@ -1035,31 +821,17 @@ export interface FileRouteTypes {
     | '/admin/roster/planner'
     | '/admin/staff/new'
     | '/admin/stakeholders/verification'
-    | '/demo/api/mcp-todos'
-    | '/demo/api/names'
-    | '/demo/api/tanchat'
-    | '/demo/api/tq-todos'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/example/guitars/$guitarId'
     | '/inventory/requisitions/$requisitionId'
     | '/inventory/requisitions/new'
     | '/organizations/$orgId/edit'
     | '/roster/templates/new'
     | '/admin/staff/'
-    | '/example/guitars/'
     | '/inventory/items/'
     | '/inventory/requisitions/'
     | '/inventory/stock/'
     | '/roster/patterns/'
     | '/roster/templates/'
     | '/admin/staff/$id/edit'
-    | '/demo/start/ssr/data-only'
-    | '/demo/start/ssr/full-ssr'
-    | '/demo/start/ssr/spa-mode'
-    | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1068,11 +840,6 @@ export interface RootRouteChildren {
   AdminStaffRoute: typeof AdminStaffRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
-  DemoMcpTodosRoute: typeof DemoMcpTodosRoute
-  DemoStoreRoute: typeof DemoStoreRoute
-  DemoTableRoute: typeof DemoTableRoute
-  DemoTanchatRoute: typeof DemoTanchatRoute
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   DocumentsDocIdRoute: typeof DocumentsDocIdRoute
   DocumentsNewRoute: typeof DocumentsNewRoute
   DocumentsRegistryRoute: typeof DocumentsRegistryRoute
@@ -1120,28 +887,14 @@ export interface RootRouteChildren {
   AdminLeaveApprovalsRoute: typeof AdminLeaveApprovalsRoute
   AdminRosterPlannerRoute: typeof AdminRosterPlannerRoute
   AdminStakeholdersVerificationRoute: typeof AdminStakeholdersVerificationRoute
-  DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
-  DemoApiNamesRoute: typeof DemoApiNamesRoute
-  DemoApiTanchatRoute: typeof DemoApiTanchatRoute
-  DemoApiTqTodosRoute: typeof DemoApiTqTodosRoute
-  DemoFormAddressRoute: typeof DemoFormAddressRoute
-  DemoFormSimpleRoute: typeof DemoFormSimpleRoute
-  DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
-  DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
-  ExampleGuitarsGuitarIdRoute: typeof ExampleGuitarsGuitarIdRoute
   InventoryRequisitionsRequisitionIdRoute: typeof InventoryRequisitionsRequisitionIdRoute
   InventoryRequisitionsNewRoute: typeof InventoryRequisitionsNewRoute
   RosterTemplatesNewRoute: typeof RosterTemplatesNewRoute
-  ExampleGuitarsIndexRoute: typeof ExampleGuitarsIndexRoute
   InventoryItemsIndexRoute: typeof InventoryItemsIndexRoute
   InventoryRequisitionsIndexRoute: typeof InventoryRequisitionsIndexRoute
   InventoryStockIndexRoute: typeof InventoryStockIndexRoute
   RosterPatternsIndexRoute: typeof RosterPatternsIndexRoute
   RosterTemplatesIndexRoute: typeof RosterTemplatesIndexRoute
-  DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
-  DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
-  DemoStartSsrSpaModeRoute: typeof DemoStartSsrSpaModeRoute
-  DemoStartSsrIndexRoute: typeof DemoStartSsrIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1482,41 +1235,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocumentsDocIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/tanchat': {
-      id: '/demo/tanchat'
-      path: '/demo/tanchat'
-      fullPath: '/demo/tanchat'
-      preLoaderRoute: typeof DemoTanchatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/table': {
-      id: '/demo/table'
-      path: '/demo/table'
-      fullPath: '/demo/table'
-      preLoaderRoute: typeof DemoTableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/store': {
-      id: '/demo/store'
-      path: '/demo/store'
-      fullPath: '/demo/store'
-      preLoaderRoute: typeof DemoStoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/mcp-todos': {
-      id: '/demo/mcp-todos'
-      path: '/demo/mcp-todos'
-      fullPath: '/demo/mcp-todos'
-      preLoaderRoute: typeof DemoMcpTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth/register': {
       id: '/auth/register'
       path: '/auth/register'
@@ -1573,13 +1291,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryItemsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/example/guitars/': {
-      id: '/example/guitars/'
-      path: '/example/guitars'
-      fullPath: '/example/guitars'
-      preLoaderRoute: typeof ExampleGuitarsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/staff/': {
       id: '/admin/staff/'
       path: '/'
@@ -1615,69 +1326,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRequisitionsRequisitionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/example/guitars/$guitarId': {
-      id: '/example/guitars/$guitarId'
-      path: '/example/guitars/$guitarId'
-      fullPath: '/example/guitars/$guitarId'
-      preLoaderRoute: typeof ExampleGuitarsGuitarIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/server-funcs': {
-      id: '/demo/start/server-funcs'
-      path: '/demo/start/server-funcs'
-      fullPath: '/demo/start/server-funcs'
-      preLoaderRoute: typeof DemoStartServerFuncsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/api-request': {
-      id: '/demo/start/api-request'
-      path: '/demo/start/api-request'
-      fullPath: '/demo/start/api-request'
-      preLoaderRoute: typeof DemoStartApiRequestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/form/simple': {
-      id: '/demo/form/simple'
-      path: '/demo/form/simple'
-      fullPath: '/demo/form/simple'
-      preLoaderRoute: typeof DemoFormSimpleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/form/address': {
-      id: '/demo/form/address'
-      path: '/demo/form/address'
-      fullPath: '/demo/form/address'
-      preLoaderRoute: typeof DemoFormAddressRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/api/tq-todos': {
-      id: '/demo/api/tq-todos'
-      path: '/demo/api/tq-todos'
-      fullPath: '/demo/api/tq-todos'
-      preLoaderRoute: typeof DemoApiTqTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/api/tanchat': {
-      id: '/demo/api/tanchat'
-      path: '/demo/api/tanchat'
-      fullPath: '/demo/api/tanchat'
-      preLoaderRoute: typeof DemoApiTanchatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/api/names': {
-      id: '/demo/api/names'
-      path: '/demo/api/names'
-      fullPath: '/demo/api/names'
-      preLoaderRoute: typeof DemoApiNamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/api/mcp-todos': {
-      id: '/demo/api/mcp-todos'
-      path: '/demo/api/mcp-todos'
-      fullPath: '/demo/api/mcp-todos'
-      preLoaderRoute: typeof DemoApiMcpTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/stakeholders/verification': {
       id: '/admin/stakeholders/verification'
       path: '/admin/stakeholders/verification'
@@ -1711,34 +1359,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/attendance/registry'
       fullPath: '/admin/attendance/registry'
       preLoaderRoute: typeof AdminAttendanceRegistryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/': {
-      id: '/demo/start/ssr/'
-      path: '/demo/start/ssr'
-      fullPath: '/demo/start/ssr'
-      preLoaderRoute: typeof DemoStartSsrIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/spa-mode': {
-      id: '/demo/start/ssr/spa-mode'
-      path: '/demo/start/ssr/spa-mode'
-      fullPath: '/demo/start/ssr/spa-mode'
-      preLoaderRoute: typeof DemoStartSsrSpaModeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/full-ssr': {
-      id: '/demo/start/ssr/full-ssr'
-      path: '/demo/start/ssr/full-ssr'
-      fullPath: '/demo/start/ssr/full-ssr'
-      preLoaderRoute: typeof DemoStartSsrFullSsrRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/ssr/data-only': {
-      id: '/demo/start/ssr/data-only'
-      path: '/demo/start/ssr/data-only'
-      fullPath: '/demo/start/ssr/data-only'
-      preLoaderRoute: typeof DemoStartSsrDataOnlyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/staff/$id/edit': {
@@ -1800,11 +1420,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminStaffRoute: AdminStaffRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
-  DemoMcpTodosRoute: DemoMcpTodosRoute,
-  DemoStoreRoute: DemoStoreRoute,
-  DemoTableRoute: DemoTableRoute,
-  DemoTanchatRoute: DemoTanchatRoute,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   DocumentsDocIdRoute: DocumentsDocIdRoute,
   DocumentsNewRoute: DocumentsNewRoute,
   DocumentsRegistryRoute: DocumentsRegistryRoute,
@@ -1852,29 +1467,15 @@ const rootRouteChildren: RootRouteChildren = {
   AdminLeaveApprovalsRoute: AdminLeaveApprovalsRoute,
   AdminRosterPlannerRoute: AdminRosterPlannerRoute,
   AdminStakeholdersVerificationRoute: AdminStakeholdersVerificationRoute,
-  DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,
-  DemoApiNamesRoute: DemoApiNamesRoute,
-  DemoApiTanchatRoute: DemoApiTanchatRoute,
-  DemoApiTqTodosRoute: DemoApiTqTodosRoute,
-  DemoFormAddressRoute: DemoFormAddressRoute,
-  DemoFormSimpleRoute: DemoFormSimpleRoute,
-  DemoStartApiRequestRoute: DemoStartApiRequestRoute,
-  DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
-  ExampleGuitarsGuitarIdRoute: ExampleGuitarsGuitarIdRoute,
   InventoryRequisitionsRequisitionIdRoute:
     InventoryRequisitionsRequisitionIdRoute,
   InventoryRequisitionsNewRoute: InventoryRequisitionsNewRoute,
   RosterTemplatesNewRoute: RosterTemplatesNewRoute,
-  ExampleGuitarsIndexRoute: ExampleGuitarsIndexRoute,
   InventoryItemsIndexRoute: InventoryItemsIndexRoute,
   InventoryRequisitionsIndexRoute: InventoryRequisitionsIndexRoute,
   InventoryStockIndexRoute: InventoryStockIndexRoute,
   RosterPatternsIndexRoute: RosterPatternsIndexRoute,
   RosterTemplatesIndexRoute: RosterTemplatesIndexRoute,
-  DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
-  DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
-  DemoStartSsrSpaModeRoute: DemoStartSsrSpaModeRoute,
-  DemoStartSsrIndexRoute: DemoStartSsrIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { formatNaira } from "@/lib/labels";
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Clock, CheckCircle2, XCircle, FileText, Eye, DollarSign, Loader2, AlertCircle, Receipt, Trash2, CreditCard } from "lucide-react";
+import { Plus, Search, Filter, Clock, CheckCircle2, XCircle, FileText, Eye, Loader2, AlertCircle, Receipt, Trash2, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

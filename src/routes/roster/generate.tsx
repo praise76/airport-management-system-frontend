@@ -322,7 +322,8 @@ function GenerateRosterPage() {
                         takenBy={(() => {
                           const m = new Map<string, string>();
                           form.watch("teams").forEach((t, i) => {
-                            if (i !== index) t.memberIds?.forEach((id) => m.set(id, t.name || `Team ${i + 1}`));
+                            if (i === index) return;
+                            for (const id of t.memberIds ?? []) m.set(id, t.name || `Team ${i + 1}`);
                           });
                           return m;
                         })()}

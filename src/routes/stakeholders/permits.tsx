@@ -39,11 +39,14 @@ function PermitQueuePage() {
 	const [page, setPage] = useState(1);
 	const [badgeFor, setBadgeFor] = useState<GlobalPermit | null>(null);
 
+	// Wait for typing to pause, then search from page 1.
 	useEffect(() => {
-		const t = setTimeout(() => setDebounced(search.trim()), 300);
+		const t = setTimeout(() => {
+			setDebounced(search.trim());
+			setPage(1);
+		}, 300);
 		return () => clearTimeout(t);
 	}, [search]);
-	useEffect(() => setPage(1), [status, debounced]);
 
 	const { data, isLoading, isError } = useGlobalPermits({
 		status: status === "all" ? undefined : status,
@@ -70,7 +73,10 @@ function PermitQueuePage() {
 					<button
 						key={t.value}
 						type="button"
-						onClick={() => setStatus(t.value)}
+						onClick={() => {
+							setStatus(t.value);
+							setPage(1);
+						}}
 						aria-pressed={status === t.value}
 						className={cn(
 							"rounded-full border px-3 py-1.5 text-sm transition-colors",

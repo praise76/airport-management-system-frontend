@@ -1,7 +1,5 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/auth'
-import { getAccessToken } from '@/utils/auth'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/admin/')({
   beforeLoad: requireStaff(ROLE_GROUPS.admins),

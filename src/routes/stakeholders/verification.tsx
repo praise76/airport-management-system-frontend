@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -25,7 +24,6 @@ import {
   Eye,
   CheckCircle2,
   Clock,
-  AlertCircle,
 } from "lucide-react";
 import { useStakeholderOrgs } from "@/hooks/stakeholder-portal";
 import {
@@ -126,6 +124,12 @@ function VerificationQueuePage() {
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
                   Loading queue...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-destructive">
+                  Couldn't load the queue. Please refresh the page.
                 </TableCell>
               </TableRow>
             ) : items.length === 0 ? (

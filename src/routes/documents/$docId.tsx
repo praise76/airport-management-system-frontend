@@ -10,7 +10,7 @@ import {
 	UserPlus,
 	XCircle,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { cloneElement, useId, useMemo, useState } from "react";
 import { fileUrl } from "@/api/client";
 import { DepartmentSelector } from "@/components/departments";
 import { Button } from "@/components/ui/button";
@@ -202,7 +202,8 @@ function ActionDialog({
 	canSubmit = true,
 	onSubmit,
 }: {
-	trigger: React.ReactNode;
+	/** The button that opens the dialog; its onClick is supplied here. */
+	trigger: React.ReactElement<{ onClick?: () => void }>;
 	title: string;
 	description?: string;
 	confirmLabel: string;
@@ -215,13 +216,14 @@ function ActionDialog({
 }) {
 	const [open, setOpen] = useState(false);
 	const [minute, setMinute] = useState("");
+	const minuteId = useId();
 	const close = () => {
 		setOpen(false);
 		setMinute("");
 	};
 	return (
 		<>
-			<span onClick={() => setOpen(true)}>{trigger}</span>
+			{cloneElement(trigger, { onClick: () => setOpen(true) })}
 			<Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
 				<DialogContent>
 					<DialogHeader>
@@ -231,8 +233,8 @@ function ActionDialog({
 					<div className="space-y-4">
 						{extra}
 						<div className="space-y-2">
-							<Label htmlFor="minute">Minute{requireMinute ? "" : " (optional)"}</Label>
-							<Textarea id="minute" rows={4} value={minute} onChange={(e) => setMinute(e.target.value)} placeholder="e.g. AVSEC to treat urgently and brief me" />
+							<Label htmlFor={minuteId}>Minute{requireMinute ? "" : " (optional)"}</Label>
+							<Textarea id={minuteId} rows={4} value={minute} onChange={(e) => setMinute(e.target.value)} placeholder="e.g. AVSEC to treat urgently and brief me" />
 						</div>
 					</div>
 					<DialogFooter>
@@ -258,6 +260,7 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 	const [toUserId, setToUserId] = useState("");
 	const [deadline, setDeadline] = useState("");
 	const [q, setQ] = useState("");
+	const deadlineId = useId();
 	const people = useMemo(() => {
 		const all = (data?.data ?? []) as any[];
 		const needle = q.trim().toLowerCase();
@@ -291,8 +294,8 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 						</Select>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="fwd-deadline">Act by (optional)</Label>
-						<Input id="fwd-deadline" type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+						<Label htmlFor={deadlineId}>Act by (optional)</Label>
+						<Input id={deadlineId} type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
 					</div>
 				</>
 			}
