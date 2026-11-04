@@ -37,12 +37,14 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as StakeholdersVerificationRouteImport } from './routes/stakeholders/verification'
 import { Route as StakeholdersPermitsRouteImport } from './routes/stakeholders/permits'
 import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
+import { Route as StakeholderResetPasswordRouteImport } from './routes/stakeholder/reset-password'
 import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
 import { Route as StakeholderRegisterRouteImport } from './routes/stakeholder/register'
 import { Route as StakeholderProfileRouteImport } from './routes/stakeholder/profile'
 import { Route as StakeholderPermitsRouteImport } from './routes/stakeholder/permits'
 import { Route as StakeholderLoginRouteImport } from './routes/stakeholder/login'
 import { Route as StakeholderInvoicesRouteImport } from './routes/stakeholder/invoices'
+import { Route as StakeholderForgotPasswordRouteImport } from './routes/stakeholder/forgot-password'
 import { Route as StakeholderFlightsRouteImport } from './routes/stakeholder/flights'
 import { Route as StakeholderDocumentsRouteImport } from './routes/stakeholder/documents'
 import { Route as StakeholderDashboardRouteImport } from './routes/stakeholder/dashboard'
@@ -58,8 +60,9 @@ import { Route as GroupsGroupIdRouteImport } from './routes/groups/$groupId'
 import { Route as DocumentsRegistryRouteImport } from './routes/documents/registry'
 import { Route as DocumentsNewRouteImport } from './routes/documents/new'
 import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
-import { Route as AuthRegisterRouteImport } from './routes/auth/register'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
 import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
 import { Route as RosterPatternsIndexRouteImport } from './routes/roster/patterns/index'
@@ -220,6 +223,12 @@ const StakeholdersStakeholderIdRoute =
     path: '/stakeholders/$stakeholderId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const StakeholderResetPasswordRoute =
+  StakeholderResetPasswordRouteImport.update({
+    id: '/stakeholder/reset-password',
+    path: '/stakeholder/reset-password',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const StakeholderRegistrationSuccessRoute =
   StakeholderRegistrationSuccessRouteImport.update({
     id: '/stakeholder/registration-success',
@@ -251,6 +260,12 @@ const StakeholderInvoicesRoute = StakeholderInvoicesRouteImport.update({
   path: '/stakeholder/invoices',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StakeholderForgotPasswordRoute =
+  StakeholderForgotPasswordRouteImport.update({
+    id: '/stakeholder/forgot-password',
+    path: '/stakeholder/forgot-password',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const StakeholderFlightsRoute = StakeholderFlightsRouteImport.update({
   id: '/stakeholder/flights',
   path: '/stakeholder/flights',
@@ -326,14 +341,19 @@ const DocumentsDocIdRoute = DocumentsDocIdRouteImport.update({
   path: '/documents/$docId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRegisterRoute = AuthRegisterRouteImport.update({
-  id: '/auth/register',
-  path: '/auth/register',
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminStaffRoute = AdminStaffRouteImport.update({
@@ -430,8 +450,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
   '/admin/staff': typeof AdminStaffRouteWithChildren
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/registry': typeof DocumentsRegistryRoute
@@ -447,12 +468,14 @@ export interface FileRoutesByFullPath {
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
   '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
+  '/stakeholder/forgot-password': typeof StakeholderForgotPasswordRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
   '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
@@ -498,8 +521,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/registry': typeof DocumentsRegistryRoute
@@ -515,12 +539,14 @@ export interface FileRoutesByTo {
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
   '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
+  '/stakeholder/forgot-password': typeof StakeholderForgotPasswordRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
   '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
@@ -569,8 +595,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
   '/admin/staff': typeof AdminStaffRouteWithChildren
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/documents/$docId': typeof DocumentsDocIdRoute
   '/documents/new': typeof DocumentsNewRoute
   '/documents/registry': typeof DocumentsRegistryRoute
@@ -586,12 +613,14 @@ export interface FileRoutesById {
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
   '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
+  '/stakeholder/forgot-password': typeof StakeholderForgotPasswordRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
   '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
@@ -641,8 +670,9 @@ export interface FileRouteTypes {
     | '/'
     | '/messages'
     | '/admin/staff'
+    | '/auth/forgot-password'
     | '/auth/login'
-    | '/auth/register'
+    | '/auth/reset-password'
     | '/documents/$docId'
     | '/documents/new'
     | '/documents/registry'
@@ -658,12 +688,14 @@ export interface FileRouteTypes {
     | '/stakeholder/dashboard'
     | '/stakeholder/documents'
     | '/stakeholder/flights'
+    | '/stakeholder/forgot-password'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
     | '/stakeholder/permits'
     | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
+    | '/stakeholder/reset-password'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
@@ -709,8 +741,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth/forgot-password'
     | '/auth/login'
-    | '/auth/register'
+    | '/auth/reset-password'
     | '/documents/$docId'
     | '/documents/new'
     | '/documents/registry'
@@ -726,12 +759,14 @@ export interface FileRouteTypes {
     | '/stakeholder/dashboard'
     | '/stakeholder/documents'
     | '/stakeholder/flights'
+    | '/stakeholder/forgot-password'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
     | '/stakeholder/permits'
     | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
+    | '/stakeholder/reset-password'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
@@ -779,8 +814,9 @@ export interface FileRouteTypes {
     | '/'
     | '/messages'
     | '/admin/staff'
+    | '/auth/forgot-password'
     | '/auth/login'
-    | '/auth/register'
+    | '/auth/reset-password'
     | '/documents/$docId'
     | '/documents/new'
     | '/documents/registry'
@@ -796,12 +832,14 @@ export interface FileRouteTypes {
     | '/stakeholder/dashboard'
     | '/stakeholder/documents'
     | '/stakeholder/flights'
+    | '/stakeholder/forgot-password'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
     | '/stakeholder/permits'
     | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
+    | '/stakeholder/reset-password'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
@@ -850,8 +888,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MessagesRoute: typeof MessagesRouteWithChildren
   AdminStaffRoute: typeof AdminStaffRouteWithChildren
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
-  AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   DocumentsDocIdRoute: typeof DocumentsDocIdRoute
   DocumentsNewRoute: typeof DocumentsNewRoute
   DocumentsRegistryRoute: typeof DocumentsRegistryRoute
@@ -865,12 +904,14 @@ export interface RootRouteChildren {
   StakeholderDashboardRoute: typeof StakeholderDashboardRoute
   StakeholderDocumentsRoute: typeof StakeholderDocumentsRoute
   StakeholderFlightsRoute: typeof StakeholderFlightsRoute
+  StakeholderForgotPasswordRoute: typeof StakeholderForgotPasswordRoute
   StakeholderInvoicesRoute: typeof StakeholderInvoicesRoute
   StakeholderLoginRoute: typeof StakeholderLoginRoute
   StakeholderPermitsRoute: typeof StakeholderPermitsRoute
   StakeholderProfileRoute: typeof StakeholderProfileRoute
   StakeholderRegisterRoute: typeof StakeholderRegisterRoute
   StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
+  StakeholderResetPasswordRoute: typeof StakeholderResetPasswordRoute
   StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
   StakeholdersPermitsRoute: typeof StakeholdersPermitsRoute
   StakeholdersVerificationRoute: typeof StakeholdersVerificationRoute
@@ -1108,6 +1149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholdersStakeholderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholder/reset-password': {
+      id: '/stakeholder/reset-password'
+      path: '/stakeholder/reset-password'
+      fullPath: '/stakeholder/reset-password'
+      preLoaderRoute: typeof StakeholderResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stakeholder/registration-success': {
       id: '/stakeholder/registration-success'
       path: '/stakeholder/registration-success'
@@ -1148,6 +1196,13 @@ declare module '@tanstack/react-router' {
       path: '/stakeholder/invoices'
       fullPath: '/stakeholder/invoices'
       preLoaderRoute: typeof StakeholderInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/forgot-password': {
+      id: '/stakeholder/forgot-password'
+      path: '/stakeholder/forgot-password'
+      fullPath: '/stakeholder/forgot-password'
+      preLoaderRoute: typeof StakeholderForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholder/flights': {
@@ -1255,11 +1310,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocumentsDocIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/register': {
-      id: '/auth/register'
-      path: '/auth/register'
-      fullPath: '/auth/register'
-      preLoaderRoute: typeof AuthRegisterRouteImport
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -1267,6 +1322,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/login'
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/auth/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/staff': {
@@ -1438,8 +1500,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MessagesRoute: MessagesRouteWithChildren,
   AdminStaffRoute: AdminStaffRouteWithChildren,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
-  AuthRegisterRoute: AuthRegisterRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   DocumentsDocIdRoute: DocumentsDocIdRoute,
   DocumentsNewRoute: DocumentsNewRoute,
   DocumentsRegistryRoute: DocumentsRegistryRoute,
@@ -1453,12 +1516,14 @@ const rootRouteChildren: RootRouteChildren = {
   StakeholderDashboardRoute: StakeholderDashboardRoute,
   StakeholderDocumentsRoute: StakeholderDocumentsRoute,
   StakeholderFlightsRoute: StakeholderFlightsRoute,
+  StakeholderForgotPasswordRoute: StakeholderForgotPasswordRoute,
   StakeholderInvoicesRoute: StakeholderInvoicesRoute,
   StakeholderLoginRoute: StakeholderLoginRoute,
   StakeholderPermitsRoute: StakeholderPermitsRoute,
   StakeholderProfileRoute: StakeholderProfileRoute,
   StakeholderRegisterRoute: StakeholderRegisterRoute,
   StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
+  StakeholderResetPasswordRoute: StakeholderResetPasswordRoute,
   StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
   StakeholdersPermitsRoute: StakeholdersPermitsRoute,
   StakeholdersVerificationRoute: StakeholdersVerificationRoute,

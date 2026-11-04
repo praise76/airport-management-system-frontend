@@ -102,7 +102,15 @@ function LoginPage() {
 							)}
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor={passwordId}>Password</Label>
+							<div className="flex items-center justify-between">
+								<Label htmlFor={passwordId}>Password</Label>
+								<Link
+									to="/auth/forgot-password"
+									className="text-sm text-primary hover:underline"
+								>
+									Forgot password?
+								</Link>
+							</div>
 							<Input
 								id={passwordId}
 								type="password"

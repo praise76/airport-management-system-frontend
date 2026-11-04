@@ -23,8 +23,11 @@ interface MyRouterContext {
 // Pages anyone can open without signing in.
 const PUBLIC_PATHS = [
   "/auth/login",
-  "/auth/register",
+  "/auth/forgot-password",
+  "/auth/reset-password",
   "/stakeholder/login",
+  "/stakeholder/forgot-password",
+  "/stakeholder/reset-password",
   "/stakeholder/register",
   "/stakeholder/registration-success",
   "/public/",
