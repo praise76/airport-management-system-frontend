@@ -134,6 +134,20 @@ export function useBlacklistStakeholderOrg() {
 	});
 }
 
+export function useRejectStakeholderOrg() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+			StakeholderPortalApi.rejectStakeholderOrg(id, { reason }),
+		onSuccess: (_, { id }) => {
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs"] });
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs", id] });
+			toast.success("Registration rejected. The company has been told why.");
+		},
+		onError: (err: any) => toast.error(err.message || "Failed to reject registration"),
+	});
+}
+
 export function useReactivateStakeholderOrg() {
 	const qc = useQueryClient();
 	return useMutation({
@@ -513,7 +527,6 @@ export function useStakeholderLogin() {
 		mutationFn: (input: StakeholderAuthLoginInput) =>
 			StakeholderPortalApi.stakeholderLogin(input),
 		onSuccess: (data) => {
-			console.log("data", data);
 			// Save to specific storage keys for persistence specific to stakeholder handling if needed
 			localStorage.setItem("stakeholder_token", data.accessToken);
 			localStorage.setItem("stakeholder_user", JSON.stringify(data.user));
@@ -527,6 +540,9 @@ export function useStakeholderLogin() {
 				refreshToken: data.refreshToken,
 				user: {
 					id: data.user.id,
+					userId: data.user.id,
+					firstName: data.user.firstName,
+					lastName: data.user.lastName,
 					name: `${data.user.firstName} ${data.user.lastName}`,
 					email: data.user.email,
 					role: data.user.role,

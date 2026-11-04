@@ -96,6 +96,18 @@ export async function blacklistStakeholderOrg(
 	return res.data.data ?? res.data;
 }
 
+/**
+ * Turn down a registration (e.g. missing or invalid documents) without blacklisting the company.
+ * Endpoint per docs/FRONTEND_STAKEHOLDER_IMP_GUIDE.md (POST /stakeholder-orgs/:id/reject).
+ */
+export async function rejectStakeholderOrg(
+	id: string,
+	data: { reason: string },
+): Promise<StakeholderOrganization> {
+	const res = await api.post(`/stakeholder-orgs/${id}/reject`, data);
+	return res.data.data ?? res.data;
+}
+
 export async function reactivateStakeholderOrg(
 	id: string,
 ): Promise<StakeholderOrganization> {

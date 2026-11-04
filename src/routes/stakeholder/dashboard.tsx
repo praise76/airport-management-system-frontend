@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { formatNaira, label } from "@/lib/labels";
 import { Progress } from "@/components/ui/progress";
 import {
   useStakeholderActivities,
@@ -216,7 +217,7 @@ function StakeholderDashboardPage() {
       pendingInvoices: invoices.filter((i) => i.status !== "paid").length,
       totalDue: invoices
         .filter((i) => i.status !== "paid")
-        .reduce((s, i) => s + i.total, 0),
+        .reduce((s, i) => s + (i.total ?? 0), 0),
     }),
     [activities, permits, invoices],
   );
@@ -370,9 +371,10 @@ function StakeholderDashboardPage() {
                 <DollarSign className="h-5 w-5 text-purple-400" />
               </div>
               <div>
-                <p className="text-slate-400 text-sm">Amount Due</p>
+                {/* These are invoices the company sent to FAAN, so this is money owed TO them. */}
+                <p className="text-slate-400 text-sm">Your unpaid invoices</p>
                 <p className="text-xl font-bold text-white">
-                  ₦{stats.totalDue.toLocaleString()}
+                  {formatNaira(stats.totalDue)}
                 </p>
               </div>
             </div>
@@ -386,26 +388,29 @@ function StakeholderDashboardPage() {
             Quick Actions
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {config.quickActions.map((action) => (
+            {[
+              ...config.quickActions,
+              // Every company can reach invoices; add it only if its type doesn't list it already.
+              ...(config.quickActions.some((a) => a.href === "/stakeholder/invoices")
+                ? []
+                : [
+                    {
+                      label: "Invoices",
+                      href: "/stakeholder/invoices",
+                      icon: <Receipt className="h-4 w-4" />,
+                    },
+                  ]),
+            ].map((action) => (
               <Link key={action.href} to={action.href}>
                 <Button
                   variant="outline"
-                  className="w-full h-auto py-4 flex-col gap-2 border-slate-700 hover:bg-white/10 hover:border-slate-600 text-slate-300"
+                  className="w-full h-auto py-4 flex-col gap-2 bg-transparent border-slate-700 text-slate-100 hover:bg-white/10 hover:text-white hover:border-slate-500"
                 >
                   {action.icon}
                   <span>{action.label}</span>
                 </Button>
               </Link>
             ))}
-            <Link to="/stakeholder/invoices">
-              <Button
-                variant="outline"
-                className="w-full h-auto py-4 flex-col gap-2 border-slate-700 hover:bg-white/10 hover:border-slate-600 text-slate-300"
-              >
-                <Receipt className="h-4 w-4" />
-                <span>Invoices</span>
-              </Button>
-            </Link>
           </div>
         </div>
 
@@ -452,8 +457,11 @@ function StakeholderDashboardPage() {
                         {activity.activityReference}
                       </p>
                     </div>
-                    <Badge variant="outline" className="capitalize text-xs">
-                      {activity.status.replace("_", " ")}
+                    <Badge
+                      variant="outline"
+                      className="text-xs shrink-0 border-slate-600 bg-slate-900 text-slate-100"
+                    >
+                      {label(activity.status)}
                     </Badge>
                   </div>
                 ))
@@ -509,12 +517,12 @@ function StakeholderDashboardPage() {
               <div className="p-3 bg-slate-800/50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 text-sm">
-                    Outstanding Balance
+                    You owe FAAN
                   </span>
                   <span
-                    className={`font-semibold ${org.outstandingBalance > 0 ? "text-red-400" : "text-emerald-400"}`}
+                    className={`font-semibold ${(org.outstandingBalance ?? 0) > 0 ? "text-red-400" : "text-emerald-400"}`}
                   >
-                    ₦{org.outstandingBalance.toLocaleString()}
+                    {formatNaira(org.outstandingBalance)}
                   </span>
                 </div>
               </div>
@@ -539,8 +547,11 @@ function StakeholderDashboardPage() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <Shield className="h-5 w-5 text-emerald-400" />
-                    <Badge variant="outline" className="text-xs">
-                      {permit.permitType}
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-slate-600 bg-slate-900 text-slate-100"
+                    >
+                      {label(permit.permitType)}
                     </Badge>
                   </div>
                   <p className="text-white font-medium mb-1">

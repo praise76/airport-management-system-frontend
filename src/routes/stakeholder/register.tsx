@@ -123,15 +123,15 @@ function RegisterPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="flex items-center">
+              <div key={s} className={`flex items-center ${s < 4 ? "flex-1" : ""}`}>
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${step >= s ? "bg-linear-to-r from-blue-500 to-purple-500 text-white" : "bg-slate-700 text-slate-400"}`}
+                  className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${step >= s ? "bg-linear-to-r from-blue-500 to-purple-500 text-white" : "bg-slate-700 text-slate-400"}`}
                 >
                   {step > s ? <Check className="h-5 w-5" /> : s}
                 </div>
                 {s < 4 && (
                   <div
-                    className={`w-16 md:w-24 h-1 mx-2 rounded ${step > s ? "bg-linear-to-r from-blue-500 to-purple-500" : "bg-slate-700"}`}
+                    className={`flex-1 min-w-4 h-1 mx-2 rounded ${step > s ? "bg-linear-to-r from-blue-500 to-purple-500" : "bg-slate-700"}`}
                   />
                 )}
               </div>

@@ -47,7 +47,9 @@ function StakeholderProfilePage() {
 
   useEffect(() => {
     if (user) {
-      const [firstName, ...lastNameParts] = user.name.split(" ");
+      const [firstName, ...lastNameParts] = (
+        user.name ?? `${user.firstName ?? ""} ${user.lastName ?? ""}`
+      ).split(" ");
       setFormData({
         firstName: firstName || "",
         lastName: lastNameParts.join(" ") || "",

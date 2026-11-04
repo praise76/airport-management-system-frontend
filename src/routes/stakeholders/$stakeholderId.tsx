@@ -1,5 +1,5 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
-import { createFileRoute, Link, redirect, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import {
 	ArrowLeft,
@@ -19,6 +19,7 @@ import {
 	AlertTriangle,
 	RefreshCw,
 	Printer,
+	XCircle,
 } from "lucide-react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,9 @@ import {
 	useStakeholderActivities,
 	useStakeholderPermits,
 	useVerifyStakeholderOrg,
+	useRejectStakeholderOrg,
+	useApproveStakeholderPermit,
+	useRejectStakeholderPermit,
 	useSuspendStakeholderOrg,
 	useBlacklistStakeholderOrg,
 	useReactivateStakeholderOrg,
@@ -51,7 +55,13 @@ import {
 	RatingStars,
 } from "@/components/stakeholders";
 import { getStakeholderTypeLabel } from "@/types/stakeholder-portal";
-import { getAccessToken } from "@/utils/auth";
+import { formatNaira, label } from "@/lib/labels";
+import { StatusPill } from "@/components/ui/status-pill";
+import {
+	DecisionButtons,
+	InvoicesReviewTab,
+	ReasonDialog,
+} from "@/components/stakeholders/ReviewActions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stakeholders/$stakeholderId")({
@@ -85,8 +95,10 @@ function StakeholderDetailPage() {
 		limit: 10,
 	});
 	const { data: permitsData } = useStakeholderPermits(stakeholderId, {
-		limit: 10,
+		limit: 100,
 	});
+	const rejectOrgMutation = useRejectStakeholderOrg();
+	const [rejectOrgOpen, setRejectOrgOpen] = useState(false);
 
 	const verifyMutation = useVerifyStakeholderOrg();
 	const suspendMutation = useSuspendStakeholderOrg();
@@ -165,12 +177,18 @@ function StakeholderDetailPage() {
 				</div>
 
 				{/* Quick Actions */}
-				<div className="flex gap-2">
+				<div className="flex flex-wrap gap-2">
 					{stakeholder.status === "pending_verification" && (
-						<Button onClick={() => setVerifyDialog(true)} className="gap-2">
-							<CheckCircle className="h-4 w-4" />
-							Verify
-						</Button>
+						<>
+							<Button variant="outline" onClick={() => setRejectOrgOpen(true)}>
+								<XCircle className="h-4 w-4 mr-2" />
+								Reject
+							</Button>
+							<Button onClick={() => setVerifyDialog(true)} className="gap-2">
+								<CheckCircle className="h-4 w-4" />
+								Verify
+							</Button>
+						</>
 					)}
 					{stakeholder.status === "active" && (
 						<Button
@@ -240,12 +258,10 @@ function StakeholderDetailPage() {
 					<ActivitiesTab activities={activitiesData?.data ?? []} />
 				)}
 				{activeTab === "permits" && (
-					<PermitsTab permits={permitsData?.data ?? []} />
+					<PermitsTab stakeholderId={stakeholderId} permits={permitsData?.data ?? []} />
 				)}
 				{activeTab === "invoices" && (
-					<div className="text-center py-12 text-muted-foreground">
-						Invoices tab coming soon...
-					</div>
+					<InvoicesReviewTab stakeholderOrgId={stakeholderId} />
 				)}
 				{activeTab === "performance" && (
 					<PerformanceTab stakeholder={stakeholder} />
@@ -253,6 +269,20 @@ function StakeholderDetailPage() {
 			</div>
 
 			{/* Dialogs */}
+			<ReasonDialog
+				open={rejectOrgOpen}
+				onOpenChange={setRejectOrgOpen}
+				title={`Reject ${stakeholder.organizationName}'s registration?`}
+				description="Use this for incomplete or invalid applications. The company can apply again. To ban a company, use Blacklist instead."
+				confirmLabel="Reject registration"
+				busy={rejectOrgMutation.isPending}
+				onConfirm={(reason) =>
+					rejectOrgMutation.mutate(
+						{ id: stakeholderId, reason },
+						{ onSuccess: () => setRejectOrgOpen(false) },
+					)
+				}
+			/>
 			<Dialog open={verifyDialog} onOpenChange={setVerifyDialog}>
 				<DialogContent>
 					<DialogHeader>
@@ -453,7 +483,7 @@ function OverviewTab({ stakeholder }: { stakeholder: StakeholderOrganization }) 
 					<div>
 						<p className="text-sm text-muted-foreground">Outstanding Balance</p>
 						<p className="text-2xl font-bold">
-							₦{stakeholder.outstandingBalance.toLocaleString()}
+							{formatNaira(stakeholder.outstandingBalance)}
 						</p>
 					</div>
 				</div>
@@ -540,7 +570,7 @@ function TypeSpecificDetails({ stakeholder }: { stakeholder: StakeholderOrganiza
 					{stakeholder.monthlyRent && (
 						<div>
 							<p className="text-muted-foreground">Monthly Rent</p>
-							<p>₦{stakeholder.monthlyRent.toLocaleString()}</p>
+							<p>{formatNaira(stakeholder.monthlyRent)}</p>
 						</div>
 					)}
 				</div>
@@ -751,14 +781,26 @@ function ActivitiesTab({ activities }: { activities: StakeholderActivity[] }) {
 	);
 }
 
-function PermitsTab({ permits }: { permits: StakeholderPermit[] }) {
+function PermitsTab({
+	stakeholderId,
+	permits,
+}: {
+	stakeholderId: string;
+	permits: StakeholderPermit[];
+}) {
 	const [selectedPermit, setSelectedPermit] = useState<StakeholderPermit | null>(null);
 	const [badgeOpen, setBadgeOpen] = useState(false);
+	const approve = useApproveStakeholderPermit(stakeholderId);
+	const reject = useRejectStakeholderPermit(stakeholderId);
+	const pending = permits.filter((p) => p.status === "pending").length;
 
 	return (
 		<div className="space-y-4">
 			<div className="flex justify-between items-center">
 				<h3 className="font-semibold">Access Permits</h3>
+				{pending > 0 && (
+					<span className="text-sm text-muted-foreground">{pending} waiting for a decision</span>
+				)}
 			</div>
 			{permits.length === 0 ? (
 				<div className="text-center py-12 text-muted-foreground">
@@ -768,25 +810,32 @@ function PermitsTab({ permits }: { permits: StakeholderPermit[] }) {
 				<div className="border rounded-lg divide-y">
 					{permits.map((permit) => (
 						<div key={permit.id} className="p-4">
-							<div className="flex items-start justify-between">
+							<div className="flex flex-wrap items-start justify-between gap-3">
 								<div>
 									<p className="font-medium">{permit.personName}</p>
 									<p className="text-sm text-muted-foreground">
-										{permit.permitType} • {permit.permitNumber}
+										{label(permit.permitType)} • {permit.permitNumber}
+										{permit.personDesignation && ` • ${permit.personDesignation}`}
 									</p>
+									{permit.accessAreas?.length > 0 && (
+										<p className="text-xs text-muted-foreground mt-1">
+											Areas: {permit.accessAreas.map((a) => label(a)).join(", ")}
+										</p>
+									)}
 								</div>
-								<div className="flex items-center gap-2">
-									<Badge
-										variant={
-											permit.status === "approved"
-												? "default"
-												: permit.status === "rejected"
-													? "destructive"
-													: "outline"
-										}
-									>
-										{permit.status}
-									</Badge>
+								<div className="flex flex-wrap items-center gap-2">
+									<StatusPill status={permit.status} />
+									{permit.status === "pending" && (
+										<DecisionButtons
+											busy={
+												(approve.isPending && approve.variables === permit.id) ||
+												(reject.isPending && reject.variables?.permitId === permit.id)
+											}
+											rejectTitle={`Reject ${permit.personName}'s permit?`}
+											onApprove={() => approve.mutate(permit.id)}
+											onReject={(reason) => reject.mutate({ permitId: permit.id, reason })}
+										/>
+									)}
 									{permit.status === "approved" && (
 										<Button
 											variant="ghost"

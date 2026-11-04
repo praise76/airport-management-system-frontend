@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { formatNaira } from "@/lib/labels";
 import { useState, useMemo } from "react";
 import {
 	Plus,
@@ -609,7 +610,7 @@ function ActivitiesPage() {
 										<div>
 											<p className="text-slate-400 text-sm">Fee Amount</p>
 											<p className="text-white text-lg font-semibold">
-												₦{selectedActivity.feeAmount.toLocaleString()}
+												{formatNaira(selectedActivity.feeAmount)}
 											</p>
 										</div>
 										<Badge
