@@ -119,9 +119,13 @@ function PermitQueuePage() {
 								<StatusPill status={p.status} />
 							</div>
 							<p className="text-sm text-muted-foreground">
-								{label(p.permitType)} · {p.permitNumber}
+								{label(p.permitType)}
+								{p.permitNumber && ` · ${p.permitNumber}`}
 								{p.personDesignation && ` · ${p.personDesignation}`}
 							</p>
+							{p.status === "rejected" && p.rejectionReason && (
+								<p className="text-sm text-destructive">Rejected: {p.rejectionReason}</p>
+							)}
 							<p className="text-sm">
 								<Link
 									to="/stakeholders/$stakeholderId"

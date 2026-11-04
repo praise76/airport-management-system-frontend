@@ -249,9 +249,14 @@ export interface StakeholderPermit {
 	validUntil: string;
 	accessAreas: string[];
 
+	/** What the person may access: one of the server's four levels (see AccessLevel). */
+	accessLevel?: AccessLevel;
+
 	status: PermitStatus;
 	approvedBy?: string;
 	approvedAt?: string;
+	/** Why FAAN rejected the application. Only set when status is "rejected". */
+	rejectionReason?: string | null;
 
 	isActive: boolean;
 	createdAt: string;
@@ -262,6 +267,9 @@ export interface GlobalPermit extends StakeholderPermit {
 	organizationName: string;
 	stakeholderType: StakeholderType;
 }
+
+/** The levels of access the server accepts on a permit application. */
+export type AccessLevel = "landside" | "airside" | "restricted" | "all_areas";
 
 export type PermitType =
 	| "permanent_staff"
@@ -473,7 +481,7 @@ export interface CreatePermitInput {
 	personPhoto?: string;
 	validFrom: string;
 	validUntil: string;
-	accessAreas: string[];
+	accessLevel: AccessLevel;
 }
 
 export interface CreateFlightInput {

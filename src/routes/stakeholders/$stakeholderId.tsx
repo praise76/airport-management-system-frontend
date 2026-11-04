@@ -716,13 +716,17 @@ function PermitsTab({
 								<div>
 									<p className="font-medium">{permit.personName}</p>
 									<p className="text-sm text-muted-foreground">
-										{label(permit.permitType)} • {permit.permitNumber}
+										{label(permit.permitType)}
+										{permit.permitNumber && ` • ${permit.permitNumber}`}
 										{permit.personDesignation && ` • ${permit.personDesignation}`}
 									</p>
 									{permit.accessAreas?.length > 0 && (
 										<p className="text-xs text-muted-foreground mt-1">
-											Areas: {permit.accessAreas.map((a) => label(a)).join(", ")}
+											Access: {permit.accessAreas.map((a) => label(a)).join(", ")}
 										</p>
+									)}
+									{permit.status === "rejected" && permit.rejectionReason && (
+										<p className="text-sm text-destructive mt-1">Rejected: {permit.rejectionReason}</p>
 									)}
 								</div>
 								<div className="flex flex-wrap items-center gap-2">

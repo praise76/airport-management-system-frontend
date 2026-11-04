@@ -20,6 +20,8 @@ import type {
 	StakeholderStats,
 	GlobalPermitListParams,
 	GlobalPermitListResponse,
+	GlobalPermit,
+	AccessLevel,
 } from "@/types/stakeholder-portal";
 
 // ============================================
@@ -212,6 +214,58 @@ export async function reviewStakeholderActivity(
 // STAKEHOLDER PERMITS
 // ============================================
 
+/** A permit exactly as the server stores and returns it. */
+interface PermitRow {
+	id: string;
+	stakeholderOrganizationId: string;
+	permitNumber: string | null;
+	permitType: string;
+	accessLevel: AccessLevel;
+	personnelName: string;
+	personnelDesignation: string | null;
+	personnelPhotoUrl: string | null;
+	validFrom: string;
+	validUntil: string;
+	status: StakeholderPermit["status"];
+	approvedByUserId: string | null;
+	approvedAt: string | null;
+	rejectionReason: string | null;
+	createdAt: string;
+	organizationName?: string;
+	stakeholderType?: GlobalPermit["stakeholderType"];
+}
+
+/**
+ * The screens read `personName`, `personPhoto` and so on; the server speaks `personnel*` and a
+ * single `accessLevel`. Translating here keeps the screens unchanged and means a permit from
+ * the real API shows its name instead of a blank.
+ */
+function toPermit<T extends StakeholderPermit = StakeholderPermit>(row: PermitRow): T {
+	const today = new Date().toISOString().slice(0, 10);
+	return {
+		id: row.id,
+		stakeholderOrganizationId: row.stakeholderOrganizationId,
+		permitType: row.permitType,
+		permitNumber: row.permitNumber ?? "",
+		personName: row.personnelName,
+		personDesignation: row.personnelDesignation ?? undefined,
+		personPhoto: row.personnelPhotoUrl ?? undefined,
+		validFrom: row.validFrom,
+		validUntil: row.validUntil,
+		accessLevel: row.accessLevel,
+		accessAreas: row.accessLevel ? [row.accessLevel] : [],
+		status: row.status,
+		approvedBy: row.approvedByUserId ?? undefined,
+		approvedAt: row.approvedAt ?? undefined,
+		rejectionReason: row.rejectionReason,
+		isActive: row.status === "approved" && row.validUntil >= today,
+		createdAt: row.createdAt,
+		...(row.organizationName
+			? { organizationName: row.organizationName, stakeholderType: row.stakeholderType }
+			: {}),
+	} as T;
+}
+
 export async function listStakeholderPermits(
 	stakeholderOrgId: string,
 	params: {
@@ -222,8 +276,9 @@ export async function listStakeholderPermits(
 ): Promise<{ data: StakeholderPermit[]; pagination: any }> {
 	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/permits`, { params });
 	const responseData = res.data.data ?? res.data;
+	const rows: PermitRow[] = responseData.items ?? responseData ?? [];
 	return {
-		data: responseData.items ?? responseData ?? [],
+		data: rows.map((r) => toPermit(r)),
 		pagination: responseData.pagination,
 	};
 }
@@ -232,31 +287,35 @@ export async function createStakeholderPermit(
 	stakeholderOrgId: string,
 	input: CreatePermitInput,
 ): Promise<StakeholderPermit> {
-	// stakeholderOrganizationId is derived from URL path
-	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/permits`, input);
-	return res.data.data ?? res.data;
+	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/permits`, {
+		// The server's validation wants the organisation in the body as well as the URL.
+		stakeholderOrganizationId: stakeholderOrgId,
+		permitType: input.permitType,
+		accessLevel: input.accessLevel,
+		personnelName: input.personName,
+		personnelDesignation: input.personDesignation || undefined,
+		personnelPhotoUrl: input.personPhoto || undefined,
+		validFrom: input.validFrom,
+		validUntil: input.validUntil,
+	});
+	return toPermit(res.data.data ?? res.data);
 }
 
+// The server decides permits through org-independent routes; the company page used to call
+// /stakeholder-orgs/:orgId/permits/:id/approve|reject, which do not exist (404).
 export async function approveStakeholderPermit(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	permitId: string,
 ): Promise<StakeholderPermit> {
-	const res = await api.post(
-		`/stakeholder-orgs/${stakeholderOrgId}/permits/${permitId}/approve`,
-	);
-	return res.data.data ?? res.data;
+	return approveGlobalPermit(permitId);
 }
 
 export async function rejectStakeholderPermit(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	permitId: string,
 	reason: string,
 ): Promise<StakeholderPermit> {
-	const res = await api.post(
-		`/stakeholder-orgs/${stakeholderOrgId}/permits/${permitId}/reject`,
-		{ reason },
-	);
-	return res.data.data ?? res.data;
+	return rejectGlobalPermit(permitId, reason);
 }
 
 // ============================================
@@ -272,8 +331,9 @@ export async function listGlobalPermits(
 ): Promise<GlobalPermitListResponse> {
 	const res = await api.get("/stakeholder-orgs/permits", { params });
 	const responseData = res.data.data ?? res.data;
+	const rows: PermitRow[] = responseData.items ?? responseData ?? [];
 	return {
-		items: responseData.items ?? responseData ?? [],
+		items: rows.map((r) => toPermit<GlobalPermit>(r)),
 		pagination: responseData.pagination ?? {
 			page: 1,
 			limit: 20,
@@ -291,7 +351,7 @@ export async function approveGlobalPermit(
 	permitId: string,
 ): Promise<StakeholderPermit> {
 	const res = await api.post(`/stakeholder-orgs/permits/${permitId}/approve`);
-	return res.data.data ?? res.data;
+	return toPermit(res.data.data ?? res.data);
 }
 
 /**
@@ -303,7 +363,7 @@ export async function rejectGlobalPermit(
 	reason: string,
 ): Promise<StakeholderPermit> {
 	const res = await api.post(`/stakeholder-orgs/permits/${permitId}/reject`, { reason });
-	return res.data.data ?? res.data;
+	return toPermit(res.data.data ?? res.data);
 }
 
 // ============================================

@@ -40,7 +40,7 @@ import {
 	useStakeholderPermits,
 	useCreateStakeholderPermit,
 } from "@/hooks/stakeholder-portal";
-import type { StakeholderPermit, PermitStatus } from "@/types/stakeholder-portal";
+import type { StakeholderPermit, PermitStatus, AccessLevel } from "@/types/stakeholder-portal";
 
 import { useAuthStore } from "@/stores/auth";
 
@@ -48,24 +48,21 @@ export const Route = createFileRoute("/stakeholder/permits")({
 	component: PermitsPage,
 });
 
+// The server accepts exactly these permit types.
 const permitTypes = [
-	{ value: "airside_access", label: "Airside Access Permit" },
-	{ value: "vehicle_access", label: "Vehicle Access Permit" },
-	{ value: "temporary_access", label: "Temporary Access Permit" },
-	{ value: "contractor_access", label: "Contractor Access Permit" },
-	{ value: "visitor_access", label: "Visitor Access Permit" },
-	{ value: "restricted_area", label: "Restricted Area Permit" },
+	{ value: "permanent_staff", label: "Permanent Staff" },
+	{ value: "temporary", label: "Temporary Worker" },
+	{ value: "visitor", label: "Visitor" },
+	{ value: "vehicle", label: "Vehicle" },
+	{ value: "crew", label: "Crew" },
 ];
 
-const accessAreas = [
-	{ value: "terminal_1", label: "Terminal 1" },
-	{ value: "terminal_2", label: "Terminal 2" },
-	{ value: "cargo_area", label: "Cargo Area" },
-	{ value: "maintenance_hangar", label: "Maintenance Hangar" },
-	{ value: "airside_ramp", label: "Airside Ramp" },
-	{ value: "control_tower", label: "Control Tower Area" },
-	{ value: "fuel_depot", label: "Fuel Depot" },
-	{ value: "vip_lounge", label: "VIP Lounge" },
+// A permit carries one access level (the server has no per-area permits).
+const accessLevels: { value: AccessLevel; label: string; hint: string }[] = [
+	{ value: "landside", label: "Landside", hint: "Public areas outside the security line" },
+	{ value: "airside", label: "Airside", hint: "Terminal airside and the apron" },
+	{ value: "restricted", label: "Restricted areas", hint: "Fuel depot, control areas and similar" },
+	{ value: "all_areas", label: "All areas", hint: "Landside, airside and restricted" },
 ];
 
 function getStatusBadge(status: PermitStatus) {
@@ -126,7 +123,7 @@ function PermitsPage() {
 		personDesignation: "",
 		validFrom: "",
 		validUntil: "",
-		accessAreas: [] as string[],
+		accessLevel: "" as AccessLevel | "",
 	});
 
 	// Data fetching
@@ -164,7 +161,7 @@ function PermitsPage() {
 			!formData.personName ||
 			!formData.validFrom ||
 			!formData.validUntil ||
-			formData.accessAreas.length === 0
+			!formData.accessLevel
 		)
 			return;
 
@@ -174,7 +171,7 @@ function PermitsPage() {
 			personDesignation: formData.personDesignation,
 			validFrom: formData.validFrom,
 			validUntil: formData.validUntil,
-			accessAreas: formData.accessAreas,
+			accessLevel: formData.accessLevel,
 		});
 
 		setShowCreateDialog(false);
@@ -184,17 +181,8 @@ function PermitsPage() {
 			personDesignation: "",
 			validFrom: "",
 			validUntil: "",
-			accessAreas: [],
+			accessLevel: "",
 		});
-	};
-
-	const toggleAccessArea = (area: string) => {
-		setFormData((prev) => ({
-			...prev,
-			accessAreas: prev.accessAreas.includes(area)
-				? prev.accessAreas.filter((a) => a !== area)
-				: [...prev.accessAreas, area],
-		}));
 	};
 
 	return (
@@ -385,32 +373,18 @@ function PermitsPage() {
 										</div>
 									</div>
 
-									{/* Access Areas */}
-									<div className="mt-3 pt-3 border-t border-white/10">
-										<p className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+									{/* Access level, and why FAAN said no if it did */}
+									<div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+										<p className="text-xs text-slate-400 flex items-center gap-1">
 											<MapPin className="h-3 w-3" />
-											Access Areas
+											{accessLevels.find((l) => l.value === permit.accessLevel)?.label ?? "Access level not set"}
 										</p>
-										<div className="flex flex-wrap gap-1">
-											{permit.accessAreas.slice(0, 3).map((area) => (
-												<Badge
-													key={area}
-													variant="secondary"
-													className="bg-slate-700/50 text-slate-300 text-xs"
-												>
-													{accessAreas.find((a) => a.value === area)?.label ||
-														area}
-												</Badge>
-											))}
-											{permit.accessAreas.length > 3 && (
-												<Badge
-													variant="secondary"
-													className="bg-slate-700/50 text-slate-300 text-xs"
-												>
-													+{permit.accessAreas.length - 3} more
-												</Badge>
-											)}
-										</div>
+										{permit.status === "rejected" && permit.rejectionReason && (
+											<p className="text-sm rounded-md border border-red-500/30 bg-red-500/10 text-red-100 p-2">
+												<span className="font-medium">Rejected: </span>
+												{permit.rejectionReason}
+											</p>
+										)}
 									</div>
 								</div>
 							))}
@@ -515,24 +489,25 @@ function PermitsPage() {
 						</div>
 
 						<div className="space-y-2">
-							<Label className="text-slate-300">Access Areas *</Label>
+							<Label className="text-slate-300">Access level *</Label>
 							<p className="text-xs text-slate-500 mb-2">
-								Select all areas that require access
+								Choose the highest level of access this person needs
 							</p>
 							<div className="grid grid-cols-2 gap-2">
-								{accessAreas.map((area) => (
+								{accessLevels.map((level) => (
 									<button
-										key={area.value}
+										key={level.value}
 										type="button"
-										onClick={() => toggleAccessArea(area.value)}
+										onClick={() => setFormData((prev) => ({ ...prev, accessLevel: level.value }))}
 										className={`p-3 rounded-lg border text-left text-sm transition-colors ${
-											formData.accessAreas.includes(area.value)
+											formData.accessLevel === level.value
 												? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
 												: "bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800"
 										}`}
 									>
 										<MapPin className="h-4 w-4 mb-1" />
-										{area.label}
+										<span className="block font-medium">{level.label}</span>
+										<span className="block text-xs opacity-70">{level.hint}</span>
 									</button>
 								))}
 							</div>
@@ -554,7 +529,7 @@ function PermitsPage() {
 								!formData.personName ||
 								!formData.validFrom ||
 								!formData.validUntil ||
-								formData.accessAreas.length === 0 ||
+								!formData.accessLevel ||
 								createPermit.isPending
 							}
 							className="bg-emerald-500 hover:bg-emerald-600"
@@ -645,31 +620,29 @@ function PermitsPage() {
 							</div>
 
 							<div className="bg-slate-800/50 rounded-lg p-4">
-								<p className="text-slate-400 text-sm mb-3">Access Areas</p>
-								<div className="flex flex-wrap gap-2">
-									{selectedPermit.accessAreas.map((area) => (
-										<Badge
-											key={area}
-											variant="secondary"
-											className="bg-emerald-500/20 text-emerald-400"
-										>
-											<MapPin className="h-3 w-3 mr-1" />
-											{accessAreas.find((a) => a.value === area)?.label || area}
-										</Badge>
-									))}
-								</div>
+								<p className="text-slate-400 text-sm mb-3">Access level</p>
+								<Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400">
+									<MapPin className="h-3 w-3 mr-1" />
+									{accessLevels.find((l) => l.value === selectedPermit.accessLevel)?.label ?? "Not set"}
+								</Badge>
 							</div>
 
-							{selectedPermit.approvedBy && (
+							{selectedPermit.status === "approved" && selectedPermit.approvedAt && (
 								<div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4">
-									<p className="text-emerald-400 text-sm">Approved By</p>
-									<p className="text-white">{selectedPermit.approvedBy}</p>
-									{selectedPermit.approvedAt && (
-										<p className="text-slate-400 text-sm mt-1">
-											on{" "}
-											{new Date(selectedPermit.approvedAt).toLocaleDateString()}
-										</p>
-									)}
+									<p className="text-emerald-400 text-sm">Approved</p>
+									<p className="text-white">{new Date(selectedPermit.approvedAt).toLocaleDateString()}</p>
+								</div>
+							)}
+
+							{selectedPermit.status === "rejected" && (
+								<div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+									<p className="text-red-300 text-sm font-medium">FAAN rejected this application</p>
+									<p className="text-white mt-1">
+										{selectedPermit.rejectionReason || "No reason was recorded."}
+									</p>
+									<p className="text-slate-400 text-sm mt-2">
+										You can submit a corrected application with "Apply for Permit".
+									</p>
 								</div>
 							)}
 						</div>
