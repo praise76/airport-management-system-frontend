@@ -12,6 +12,8 @@ type User = {
   roles?: string[]
   name?: string
   type?: string // 'staff' | 'stakeholder'
+  /** Set by an admin: may review stakeholder submissions without being a super admin. */
+  canManageStakeholders?: boolean
 }
 
 type AuthState = {

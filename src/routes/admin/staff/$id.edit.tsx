@@ -24,7 +24,7 @@ import {
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
 import type { UpdateStaffInput } from "@/types/staff";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 export const Route = createFileRoute("/admin/staff/$id/edit")({
   beforeLoad: requireStaff(ROLE_GROUPS.staffAdmins),
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/admin/staff/$id/edit")({
 });
 
 function EditStaffPage() {
+  const stakeholderFlagId = useId();
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { data: staff, isLoading: staffLoading } = useStaffById(id);
@@ -70,6 +71,7 @@ function EditStaffPage() {
         isActive: staff.isActive,
         canAssignDocuments: staff.canAssignDocuments,
         canRegisterDocuments: staff.canRegisterDocuments,
+        canManageStakeholders: staff.canManageStakeholders,
         assignedTerminals: staff.assignedTerminals,
         airportCode: staff.airportCode,
       });
@@ -77,8 +79,14 @@ function EditStaffPage() {
   }, [staff, reset]);
 
   const onSubmit = async (data: UpdateStaffInput) => {
+    // The server's schema accepts a missing field but not null or "" (the loaded record has nulls
+    // for blank phone, employee ID and so on), so send only fields that hold a value. `false`
+    // is a value: un-ticking a permission box must still be sent.
+    const payload = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== null && v !== undefined && v !== ""),
+    ) as UpdateStaffInput;
     updateMutation.mutate(
-      { id, data },
+      { id, data: payload },
       {
         onSuccess: () => {
           navigate({ to: "/admin/staff" });
@@ -213,6 +221,25 @@ function EditStaffPage() {
                 <Label htmlFor="canRegisterDocuments" className="font-normal">
                   Can register documents
                 </Label>
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id={stakeholderFlagId}
+                  checked={watch("canManageStakeholders")}
+                  onCheckedChange={(checked) =>
+                    setValue("canManageStakeholders", checked as boolean)
+                  }
+                />
+                <div className="space-y-0.5">
+                  <Label htmlFor={stakeholderFlagId} className="font-normal">
+                    Can review stakeholder submissions
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Verify companies and approve documents, permits and invoices. Suspending or
+                    blacklisting stays with super admins.
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">

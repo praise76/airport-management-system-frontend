@@ -24,7 +24,9 @@ import {
 	documentTypeLabel,
 	formatFileSize,
 } from "@/lib/stakeholder-documents";
+import { canReviewStakeholders } from "@/lib/access";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth";
 import type {
 	ChecklistItem,
 	ChecklistState,
@@ -107,7 +109,9 @@ function DecisionButtons({
  * beside the approve / ask-for-more-information / reject buttons, and the upload history.
  */
 export function CompanyDocumentsReview({ orgId }: { orgId: string }) {
-	const { data, isLoading, isError, refetch } = useDocumentChecklist(orgId);
+	const user = useAuthStore((st) => st.user);
+	const allowed = canReviewStakeholders(user);
+	const { data, isLoading, isError, refetch } = useDocumentChecklist(allowed ? orgId : "");
 	const review = useReviewStakeholderDocument(orgId);
 	const historyId = useId();
 	const [showHistory, setShowHistory] = useState(false);
@@ -188,6 +192,15 @@ export function CompanyDocumentsReview({ orgId }: { orgId: string }) {
 		</div>
 	));
 
+	if (!allowed) {
+		return (
+			<div className="py-12 text-center space-y-2">
+				<FileText className="h-10 w-10 mx-auto text-muted-foreground" />
+				<p className="font-medium">Documents are visible to FAAN's stakeholder reviewers only.</p>
+				<p className="text-sm text-muted-foreground">Ask an administrator to give you reviewer access if you need it.</p>
+			</div>
+		);
+	}
 	if (isLoading) {
 		return (
 			<div className="py-12 text-center">

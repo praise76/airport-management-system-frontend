@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { TerminalCheckboxes } from "@/components/staff/TerminalCheckboxes";
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -42,6 +42,7 @@ export const Route = createFileRoute("/admin/staff/new")({
 });
 
 function NewStaffPage() {
+  const stakeholderFlagId = useId();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { data: roles, isLoading: rolesLoading } = useRoles();
@@ -58,6 +59,7 @@ function NewStaffPage() {
       organizationId: user?.organizationId || "",
       canAssignDocuments: false,
       canRegisterDocuments: false,
+      canManageStakeholders: false,
     },
   });
 
@@ -271,6 +273,24 @@ function NewStaffPage() {
                 <Label htmlFor="canRegisterDocuments" className="font-normal">
                   Can register documents
                 </Label>
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id={stakeholderFlagId}
+                  onCheckedChange={(checked) =>
+                    setValue("canManageStakeholders", checked as boolean)
+                  }
+                />
+                <div className="space-y-0.5">
+                  <Label htmlFor={stakeholderFlagId} className="font-normal">
+                    Can review stakeholder submissions
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Verify companies and approve documents, permits and invoices. Suspending or
+                    blacklisting stays with super admins.
+                  </p>
+                </div>
               </div>
             </div>
 

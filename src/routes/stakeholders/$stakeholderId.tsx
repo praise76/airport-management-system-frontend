@@ -1,4 +1,5 @@
-import { requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { requireStaff, ROLE_GROUPS, canReviewStakeholders, isSuperAdmin } from "@/lib/access";
+import { useAuthStore } from "@/stores/auth";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import {
@@ -66,7 +67,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stakeholders/$stakeholderId")({
-	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers),
+	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers, canReviewStakeholders),
 	component: StakeholderDetailPage,
 });
 
@@ -85,6 +86,10 @@ const tabs: { id: TabType; label: string; icon: React.ComponentType<{ className?
 function StakeholderDetailPage() {
 	const { stakeholderId } = useParams({ from: "/stakeholders/$stakeholderId" });
 	const [activeTab, setActiveTab] = useState<TabType>("overview");
+	const currentUser = useAuthStore((st) => st.user);
+	// Reviewing (verify/reject) is open to named reviewers; suspend/blacklist stay super admin only.
+	const canReview = canReviewStakeholders(currentUser);
+	const canModerate = isSuperAdmin(currentUser);
 	const [verifyDialog, setVerifyDialog] = useState(false);
 	const [suspendDialog, setSuspendDialog] = useState(false);
 	const [blacklistDialog, setBlacklistDialog] = useState(false);
@@ -179,7 +184,7 @@ function StakeholderDetailPage() {
 
 				{/* Quick Actions */}
 				<div className="flex flex-wrap gap-2">
-					{stakeholder.status === "pending_verification" && (
+					{canReview && stakeholder.status === "pending_verification" && (
 						<>
 							<Button variant="outline" onClick={() => setRejectOrgOpen(true)}>
 								<XCircle className="h-4 w-4 mr-2" />
@@ -191,7 +196,7 @@ function StakeholderDetailPage() {
 							</Button>
 						</>
 					)}
-					{stakeholder.status === "active" && (
+					{canModerate && stakeholder.status === "active" && (
 						<Button
 							variant="outline"
 							className="text-orange-600 border-orange-600"
@@ -201,13 +206,13 @@ function StakeholderDetailPage() {
 							Suspend
 						</Button>
 					)}
-					{(stakeholder.status === "suspended" || stakeholder.status === "blacklisted") && (
+					{canModerate && (stakeholder.status === "suspended" || stakeholder.status === "blacklisted") && (
 						<Button variant="outline" onClick={handleReactivate}>
 							<RefreshCw className="h-4 w-4 mr-2" />
 							Reactivate
 						</Button>
 					)}
-					{stakeholder.status !== "blacklisted" && (
+					{canModerate && stakeholder.status !== "blacklisted" && (
 						<Button
 							variant="outline"
 							className="text-red-600 border-red-600"

@@ -11,13 +11,13 @@ import {
 	useGlobalPermits,
 	useRejectGlobalPermit,
 } from "@/hooks/stakeholder-portal";
-import { requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { requireStaff, ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
 import { label } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { GlobalPermit, PermitStatus } from "@/types/stakeholder-portal";
 
 export const Route = createFileRoute("/stakeholders/permits")({
-	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers),
+	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers, canReviewStakeholders),
 	component: PermitQueuePage,
 });
 

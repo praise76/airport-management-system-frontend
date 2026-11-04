@@ -23,6 +23,7 @@ export interface StaffMember {
   isActive: boolean;
   canAssignDocuments: boolean;
   canRegisterDocuments: boolean;
+  canManageStakeholders: boolean;
   assignedTerminals?: string;
   airportCode?: string;
   createdAt: string;
@@ -42,6 +43,7 @@ export interface CreateStaffInput {
   reportsToUserId?: string;
   canAssignDocuments?: boolean;
   canRegisterDocuments?: boolean;
+  canManageStakeholders?: boolean;
   assignedTerminals?: string;
   airportCode?: string;
 }
@@ -57,6 +59,7 @@ export interface UpdateStaffInput {
   isActive?: boolean;
   canAssignDocuments?: boolean;
   canRegisterDocuments?: boolean;
+  canManageStakeholders?: boolean;
   assignedTerminals?: string;
   airportCode?: string;
 }

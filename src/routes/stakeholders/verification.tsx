@@ -1,4 +1,4 @@
-import { requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { requireStaff, ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
@@ -34,7 +34,7 @@ import { getStakeholderTypeLabel } from "@/types/stakeholder-portal";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/stakeholders/verification")({
-  beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers),
+  beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers, canReviewStakeholders),
   component: VerificationQueuePage,
 });
 

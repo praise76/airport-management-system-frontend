@@ -40,6 +40,7 @@ type MaybeUser = {
 	role?: string;
 	roles?: string[];
 	type?: string;
+	canManageStakeholders?: boolean;
 } | null | undefined;
 
 export function getRoles(user: MaybeUser): string[] {
@@ -53,6 +54,19 @@ export function hasAnyRole(user: MaybeUser, allowed: readonly string[]): boolean
 	return roles.some((r) => allowed.includes(r));
 }
 
+export function isSuperAdmin(user: MaybeUser): boolean {
+	return getRoles(user).includes("SUPER_ADMIN");
+}
+
+/**
+ * May review stakeholder submissions (verify or reject a company, approve documents, permits,
+ * invoices): super admins, plus staff an admin has switched `canManageStakeholders` on for
+ * (some HODs, commercial staff, ...). The server enforces the same rule.
+ */
+export function canReviewStakeholders(user: MaybeUser): boolean {
+	return isSuperAdmin(user) || user?.canManageStakeholders === true;
+}
+
 /** A user who signed in through the external stakeholder (concessionaire) portal. */
 export function isStakeholderUser(user: MaybeUser): boolean {
 	return user?.type === "stakeholder";
@@ -64,16 +78,17 @@ export function isStakeholderUser(user: MaybeUser): boolean {
  * - Not signed in: sends the visitor to the staff login.
  * - Signed in through the stakeholder portal: sends them back to their portal,
  *   so a concessionaire can never open internal screens such as Staff Management.
- * - `roles` given and the user has none of them: sends them to the staff dashboard.
+ * - `roles` given and the user has none of them (and `allowIf`, if given, says no): sends them to
+ *   the staff dashboard.
  */
-export function requireStaff(roles?: readonly string[]) {
+export function requireStaff(roles?: readonly string[], allowIf?: (user: MaybeUser) => boolean) {
 	return () => {
 		if (typeof window === "undefined") return;
 		const token = getAccessToken();
 		if (!token) throw redirect({ to: "/auth/login" });
 		const user = useAuthStore.getState().user;
 		if (isStakeholderUser(user)) throw redirect({ to: "/stakeholder/dashboard" });
-		if (roles && !hasAnyRole(user, roles)) throw redirect({ to: "/" });
+		if (roles && !hasAnyRole(user, roles) && !allowIf?.(user)) throw redirect({ to: "/" });
 	};
 }
 

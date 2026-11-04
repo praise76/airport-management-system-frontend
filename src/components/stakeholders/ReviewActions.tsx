@@ -15,7 +15,9 @@ import {
 	useReviewStakeholderInvoice,
 	useStakeholderInvoices,
 } from "@/hooks/stakeholder-portal";
+import { canReviewStakeholders } from "@/lib/access";
 import { formatNaira } from "@/lib/labels";
+import { useAuthStore } from "@/stores/auth";
 import type { StakeholderInvoice } from "@/types/stakeholder-portal";
 
 /** Asks for a reason before a "no" decision. The reason is sent to the company. */
@@ -99,6 +101,9 @@ export function DecisionButtons({
 	size?: "sm" | "default";
 }) {
 	const [rejecting, setRejecting] = useState(false);
+	const user = useAuthStore((st) => st.user);
+	// Only named reviewers can decide; the server refuses everyone else, so don't offer the buttons.
+	if (!canReviewStakeholders(user)) return null;
 	return (
 		<>
 			<div className="flex gap-2">

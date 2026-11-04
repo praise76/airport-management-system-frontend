@@ -44,7 +44,7 @@ import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
 import { Logo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { ROLE_GROUPS } from "@/lib/access";
+import { ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 
@@ -57,6 +57,7 @@ type NavItem = {
 	to: string;
 	icon: LucideIcon;
 	roles?: string[]; // if provided, only these roles can see
+	allowIf?: (user: Parameters<typeof canReviewStakeholders>[0]) => boolean; // ...or anyone this says yes to
 };
 
 type NavGroup = {
@@ -93,18 +94,21 @@ const navGroups: NavGroup[] = [
 				to: "/stakeholders",
 				icon: Building2,
 				roles: [...ROLE_GROUPS.stakeholderOfficers],
+				allowIf: canReviewStakeholders,
 			},
 			{
 				label: "Verification queue",
 				to: "/admin/stakeholders/verification",
 				icon: ShieldCheck,
 				roles: [...ROLE_GROUPS.stakeholderOfficers],
+				allowIf: canReviewStakeholders,
 			},
 			{
 				label: "Permit applications",
 				to: "/stakeholders/permits",
 				icon: IdCard,
 				roles: [...ROLE_GROUPS.stakeholderOfficers],
+				allowIf: canReviewStakeholders,
 			},
 			{ label: "Public duty board", to: "/public/duty-board", icon: Radio },
 		],
@@ -236,7 +240,7 @@ export function AppShell(props: AppShellProps) {
 				...group,
 				items: group.items.filter((item) => {
 					if (!item.roles || item.roles.length === 0) return true;
-					return item.roles.some((r) => userRoles.includes(r));
+					return item.roles.some((r) => userRoles.includes(r)) || !!item.allowIf?.(user);
 				}),
 			}))
 			.filter((group) => group.items.length > 0);
