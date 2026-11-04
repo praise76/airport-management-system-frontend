@@ -35,9 +35,11 @@ export interface AttendanceRecord {
   }
   status: AttendanceStatus
   
-  // Check-in/out details
+  // Check-in/out details (api.json names them clockIn / clockOut)
   checkInTime?: string
   checkOutTime?: string
+  clockIn?: string
+  clockOut?: string | null
   checkInLocation?: {
     lat: number
     lng: number

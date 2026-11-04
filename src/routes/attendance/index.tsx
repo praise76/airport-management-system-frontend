@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format, isAfter, parse } from "date-fns";
+import { format, isAfter, parse, parseISO } from "date-fns";
 import {
 	AlertTriangle,
 	Calendar,
@@ -182,7 +182,9 @@ function AttendancePage() {
 		? parse(toTime(todayShift.shiftStartTime), "HH:mm", new Date())
 		: null;
 	const shiftHasStarted = shiftStart ? isAfter(new Date(), shiftStart) : false;
-	const canCheckIn = !isCheckedIn && !isCheckedOut;
+	// Checking out closes a session; someone called back on duty (or checked out automatically)
+	// must be able to check in again.
+	const canCheckIn = !isCheckedIn;
 	const displayStatus = isCheckedIn
 		? "CHECKED_IN"
 		: isCheckedOut
@@ -290,7 +292,7 @@ function AttendancePage() {
 									className="w-full sm:w-auto"
 								>
 									{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
-									{busy ? "Checking your location…" : "Check in"}
+									{busy ? "Checking your location…" : isCheckedOut ? "Check in again" : "Check in"}
 								</Button>
 							</div>
 						)}
@@ -341,7 +343,11 @@ function AttendancePage() {
 						{history && history.data.length > 0 && (
 							<div className="space-y-2">
 								{history.data.map((record) => {
-									const day = record.date || record.checkInTime || record.createdAt;
+									// api.json's AttendanceRecord calls the times clockIn / clockOut; older
+									// responses used checkInTime / checkOutTime. Read both.
+									const inAt = record.checkInTime ?? record.clockIn ?? undefined;
+									const outAt = record.checkOutTime ?? record.clockOut ?? undefined;
+									const day = record.date || inAt || record.createdAt;
 									return (
 										<div
 											key={record.id || record.createdAt}
@@ -351,17 +357,13 @@ function AttendancePage() {
 												<Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
 												<div className="min-w-0">
 													<div className="font-medium">
-														{day ? format(new Date(day), "EEE d MMM yyyy") : "—"}
+														{day ? format(parseISO(day), "EEE d MMM yyyy") : "—"}
 													</div>
 													<div className="text-sm text-muted-foreground">
-														{record.checkInTime && (
-															<span>In {format(new Date(record.checkInTime), "HH:mm")}</span>
-														)}
-														{record.checkOutTime && (
-															<span className="ml-3">
-																Out {format(new Date(record.checkOutTime), "HH:mm")}
-															</span>
-														)}
+														{inAt && <span>In {format(new Date(inAt), "HH:mm")}</span>}
+														{outAt && <span className="ml-3">Out {format(new Date(outAt), "HH:mm")}</span>}
+														{inAt && !outAt && <span className="ml-3">· not checked out</span>}
+														{!inAt && !outAt && <span>No check-in times recorded</span>}
 													</div>
 												</div>
 											</div>
