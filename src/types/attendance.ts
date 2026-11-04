@@ -11,6 +11,8 @@ export interface GeofenceZone {
   name: string
   description?: string
   type: 'polygon' | 'circle'
+  /** Category, e.g. 'terminal', 'office', 'restricted'. May be missing on older zones. */
+  zoneType?: string
   latitude?: number // Required for circle
   longitude?: number // Required for circle
   radius?: number // in meters. Required for circle.

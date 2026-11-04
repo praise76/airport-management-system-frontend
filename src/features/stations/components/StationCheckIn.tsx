@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useAuthStore } from "@/stores/auth";
+import { getPosition, locationErrorMessage } from "@/lib/geo";
+import { toast } from "sonner";
 
 interface StationCheckInProps {
   stationId: string;
@@ -16,39 +18,34 @@ interface StationCheckInProps {
 export function StationCheckIn({ stationId, stationName }: StationCheckInProps) {
   const [isChecking, setIsChecking] = useState(false);
   const { data: staffing, isLoading: loadingStaff } = useStationStaffing(stationId);
-  console.log(staffing, "staffing");
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const user = useAuthStore((s) => s.user);
 
   // Use real userId from auth store
-  const isMeCheckedIn = staffing?.some(s => s.userId === user?.userId); 
+  const isMeCheckedIn = staffing?.some(
+    (s) => s.userId === user?.userId || s.userId === (user as any)?.id,
+  );
 
-  const handleCheckIn = () => {
+  // A check-in is only sent with a real location. (It used to fall back to 0,0 when GPS
+  // failed, which let anyone check in to any post from anywhere.)
+  const handleCheckIn = async () => {
     setIsChecking(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          checkIn.mutate({
-            stationId,
-            coords: {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            },
-          }, {
-            onSettled: () => setIsChecking(false)
-          });
+    try {
+      const position = await getPosition();
+      checkIn.mutate(
+        {
+          stationId,
+          coords: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          },
         },
-        (error) => {
-          console.error(error);
-          setIsChecking(false);
-          // Fallback if geo fails
-          checkIn.mutate({ stationId, coords: { latitude: 0, longitude: 0 } });
-        }
+        { onSettled: () => setIsChecking(false) },
       );
-    } else {
-      checkIn.mutate({ stationId, coords: { latitude: 0, longitude: 0 } });
+    } catch (error) {
       setIsChecking(false);
+      toast.error(locationErrorMessage(error as GeolocationPositionError));
     }
   };
 

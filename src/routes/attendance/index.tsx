@@ -1,392 +1,502 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { format, isAfter, parse } from "date-fns";
 import {
-  useMyAttendanceToday,
-  useAttendance,
-  useGeofenceZones,
-  useCheckIn,
-  useCheckOut,
-  useCheckLocation,
-} from "@/hooks/attendance";
-import type { AttendanceRecord, AttendanceStatus } from "@/types/attendance";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { StatusPill } from "@/components/ui/status-pill";
-import {
-  MapPin,
-  Clock,
-  Calendar,
-  LogIn,
-  LogOut,
-  MapPinned,
-  Loader2,
+	AlertTriangle,
+	Calendar,
+	CheckCircle2,
+	Clock,
+	Loader2,
+	LogIn,
+	LogOut,
+	MapPin,
+	MapPinned,
+	Navigation,
 } from "lucide-react";
-import { getAccessToken } from "@/utils/auth";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { getTodaysRoster } from "@/api/roster";
+import { Button } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { StatusPill } from "@/components/ui/status-pill";
 import { SubmitShiftReportModal } from "@/features/shift-reports/SubmitShiftReportModal";
+import {
+	useAttendance,
+	useCheckIn,
+	useCheckLocation,
+	useCheckOut,
+	useGeofenceZones,
+	useMyAttendanceToday,
+} from "@/hooks/attendance";
+import { useTerminals } from "@/hooks/terminals";
+import {
+	getDeviceId,
+	getPosition,
+	isLocationError,
+	locationErrorMessage,
+	nearestZone,
+} from "@/lib/geo";
+import { label } from "@/lib/labels";
 
+// Sign-in is checked for every page in __root.tsx.
 export const Route = createFileRoute("/attendance/")({
-  beforeLoad: () => {
-    const token = getAccessToken();
-    if (!token && typeof window !== "undefined")
-      throw redirect({ to: "/auth/login" });
-  },
-  component: AttendancePage,
+	component: AttendancePage,
 });
 
+type Fix = { lat: number; lng: number; accuracy: number; at: Date };
+
+const toTime = (t?: string) => (t ? t.slice(0, 5) : "");
+
 function AttendancePage() {
-  const { data: todayRecord, isLoading: loadingToday } = useMyAttendanceToday();
-  const { data: history, isLoading: loadingHistory } = useAttendance({
-    pageSize: 30,
-  });
-  console.log("history", history);
-  const { data: zones } = useGeofenceZones();
-  const checkInMutation = useCheckIn();
-  const checkOutMutation = useCheckOut();
+	const { data: todayRecord, isLoading: loadingToday } = useMyAttendanceToday();
+	const { data: history, isLoading: loadingHistory } = useAttendance({ pageSize: 30 });
+	const { data: zones } = useGeofenceZones();
+	const { data: terminals } = useTerminals();
+	const { data: todayShift } = useQuery({
+		queryKey: ["roster", "today"],
+		queryFn: getTodaysRoster,
+	});
+	const checkInMutation = useCheckIn();
+	const checkOutMutation = useCheckOut();
 
-  const [gettingLocation, setGettingLocation] = useState(false);
-  const [terminalCode, setTerminalCode] = useState("");
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
+	const [busy, setBusy] = useState(false);
+	const [terminalCode, setTerminalCode] = useState<string>("");
+	const [showReportModal, setShowReportModal] = useState(false);
+	const [fix, setFix] = useState<Fix | null>(null);
+	const [locationProblem, setLocationProblem] = useState<string | null>(null);
+	const [lastError, setLastError] = useState<string | null>(null);
 
-  const { data: locStatus } = useCheckLocation(
-    currentLocation?.lat,
-    currentLocation?.lng,
-  );
+	const activeZones = useMemo(() => (zones ?? []).filter((z) => z.isActive !== false), [zones]);
+	const { data: locStatus } = useCheckLocation(fix?.lat, fix?.lng);
 
-  // Periodic location check for geofence indicator
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const id = setInterval(() => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) =>
-            setCurrentLocation({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-            }),
-          () => {},
-          { enableHighAccuracy: true },
-        );
-      }, 30000); // Check every 30s
-      return () => clearInterval(id);
-    }
-  }, []);
+	// Read the location as soon as the page opens, then every 30 seconds.
+	const readLocation = useCallback(async () => {
+		try {
+			const p = await getPosition();
+			setFix({
+				lat: p.coords.latitude,
+				lng: p.coords.longitude,
+				accuracy: Math.round(p.coords.accuracy),
+				at: new Date(),
+			});
+			setLocationProblem(null);
+			return p;
+		} catch (err) {
+			setLocationProblem(locationErrorMessage(err as GeolocationPositionError));
+			throw err;
+		}
+	}, []);
 
-  const handleCheckIn = async () => {
-    setGettingLocation(true);
-    try {
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-          });
-        },
-      );
+	useEffect(() => {
+		readLocation().catch(() => {});
+		const id = setInterval(() => readLocation().catch(() => {}), 30000);
+		return () => clearInterval(id);
+	}, [readLocation]);
 
-      const result = await checkInMutation.mutateAsync({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        terminalCode: terminalCode || undefined,
-        // Backend only accepts qr/geofence/manual/biometric - this flow captures real
-        // GPS and checks it against geofence zones, so "geofence" is the accurate
-        // value (the literal "web" used here before isn't a valid enum member and
-        // made every check-in 400 with a Zod validation error).
-        clockInMethod: "geofence",
-        deviceId:
-          typeof navigator !== "undefined"
-            ? navigator.userAgent
-            : "web-unknown",
-      });
+	// Pre-select the terminal from today's roster entry.
+	useEffect(() => {
+		if (terminalCode || !todayShift || !terminals?.length) return;
+		const t = terminals.find(
+			(x) =>
+				x.id === todayShift.terminalId ||
+				x.terminalCode === todayShift.terminal?.terminalCode,
+		);
+		if (t) setTerminalCode(t.terminalCode);
+	}, [todayShift, terminals, terminalCode]);
 
-      if (result.rosterInfo.isLate) {
-        alert(
-          `Checked in, but you are marked as LATE (${result.rosterInfo.lateMinutes} minutes).`,
-        );
-      }
-    } catch (error: any) {
-      if (error.code === 1) {
-        alert("Location permission denied. Please enable location access.");
-      } else {
-        alert("Failed to get location. Please try again.");
-      }
-    } finally {
-      setGettingLocation(false);
-    }
-  };
+	const nearest = fix ? nearestZone(fix.lat, fix.lng, activeZones) : null;
 
-  const handleCheckOut = async () => {
-    setGettingLocation(true);
-    try {
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-          });
-        },
-      );
+	const handleCheckIn = async () => {
+		setBusy(true);
+		setLastError(null);
+		try {
+			const position = await readLocation();
+			const result = await checkInMutation.mutateAsync({
+				lat: position.coords.latitude,
+				lng: position.coords.longitude,
+				terminalCode: terminalCode || undefined,
+				clockInMethod: "geofence",
+				deviceId: getDeviceId(),
+			});
+			if (result?.rosterInfo?.isLate) {
+				toast.warning(
+					`Checked in ${result.rosterInfo.lateMinutes} minutes late. Your shift started at ${toTime(result.rosterInfo.scheduledStart)}.`,
+				);
+			}
+		} catch (error: any) {
+			// GPS problems get advice; server refusals show the server's reason (also shown as a toast by the hook).
+			setLastError(
+				isLocationError(error)
+					? locationErrorMessage(error)
+					: error?.message || "The check-in wasn't accepted. Please try again.",
+			);
+		} finally {
+			setBusy(false);
+		}
+	};
 
-      await checkOutMutation.mutateAsync({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      });
-      setShowReportModal(true); // Show modal after successful checkout
-    } catch (error: any) {
-      if (error.code === 1) {
-        alert("Location permission denied. Please enable location access.");
-      } else {
-        alert("Failed to get location. Please try again.");
-      }
-    } finally {
-      setGettingLocation(false);
-    }
-  };
+	const handleCheckOut = async () => {
+		setBusy(true);
+		setLastError(null);
+		try {
+			const position = await readLocation();
+			await checkOutMutation.mutateAsync({
+				lat: position.coords.latitude,
+				lng: position.coords.longitude,
+			});
+			setShowReportModal(true);
+		} catch (error: any) {
+			setLastError(
+				isLocationError(error)
+					? locationErrorMessage(error)
+					: error?.message || "The check-out wasn't accepted. Please try again.",
+			);
+		} finally {
+			setBusy(false);
+		}
+	};
 
-  // Derive status from either explicit status field or presence of active session
-  const effectiveStatus = (todayRecord?.status ||
-    (todayRecord?.activeSession ? "clocked_in" : "ABSENT")) as string;
+	// Status: never call someone "absent" before their shift has started.
+	const rawStatus = String(
+		todayRecord?.status || (todayRecord?.activeSession ? "clocked_in" : ""),
+	);
+	const upper = rawStatus.toUpperCase();
+	const isCheckedIn = upper === "CHECKED_IN" || upper === "CLOCKED_IN";
+	const isCheckedOut = upper === "CHECKED_OUT" || upper === "CLOCKED_OUT";
+	const shiftStart = todayShift?.shiftStartTime
+		? parse(toTime(todayShift.shiftStartTime), "HH:mm", new Date())
+		: null;
+	const shiftHasStarted = shiftStart ? isAfter(new Date(), shiftStart) : false;
+	const canCheckIn = !isCheckedIn && !isCheckedOut;
+	const displayStatus = isCheckedIn
+		? "CHECKED_IN"
+		: isCheckedOut
+			? "CHECKED_OUT"
+			: todayShift && shiftHasStarted
+				? "late_not_checked_in"
+				: "not_checked_in";
 
-  const isCheckedIn =
-    effectiveStatus === "CHECKED_IN" || effectiveStatus === "clocked_in";
-  const isCheckedOut =
-    effectiveStatus === "CHECKED_OUT" || effectiveStatus === "clocked_out";
-  const canCheckIn = !todayRecord || effectiveStatus.toUpperCase() === "ABSENT";
+	const insideZone = !!locStatus?.inside;
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold">Attendance</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Track your attendance with geofence-based check-in/out
-        </p>
-      </div>
+	return (
+		<div className="space-y-6">
+			<div>
+				<h1 className="text-2xl font-semibold">Attendance</h1>
+				<p className="text-sm text-muted-foreground mt-1">
+					Check in at your post at the start of your shift, and check out when you leave.
+				</p>
+			</div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's Status */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Status Card */}
-          <div className="border rounded-lg p-6 space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold">Today's Status</h2>
-              {locStatus?.inside && (
-                <Badge variant="success" className="animate-pulse">
-                  Inside {locStatus.zone?.name}
-                </Badge>
-              )}
-            </div>
-            <StatusPill status={effectiveStatus} />
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<div className="lg:col-span-2 space-y-6">
+					{/* Today's shift, from the roster */}
+					<div className="border rounded-lg p-5">
+						<h2 className="font-semibold text-sm text-muted-foreground mb-2">Your shift today</h2>
+						{todayShift ? (
+							<div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+								<div className="text-lg font-semibold">
+									{label(todayShift.shift)} · {toTime(todayShift.shiftStartTime)}–
+									{toTime(todayShift.shiftEndTime)}
+								</div>
+								{(todayShift.dutyPosition || todayShift.dutyLocation) && (
+									<div className="flex items-center gap-1 text-sm text-muted-foreground">
+										<MapPin className="h-4 w-4" />
+										{[todayShift.dutyPosition, todayShift.dutyLocation].filter(Boolean).join(", ")}
+									</div>
+								)}
+							</div>
+						) : (
+							<p className="text-sm text-muted-foreground">
+								You're not on the roster today. You can still check in if you've been called in.
+							</p>
+						)}
+					</div>
 
-            {loadingToday && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Loader2 className="h-8 w-8 mx-auto animate-spin mb-2" />
-                Loading...
-              </div>
-            )}
+					{/* Status and check-in */}
+					<div className="border rounded-lg p-6 space-y-4">
+						<div className="flex flex-wrap items-center gap-2">
+							<h2 className="font-semibold">Today's status</h2>
+							<StatusPill status={displayStatus} />
+						</div>
 
-            {!loadingToday && canCheckIn && (
-              <div className="text-center py-8">
-                <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  {effectiveStatus.toUpperCase() === "ABSENT"
-                    ? "You are marked as absent for today. You can still check in if you're actually on duty."
-                    : "You haven't checked in today"}
-                </p>
+						{loadingToday && (
+							<div className="text-center py-6 text-muted-foreground">
+								<Loader2 className="h-6 w-6 mx-auto animate-spin mb-2" />
+								Loading…
+							</div>
+						)}
 
-                <div className="max-w-xs mx-auto mb-4">
-                  <input
-                    type="text"
-                    placeholder="Enter Terminal Code (e.g. T1)"
-                    value={terminalCode}
-                    onChange={(e) => setTerminalCode(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md text-center"
-                  />
-                </div>
+						{!loadingToday && canCheckIn && (
+							<div className="space-y-4">
+								<LocationStatus
+									fix={fix}
+									problem={locationProblem}
+									inside={insideZone}
+									insideName={locStatus?.zone?.name}
+									nearest={nearest}
+									onRetry={() => readLocation().catch(() => {})}
+								/>
 
-                <Button
-                  onClick={handleCheckIn}
-                  disabled={gettingLocation || checkInMutation.isPending}
-                  size="lg"
-                >
-                  <LogIn className="h-5 w-5" />
-                  {gettingLocation ? "Getting Location..." : "Check In"}
-                </Button>
-              </div>
-            )}
+								<div className="grid gap-2 sm:max-w-xs">
+									<label htmlFor="terminal" className="text-sm font-medium">
+										Terminal
+									</label>
+									<Select value={terminalCode} onValueChange={setTerminalCode}>
+										<SelectTrigger id="terminal">
+											<SelectValue placeholder="Choose your terminal" />
+										</SelectTrigger>
+										<SelectContent>
+											{(terminals ?? []).map((t) => (
+												<SelectItem key={t.id} value={t.terminalCode}>
+													{t.terminalName} ({t.terminalCode})
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
 
-            {todayRecord && !canCheckIn && (
-              <div className="space-y-4">
-                {/* Check-in Info */}
-                {todayRecord.checkInTime && (
-                  <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                    <LogIn className="h-5 w-5 text-[#10B981] mt-0.5" />
-                    <div className="flex-1">
-                      <div className="font-medium">Checked In</div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(todayRecord.checkInTime).toLocaleTimeString()}
-                      </div>
-                      {todayRecord.checkInZone && (
-                        <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          {todayRecord.checkInZone.name}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+								{lastError && <ErrorBox message={lastError} />}
 
-                {/* Check-out Info */}
-                {todayRecord.checkOutTime && (
-                  <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
-                    <LogOut className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <div className="font-medium">Checked Out</div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(
-                          todayRecord.checkOutTime,
-                        ).toLocaleTimeString()}
-                      </div>
-                      {todayRecord.checkOutZone && (
-                        <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          {todayRecord.checkOutZone.name}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+								<Button
+									onClick={handleCheckIn}
+									disabled={busy || checkInMutation.isPending}
+									size="lg"
+									className="w-full sm:w-auto"
+								>
+									{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
+									{busy ? "Checking your location…" : "Check in"}
+								</Button>
+							</div>
+						)}
 
-                {/* Action Button */}
-                {isCheckedIn && !isCheckedOut && (
-                  <Button
-                    onClick={handleCheckOut}
-                    disabled={gettingLocation || checkOutMutation.isPending}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {gettingLocation ? "Getting Location..." : "Check Out"}
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+						{!loadingToday && !canCheckIn && (
+							<div className="space-y-3">
+								{todayRecord?.checkInTime && (
+									<TimeRow
+										icon={<LogIn className="h-5 w-5 text-emerald-600 mt-0.5" />}
+										title="Checked in"
+										time={todayRecord.checkInTime}
+										place={todayRecord.checkInZone?.name}
+									/>
+								)}
+								{todayRecord?.checkOutTime && (
+									<TimeRow
+										icon={<LogOut className="h-5 w-5 text-muted-foreground mt-0.5" />}
+										title="Checked out"
+										time={todayRecord.checkOutTime}
+										place={todayRecord.checkOutZone?.name}
+									/>
+								)}
+								{lastError && <ErrorBox message={lastError} />}
+								{isCheckedIn && (
+									<Button
+										onClick={handleCheckOut}
+										disabled={busy || checkOutMutation.isPending}
+										variant="outline"
+										className="w-full"
+									>
+										{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+										{busy ? "Checking your location…" : "Check out"}
+									</Button>
+								)}
+							</div>
+						)}
+					</div>
 
-          {/* History */}
-          <div className="border rounded-lg p-6 space-y-4">
-            <h2 className="font-semibold">Attendance History</h2>
+					{/* History */}
+					<div className="border rounded-lg p-6 space-y-4">
+						<h2 className="font-semibold">Attendance history</h2>
+						{loadingHistory && (
+							<div className="text-center py-6 text-muted-foreground">Loading history…</div>
+						)}
+						{history && history.data.length === 0 && (
+							<div className="text-center py-6 text-muted-foreground">No attendance records yet.</div>
+						)}
+						{history && history.data.length > 0 && (
+							<div className="space-y-2">
+								{history.data.map((record) => {
+									const day = record.date || record.checkInTime || record.createdAt;
+									return (
+										<div
+											key={record.id || record.createdAt}
+											className="flex items-center justify-between gap-3 p-3 border rounded-lg"
+										>
+											<div className="flex items-center gap-3 min-w-0">
+												<Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+												<div className="min-w-0">
+													<div className="font-medium">
+														{day ? format(new Date(day), "EEE d MMM yyyy") : "—"}
+													</div>
+													<div className="text-sm text-muted-foreground">
+														{record.checkInTime && (
+															<span>In {format(new Date(record.checkInTime), "HH:mm")}</span>
+														)}
+														{record.checkOutTime && (
+															<span className="ml-3">
+																Out {format(new Date(record.checkOutTime), "HH:mm")}
+															</span>
+														)}
+													</div>
+												</div>
+											</div>
+											<StatusPill status={record.status} />
+										</div>
+									);
+								})}
+							</div>
+						)}
+					</div>
+				</div>
 
-            {loadingHistory && (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading history...
-              </div>
-            )}
+				{/* Zones */}
+				<div className="space-y-4">
+					<details className="border rounded-lg p-4 group">
+						<summary className="font-semibold text-sm flex items-center gap-2 cursor-pointer list-none">
+							<MapPinned className="h-4 w-4" />
+							Check-in zones ({activeZones.length})
+							<span className="ml-auto text-xs text-muted-foreground group-open:hidden">Show</span>
+						</summary>
+						<div className="space-y-2 mt-3">
+							{activeZones.length === 0 && (
+								<p className="text-sm text-muted-foreground">No zones set up yet.</p>
+							)}
+							{activeZones.map((zone) => (
+								<div key={zone.id} className="p-3 border rounded-lg text-sm">
+									<div className="font-medium">{zone.name}</div>
+									{zone.description && (
+										<div className="text-xs text-muted-foreground mt-1">{zone.description}</div>
+									)}
+									<div className="text-xs text-muted-foreground mt-1">
+										{zone.type === "polygon"
+											? `Area with ${zone.polygonJson?.coordinates?.[0]?.length ?? 0} corners`
+											: `Within ${zone.radius ?? 0} m of the centre`}
+									</div>
+								</div>
+							))}
+						</div>
+					</details>
 
-            {history && history.data.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No attendance records found
-              </div>
-            )}
-
-            {history && history.data.length > 0 && (
-              <div className="space-y-2">
-                {history.data.map((record) => (
-                  <div
-                    key={record.id || record.createdAt}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">
-                          {record.createdAt
-                            ? new Date(record.createdAt).toLocaleDateString()
-                            : "N/A"}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {record.checkInTime && (
-                            <span>
-                              In:{" "}
-                              {new Date(record.createdAt).toLocaleTimeString(
-                                "en-US",
-                                { hour: "2-digit", minute: "2-digit" },
-                              )}
-                            </span>
-                          )}
-                          {record.checkOutTime && (
-                            <span className="ml-3">
-                              Out:{" "}
-                              {new Date(record.checkOutTime).toLocaleTimeString(
-                                "en-US",
-                                { hour: "2-digit", minute: "2-digit" },
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <StatusPill status={record.status} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Geofence Zones */}
-        <div className="space-y-4">
-          <div className="border rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <MapPinned className="h-4 w-4" />
-              Geofence Zones
-            </h3>
-            {zones && zones.length > 0 ? (
-              <div className="space-y-2">
-                {zones.map((zone) => (
-                  <div key={zone.id} className="p-3 border rounded-lg text-sm">
-                    <div className="font-medium">{zone.name}</div>
-                    {zone.description && (
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {zone.description}
-                      </div>
-                    )}
-                    <div className="text-xs text-muted-foreground mt-2">
-                      Radius: {zone.radius}m
-                    </div>
-                    <Badge
-                      variant={zone.isActive ? "success" : "secondary"}
-                      className="mt-2"
-                    >
-                      {zone.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground text-center py-4">
-                No zones configured
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
-            <h3 className="font-semibold text-sm">How it works</h3>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Check in when you arrive at work</li>
-              <li>• Your location must be within a geofence zone</li>
-              <li>• Check out when you leave</li>
-              <li>• View your attendance history anytime</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      {showReportModal && (
-        <SubmitShiftReportModal onClose={() => setShowReportModal(false)} />
-      )}
-    </div>
-  );
+					<div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+						<h3 className="font-semibold text-sm">How it works</h3>
+						<ul className="text-xs text-muted-foreground space-y-1">
+							<li>• Allow location when your browser asks.</li>
+							<li>• Check in once you're inside your terminal's zone.</li>
+							<li>• Indoors GPS can be weak; move near a window if it can't find you.</li>
+							<li>• Check out when you leave, then file your shift report.</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+			{showReportModal && <SubmitShiftReportModal onClose={() => setShowReportModal(false)} />}
+		</div>
+	);
 }
+
+function LocationStatus({
+	fix,
+	problem,
+	inside,
+	insideName,
+	nearest,
+	onRetry,
+}: {
+	fix: Fix | null;
+	problem: string | null;
+	inside: boolean;
+	insideName?: string;
+	nearest: ReturnType<typeof nearestZone>;
+	onRetry: () => void;
+}) {
+	if (problem) {
+		return (
+			<div className="flex flex-wrap items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+				<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+				<span className="flex-1">{problem}</span>
+				<Button size="sm" variant="outline" onClick={onRetry}>
+					Try again
+				</Button>
+			</div>
+		);
+	}
+	if (!fix) {
+		return (
+			<div className="flex items-center gap-2 text-sm text-muted-foreground">
+				<Loader2 className="h-4 w-4 animate-spin" /> Finding your location…
+			</div>
+		);
+	}
+	if (inside) {
+		return (
+			<div className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
+				<CheckCircle2 className="h-4 w-4 shrink-0" />
+				You're at {insideName ?? "a check-in zone"}. You can check in.
+			</div>
+		);
+	}
+	return (
+		<div className="flex items-start gap-2 rounded-md border p-3 text-sm">
+			<Navigation className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+			<div>
+				{nearest && nearest.metresAway > 0 ? (
+					<>
+						You're about <b>{nearest.metresAway} m</b> from {nearest.zone.name}. Move closer to check in.
+					</>
+				) : (
+					<>Checking whether you're inside a check-in zone…</>
+				)}
+				<div className="text-xs text-muted-foreground mt-1">
+					Location accurate to about {fix.accuracy} m · updated {format(fix.at, "HH:mm:ss")}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function TimeRow({
+	icon,
+	title,
+	time,
+	place,
+}: {
+	icon: React.ReactNode;
+	title: string;
+	time: string;
+	place?: string;
+}) {
+	return (
+		<div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+			{icon}
+			<div className="flex-1">
+				<div className="font-medium">{title}</div>
+				<div className="text-sm text-muted-foreground flex items-center gap-1">
+					<Clock className="h-3 w-3" /> {format(new Date(time), "HH:mm")}
+				</div>
+				{place && (
+					<div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+						<MapPin className="h-3 w-3" />
+						{place}
+					</div>
+				)}
+			</div>
+		</div>
+	);
+}
+
+function ErrorBox({ message }: { message: string }) {
+	return (
+		<div
+			role="alert"
+			className="flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100"
+		>
+			<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+			{message}
+		</div>
+	);
+}
+

@@ -20,6 +20,9 @@ export type RosterEntry = {
   shiftStartTime: string
   shiftEndTime: string
   dutyPosition: string
+  dutyLocation?: string
+  terminalId?: string
+  terminal?: { terminalCode?: string; terminalName?: string }
 }
 
 export type SwapRequest = {

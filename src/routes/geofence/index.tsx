@@ -1,6 +1,5 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { getAccessToken } from "@/utils/auth";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   useGeofenceZones,
   useCreateGeofenceZone,
@@ -9,6 +8,9 @@ import {
 } from "@/hooks/attendance";
 import type { GeofenceZone } from "@/types/attendance";
 import { useState } from "react";
+import { toast } from "sonner";
+import { getPosition, locationErrorMessage } from "@/lib/geo";
+import { label } from "@/lib/labels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -136,7 +138,7 @@ function Page() {
                 className="group flex items-center p-5 hover:bg-muted/50 cursor-pointer transition-colors"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl shrink-0 flex items-center justify-center mr-5 ${zoneTypeColors[zone.zoneType]}`}
+                  className={`w-12 h-12 rounded-xl shrink-0 flex items-center justify-center mr-5 ${zoneTypeColors[zone.zoneType ?? ""]}`}
                 >
                   {zone.type === "circle" ? (
                     <CircleIcon className="w-6 h-6" />
@@ -159,8 +161,7 @@ function Page() {
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Settings className="w-3.5 h-3.5" />
-                      {zone.zoneType.charAt(0).toUpperCase() +
-                        zone.zoneType.slice(1)}
+                      {label(zone.zoneType) || "General"}
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5" />
@@ -253,7 +254,7 @@ function ZoneDetailModal({
         <div className="p-6 border-b flex justify-between items-center bg-muted/30">
           <div className="flex items-center gap-4">
             <div
-              className={`p-2.5 rounded-xl ${zoneTypeColors[zone.zoneType]}`}
+              className={`p-2.5 rounded-xl ${zoneTypeColors[zone.zoneType ?? ""]}`}
             >
               {zone.type === "circle" ? (
                 <CircleIcon className="w-6 h-6" />
@@ -414,7 +415,7 @@ function ZoneDetailModal({
                     Type & Category
                   </p>
                   <p className="text-lg font-bold capitalize">
-                    {zone.zoneType} • {zone.type}
+                    {label(zone.zoneType) || "General"} • {label(zone.type)}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -612,6 +613,33 @@ function CreateZoneModal({ onClose }: { onClose: () => void }) {
                     placeholder="e.g. 50"
                     className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
                   />
+                </div>
+                <div className="md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const p = await getPosition();
+                        setForm({
+                          ...form,
+                          latitude: p.coords.latitude.toFixed(6),
+                          longitude: p.coords.longitude.toFixed(6),
+                        });
+                        toast.success(
+                          `Centre set to where you're standing (accurate to about ${Math.round(p.coords.accuracy)} m).`,
+                        );
+                      } catch (err) {
+                        toast.error(locationErrorMessage(err as GeolocationPositionError));
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted"
+                  >
+                    <MapPin className="h-4 w-4" /> Use my current location as the centre
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Stand at the middle of the post, tap the button, then set the radius. Indoors, allow
+                    at least 50 m because phone GPS is less accurate inside buildings.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">

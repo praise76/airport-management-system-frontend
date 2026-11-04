@@ -61,6 +61,8 @@ const statusConfig: Record<
   clocked_out: { variant: "secondary", label: "Checked Out" },
   ABSENT: { variant: "destructive", label: "Absent" },
   ON_LEAVE: { variant: "info", label: "On Leave" },
+  not_checked_in: { variant: "secondary", label: "Not checked in yet" },
+  late_not_checked_in: { variant: "warning", label: "Shift started, not checked in" },
 
   // Certification statuses
   ACTIVE: { variant: "success", label: "Active" },
