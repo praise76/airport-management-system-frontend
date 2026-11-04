@@ -14,7 +14,18 @@ export type ApiError = {
 // Previously pointed at a since-deleted Render service; now the live one deployed
 // 2026-09-26 (Render web service + Neon Postgres, see SESSION_HANDOFF.md in the
 // backend repo for the full deployment record).
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://airport-management-system-backend-ed7t.onrender.com/api";
+export const API_BASE_URL: string =
+	import.meta.env.VITE_API_BASE_URL || "https://airport-management-system-backend-ed7t.onrender.com/api";
+
+/** The server's root address (no "/api"), used for uploaded files and the live-update socket. */
+export const API_ORIGIN: string = API_BASE_URL.replace(/\/api\/?$/, "");
+
+/** Turns a stored file path such as "/uploads/x.pdf" into a full link; full links pass through. */
+export function fileUrl(path?: string | null): string | undefined {
+	if (!path) return undefined;
+	if (/^https?:\/\//i.test(path)) return path;
+	return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
+}
 
 /**
  * Base axios instance WITHOUT the 401 interceptor.

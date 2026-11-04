@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, Link, redirect, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import {
@@ -54,11 +55,7 @@ import { getAccessToken } from "@/utils/auth";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stakeholders/$stakeholderId")({
-	beforeLoad: () => {
-		const token = getAccessToken();
-		if (!token && typeof window !== "undefined")
-			throw redirect({ to: "/auth/login" });
-	},
+	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers),
 	component: StakeholderDetailPage,
 });
 

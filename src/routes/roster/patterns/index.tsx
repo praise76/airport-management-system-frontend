@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, Calendar, Clock, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -38,6 +39,7 @@ import {
 import { ShiftPattern } from "@/features/roster/types";
 
 export const Route = createFileRoute("/roster/patterns/")({
+  beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
   component: ShiftPatternsPage,
 });
 

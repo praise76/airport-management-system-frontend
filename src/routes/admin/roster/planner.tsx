@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import { RosterEntry } from "@/features/roster/types";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/roster/planner")({
+  beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
   component: RosterPlannerPage,
 });
 

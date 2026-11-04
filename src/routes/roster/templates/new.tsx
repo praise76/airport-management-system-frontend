@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/roster/templates/new")({
+  beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
   component: CreateTemplatePage,
 });
 

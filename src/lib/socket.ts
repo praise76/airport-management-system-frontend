@@ -1,3 +1,4 @@
+import { API_ORIGIN } from "@/api/client";
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth';
 
@@ -38,7 +39,8 @@ class MessagingSocket {
     if (this.socket?.connected) return;
 
     const token = useAuthStore.getState().accessToken;
-    const url = import.meta.env.VITE_API_URL || "http://localhost:3000"; // Fallback, should come from env
+    // Same server as the REST API. VITE_API_URL can still override it if the socket ever moves.
+    const url = import.meta.env.VITE_API_URL || API_ORIGIN;
 
     // Adjust URL if needed (e.g. remove /api suffix if present in base URL)
     // For now assuming the socket is at the same domain/port root

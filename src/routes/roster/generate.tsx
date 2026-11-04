@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -35,6 +36,7 @@ import { useUsers } from "@/hooks/users";
 import { useDepartmentTree } from "@/hooks/departments";
 
 export const Route = createFileRoute("/roster/generate")({
+  beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
   component: GenerateRosterPage,
   validateSearch: (search: Record<string, unknown>) => {
     return {

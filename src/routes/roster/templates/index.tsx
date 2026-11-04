@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Plus, LayoutTemplate, CalendarClock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import { listTemplates } from "@/api/roster";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/roster/templates/")({
+  beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
   component: RosterTemplatesPage,
 });
 

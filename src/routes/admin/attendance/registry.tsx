@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/attendance/registry")({
+  beforeLoad: requireStaff(ROLE_GROUPS.supervisors),
   component: AttendanceRegistryPage,
 });
 

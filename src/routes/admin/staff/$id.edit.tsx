@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useRoles, useStaffById, useUpdateStaff } from "@/hooks/staff";
@@ -25,6 +26,7 @@ import type { UpdateStaffInput } from "@/types/staff";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/admin/staff/$id/edit")({
+  beforeLoad: requireStaff(ROLE_GROUPS.staffAdmins),
   component: EditStaffPage,
 });
 

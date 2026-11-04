@@ -1,17 +1,10 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth'
 import { getAccessToken } from '@/utils/auth'
 
 export const Route = createFileRoute('/admin/')({
-  beforeLoad: () => {
-    const token = getAccessToken()
-    const isClient = typeof window !== 'undefined'
-    if (!token && isClient) throw redirect({ to: '/auth/login' })
-    if (isClient) {
-      const user = useAuthStore.getState().user
-      if (!user?.roles?.includes('SUPER_ADMIN')) throw redirect({ to: '/' })
-    }
-  },
+  beforeLoad: requireStaff(ROLE_GROUPS.admins),
   component: Page,
 })
 

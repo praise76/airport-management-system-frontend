@@ -16,7 +16,8 @@ const config = defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tailwindcss(),
-    TanStackRouterVite(),
+    // Each page is bundled separately, so the login page no longer downloads the whole app.
+    TanStackRouterVite({ autoCodeSplitting: true }),
     viteReact({
       babel: {
         plugins: ['babel-plugin-react-compiler'],

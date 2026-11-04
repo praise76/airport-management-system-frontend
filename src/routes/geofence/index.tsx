@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getAccessToken } from "@/utils/auth";
 import {
@@ -23,11 +24,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/geofence/")({
-  beforeLoad: () => {
-    const token = getAccessToken();
-    if (!token && typeof window !== "undefined")
-      throw redirect({ to: "/auth/login" });
-  },
+  beforeLoad: requireStaff(ROLE_GROUPS.admins),
   component: Page,
 });
 

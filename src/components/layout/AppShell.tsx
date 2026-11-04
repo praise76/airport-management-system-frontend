@@ -44,6 +44,7 @@ import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
 import { Logo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { ROLE_GROUPS } from "@/lib/access";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 
@@ -83,14 +84,27 @@ const navGroups: NavGroup[] = [
 				label: "Registry desk",
 				to: "/documents/registry",
 				icon: Inbox,
-				roles: ["REGISTRY_CLERK", "SUPER_ADMIN", "ORG_ADMIN"],
+				roles: [...ROLE_GROUPS.registry],
 			},
 			{ label: "Tasks", to: "/tasks", icon: ClipboardList },
 			{ label: "Messages", to: "/messages", icon: MessageSquare },
 			{
+				label: "Stakeholders",
+				to: "/stakeholders",
+				icon: Building2,
+				roles: [...ROLE_GROUPS.stakeholderOfficers],
+			},
+			{
 				label: "Verification queue",
 				to: "/admin/stakeholders/verification",
 				icon: ShieldCheck,
+				roles: [...ROLE_GROUPS.stakeholderOfficers],
+			},
+			{
+				label: "Permit applications",
+				to: "/stakeholders/permits",
+				icon: IdCard,
+				roles: [...ROLE_GROUPS.stakeholderOfficers],
 			},
 			{ label: "Public duty board", to: "/public/duty-board", icon: Radio },
 		],
@@ -106,20 +120,20 @@ const navGroups: NavGroup[] = [
 				label: "Staff management",
 				to: "/admin/staff",
 				icon: UsersRound,
-				roles: ["SUPER_ADMIN", "HR"],
+				roles: [...ROLE_GROUPS.staffAdmins],
 			},
 			{ label: "Attendance", to: "/attendance", icon: Fingerprint },
 			{
 				label: "Attendance registry",
 				to: "/admin/attendance/registry",
 				icon: ListChecks,
-				roles: ["SUPER_ADMIN"],
+				roles: [...ROLE_GROUPS.supervisors],
 			},
 			{
 				label: "Leave approvals",
 				to: "/admin/leave/approvals",
 				icon: CalendarCheck,
-				roles: ["SUPER_ADMIN", "ADMIN", "ORG_ADMIN", "HOD", "HOU"],
+				roles: [...ROLE_GROUPS.supervisors],
 			},
 			{ label: "Shift swaps", to: "/swaps", icon: Repeat },
 		],
@@ -131,13 +145,13 @@ const navGroups: NavGroup[] = [
 				label: "Roster planner",
 				to: "/admin/roster/planner",
 				icon: CalendarRange,
-				roles: ["SUPER_ADMIN", "ADMIN", "ORG_ADMIN", "HOD", "HOU"],
+				roles: [...ROLE_GROUPS.rosterPlanners],
 			},
 			{
 				label: "Roster templates",
 				to: "/roster/templates",
 				icon: LayoutTemplate,
-				roles: ["SUPER_ADMIN", "RGM", "ADMIN"],
+				roles: [...ROLE_GROUPS.rosterPlanners],
 			},
 		],
 	},
@@ -157,7 +171,7 @@ const navGroups: NavGroup[] = [
 	{
 		label: "Compliance & safety",
 		items: [
-			{ label: "Geofence", to: "/geofence", icon: MapPin },
+			{ label: "Geofence", to: "/geofence", icon: MapPin, roles: [...ROLE_GROUPS.admins] },
 			{
 				label: "Security",
 				to: "/security",

@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { useRoles, useCreateStaff } from "@/hooks/staff";
@@ -25,6 +26,7 @@ import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
 import type { CreateStaffInput } from "@/types/staff";
 
 export const Route = createFileRoute("/admin/staff/new")({
+  beforeLoad: requireStaff(ROLE_GROUPS.staffAdmins),
   component: NewStaffPage,
 });
 

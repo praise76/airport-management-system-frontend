@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useStaff, useDeactivateStaff } from "@/hooks/staff";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/staff/")({
+  beforeLoad: requireStaff(ROLE_GROUPS.staffAdmins),
   component: StaffListPage,
 });
 

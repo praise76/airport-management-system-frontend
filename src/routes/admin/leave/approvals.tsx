@@ -1,3 +1,4 @@
+import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePendingApprovals, useProcessApproval } from "@/hooks/leave";
 import {
@@ -17,6 +18,7 @@ import { ApprovalActionModal } from "@/components/leave/ApprovalActionModal";
 import { LeaveApplication } from "@/types/leave";
 
 export const Route = createFileRoute("/admin/leave/approvals")({
+  beforeLoad: requireStaff(ROLE_GROUPS.supervisors),
   component: LeaveApprovalsPage,
 });
 
