@@ -22,6 +22,9 @@ import type {
 	GlobalPermitListResponse,
 	GlobalPermit,
 	AccessLevel,
+	FlightStatus,
+	FlightType,
+	InvoiceLineItem,
 } from "@/types/stakeholder-portal";
 
 // ============================================
@@ -113,7 +116,10 @@ export async function rejectStakeholderOrg(
 export async function reactivateStakeholderOrg(
 	id: string,
 ): Promise<StakeholderOrganization> {
-	const res = await api.post(`/stakeholder-orgs/${id}/reactivate`);
+	// The server has two reversals, one per kind of block; pick the one that applies.
+	const org = await getStakeholderOrg(id);
+	const route = org.status === "blacklisted" ? "unblacklist" : "unsuspend";
+	const res = await api.post(`/stakeholder-orgs/${id}/${route}`);
 	return res.data.data ?? res.data;
 }
 
@@ -141,12 +147,168 @@ export async function createStakeholderUser(
 }
 
 export async function updateStakeholderUser(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	userId: string,
 	input: Partial<StakeholderUser>,
 ): Promise<StakeholderUser> {
-	const res = await api.patch(`/stakeholder-orgs/${stakeholderOrgId}/users/${userId}`, input);
+	// The server addresses a portal user by id alone.
+	const res = await api.patch(`/stakeholder-orgs/users/${userId}`, input);
 	return res.data.data ?? res.data;
+}
+
+// ============================================
+// SERVER ROW SHAPES
+//
+// The server returns database rows (decimals as strings, nullable columns, `personnel*`, `flightStatus`
+// and so on). The screens were written against a friendlier shape, so each list translates once here.
+// ============================================
+
+const toNumber = (v: unknown): number =>
+	v === null || v === undefined || v === "" ? 0 : Number(v);
+
+interface ActivityRow {
+	id: string;
+	stakeholderOrganizationId: string;
+	stakeholderUserId: string | null;
+	activityType: string;
+	activityTitle: string | null;
+	activityReference: string | null;
+	status: StakeholderActivity["status"];
+	priority: StakeholderActivity["priority"] | null;
+	data: Record<string, unknown> | null;
+	attachments: Array<{ name: string; url: string }> | null;
+	submittedAt: string | null;
+	reviewComments: string | null;
+	reviewedAt: string | null;
+	completedAt: string | null;
+	feeAmount: string | null;
+	paymentStatus: StakeholderActivity["paymentStatus"] | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+function toActivity(row: ActivityRow): StakeholderActivity {
+	return {
+		id: row.id,
+		stakeholderOrganizationId: row.stakeholderOrganizationId,
+		stakeholderUserId: row.stakeholderUserId ?? undefined,
+		activityType: row.activityType,
+		activityTitle: row.activityTitle ?? "",
+		activityReference: row.activityReference ?? "",
+		status: row.status,
+		priority: row.priority ?? "normal",
+		data: row.data ?? {},
+		attachments: row.attachments ?? [],
+		submittedAt: row.submittedAt ?? undefined,
+		reviewComments: row.reviewComments ?? undefined,
+		reviewedAt: row.reviewedAt ?? undefined,
+		completedAt: row.completedAt ?? undefined,
+		feeAmount: toNumber(row.feeAmount),
+		paymentStatus: row.paymentStatus ?? "pending",
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
+	};
+}
+
+interface FlightRow {
+	id: string;
+	stakeholderOrganizationId: string;
+	flightNumber: string;
+	flightType: FlightType;
+	aircraftType: string | null;
+	aircraftRegistration: string | null;
+	originAirport: string | null;
+	destinationAirport: string | null;
+	scheduledDate: string;
+	scheduledTime: string;
+	eta: string | null;
+	etd: string | null;
+	ata: string | null;
+	atd: string | null;
+	gate: string | null;
+	paxCapacity: number | null;
+	paxOnboard: number | null;
+	flightStatus: FlightStatus;
+	createdAt: string;
+	updatedAt: string;
+}
+
+function toFlight(row: FlightRow): StakeholderFlight {
+	// The server stores one scheduled time, for this airport's own leg of the flight.
+	const scheduled = `${row.scheduledDate}T${row.scheduledTime.slice(0, 5)}`;
+	const departing = row.flightType === "departure";
+	return {
+		id: row.id,
+		stakeholderOrganizationId: row.stakeholderOrganizationId,
+		flightNumber: row.flightNumber,
+		flightType: row.flightType,
+		aircraftType: row.aircraftType ?? undefined,
+		aircraftRegistration: row.aircraftRegistration ?? undefined,
+		origin: row.originAirport ?? "",
+		destination: row.destinationAirport ?? "",
+		scheduledDeparture: departing ? scheduled : (row.etd ?? ""),
+		scheduledArrival: departing ? (row.eta ?? "") : scheduled,
+		actualDeparture: row.atd ?? undefined,
+		actualArrival: row.ata ?? undefined,
+		status: row.flightStatus,
+		gate: row.gate ?? undefined,
+		passengerCount: row.paxOnboard ?? row.paxCapacity ?? undefined,
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
+	};
+}
+
+interface InvoiceRow {
+	id: string;
+	stakeholderOrganizationId: string;
+	invoiceNumber: string;
+	invoiceDate: string;
+	dueDate: string;
+	description: string;
+	lineItems: InvoiceLineItem[] | null;
+	subtotal: string;
+	vat: string | null;
+	totalAmount: string;
+	paymentStatus: string;
+	paymentReference: string | null;
+	paymentDate: string | null;
+	reviewStatus: string | null;
+	reviewComments: string | null;
+	reviewedAt: string | null;
+	createdAt: string;
+	updatedAt: string;
+}
+
+/** One status for the screens, from the server's separate payment and review statuses. */
+function invoiceStatus(row: Pick<InvoiceRow, "paymentStatus" | "reviewStatus">): StakeholderInvoice["status"] {
+	if (row.paymentStatus === "paid") return "paid";
+	if (row.reviewStatus === "approved") return "approved";
+	if (row.reviewStatus === "rejected") return "rejected";
+	if (row.reviewStatus === "queried") return "under_review";
+	return "submitted";
+}
+
+function toInvoice(row: InvoiceRow): StakeholderInvoice {
+	return {
+		id: row.id,
+		stakeholderOrganizationId: row.stakeholderOrganizationId,
+		invoiceNumber: row.invoiceNumber,
+		invoiceDate: row.invoiceDate,
+		dueDate: row.dueDate,
+		description: row.description,
+		lineItems: row.lineItems ?? [],
+		subtotal: toNumber(row.subtotal),
+		tax: toNumber(row.vat),
+		total: toNumber(row.totalAmount),
+		status: invoiceStatus(row),
+		reviewComments: row.reviewComments ?? undefined,
+		reviewedAt: row.reviewedAt ?? undefined,
+		paymentReference: row.paymentReference ?? undefined,
+		paidAt: row.paymentDate ?? undefined,
+		attachments: [],
+		createdAt: row.createdAt,
+		updatedAt: row.updatedAt,
+	};
 }
 
 // ============================================
@@ -164,8 +326,9 @@ export async function listStakeholderActivities(
 ): Promise<{ data: StakeholderActivity[]; pagination: any }> {
 	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/activities`, { params });
 	const responseData = res.data.data ?? res.data;
+	const rows: ActivityRow[] = responseData.items ?? responseData ?? [];
 	return {
-		data: responseData.items ?? responseData ?? [],
+		data: rows.map(toActivity),
 		pagination: responseData.pagination,
 	};
 }
@@ -174,40 +337,44 @@ export async function getStakeholderActivity(
 	stakeholderOrgId: string,
 	activityId: string,
 ): Promise<StakeholderActivity> {
-	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/activities/${activityId}`);
-	return res.data.data ?? res.data;
+	// The server has no single-activity route; the list is small, so find it there.
+	const { data } = await listStakeholderActivities(stakeholderOrgId, { limit: 200 });
+	const found = data.find((a) => a.id === activityId);
+	if (!found) throw new Error("This activity no longer exists.");
+	return found;
 }
 
 export async function createStakeholderActivity(
 	stakeholderOrgId: string,
 	input: CreateActivityInput,
 ): Promise<StakeholderActivity> {
-	// stakeholderOrganizationId is derived from URL path
-	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/activities`, input);
-	return res.data.data ?? res.data;
+	// The server's validation wants the organisation in the body as well as the URL.
+	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/activities`, {
+		...input,
+		stakeholderOrganizationId: stakeholderOrgId,
+	});
+	return toActivity(res.data.data ?? res.data);
 }
 
 export async function submitStakeholderActivity(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	activityId: string,
 ): Promise<StakeholderActivity> {
-	const res = await api.post(
-		`/stakeholder-orgs/${stakeholderOrgId}/activities/${activityId}/submit`,
-	);
-	return res.data.data ?? res.data;
+	const res = await api.post(`/stakeholder-orgs/activities/${activityId}/submit`);
+	return toActivity(res.data.data ?? res.data);
 }
 
 export async function reviewStakeholderActivity(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	activityId: string,
 	status: "approved" | "rejected",
 	reviewComments?: string,
 ): Promise<StakeholderActivity> {
-	const res = await api.post(
-		`/stakeholder-orgs/${stakeholderOrgId}/activities/${activityId}/review`,
-		{ status, reviewComments },
-	);
-	return res.data.data ?? res.data;
+	const res = await api.post(`/stakeholder-orgs/activities/${activityId}/review`, {
+		status,
+		reviewComments,
+	});
+	return toActivity(res.data.data ?? res.data);
 }
 
 // ============================================
@@ -379,10 +546,14 @@ export async function listStakeholderFlights(
 		limit?: number;
 	} = {},
 ): Promise<{ data: StakeholderFlight[]; pagination: any }> {
-	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/flights`, { params });
+	// The server filters by date only; status is filtered here.
+	const { flightStatus, ...serverParams } = params;
+	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/flights`, { params: serverParams });
 	const responseData = res.data.data ?? res.data;
+	const rows: FlightRow[] = responseData.items ?? responseData ?? [];
+	const flights = rows.map(toFlight);
 	return {
-		data: responseData.items ?? responseData ?? [],
+		data: flightStatus ? flights.filter((f) => f.status === flightStatus) : flights,
 		pagination: responseData.pagination,
 	};
 }
@@ -391,21 +562,34 @@ export async function createStakeholderFlight(
 	stakeholderOrgId: string,
 	input: CreateFlightInput,
 ): Promise<StakeholderFlight> {
-	// stakeholderOrganizationId is derived from URL path
-	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/flights`, input);
-	return res.data.data ?? res.data;
+	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/flights`, {
+		stakeholderOrganizationId: stakeholderOrgId,
+		flightNumber: input.flightNumber.trim().toUpperCase(),
+		flightType: input.flightType,
+		aircraftType: input.aircraftType || undefined,
+		aircraftRegistration: input.aircraftRegistration || undefined,
+		originAirport: input.origin.trim().toUpperCase(),
+		destinationAirport: input.destination.trim().toUpperCase(),
+		scheduledDate: input.scheduledAt.slice(0, 10),
+		scheduledTime: input.scheduledAt.slice(11, 16),
+		paxCapacity: input.passengerCount || undefined,
+	});
+	return toFlight(res.data.data ?? res.data);
 }
 
 export async function updateStakeholderFlight(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	flightId: string,
-	input: Partial<CreateFlightInput & { flightStatus: string; gate: string; parkingStand: string }>,
+	input: { flightStatus?: string; gate?: string; parkingStand?: string },
 ): Promise<StakeholderFlight> {
-	const res = await api.patch(
-		`/stakeholder-orgs/${stakeholderOrgId}/flights/${flightId}`,
-		input,
-	);
-	return res.data.data ?? res.data;
+	// The server addresses a flight by id alone, and only these fields can change.
+	const { flightStatus, gate, parkingStand } = input;
+	const res = await api.patch(`/stakeholder-orgs/flights/${flightId}`, {
+		flightStatus,
+		gate,
+		parkingStand,
+	});
+	return toFlight(res.data.data ?? res.data);
 }
 
 // ============================================
@@ -415,40 +599,60 @@ export async function updateStakeholderFlight(
 export async function listStakeholderInvoices(
 	stakeholderOrgId: string,
 	params: {
-		paymentStatus?: string;
 		reviewStatus?: string;
+		paymentStatus?: string;
 		page?: number;
 		limit?: number;
 	} = {},
 ): Promise<{ data: StakeholderInvoice[]; pagination: any }> {
-	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/invoices`, { params });
+	// The screens filter by the combined status, which the server doesn't know; filter here.
+	const { reviewStatus, ...serverParams } = params;
+	const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/invoices`, { params: serverParams });
 	const responseData = res.data.data ?? res.data;
+	const rows: InvoiceRow[] = responseData.items ?? responseData ?? [];
+	const invoices = rows.map(toInvoice);
 	return {
-		data: responseData.items ?? responseData ?? [],
+		data: reviewStatus ? invoices.filter((i) => i.status === reviewStatus) : invoices,
 		pagination: responseData.pagination,
 	};
 }
+
+const VAT_RATE = 0.075;
+const money = (n: number) => Math.round(n * 100) / 100;
 
 export async function createStakeholderInvoice(
 	stakeholderOrgId: string,
 	input: CreateInvoiceInput,
 ): Promise<StakeholderInvoice> {
-	// stakeholderOrganizationId is derived from URL path
-	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/invoices`, input);
-	return res.data.data ?? res.data;
+	const subtotal = money(input.lineItems.reduce((sum, i) => sum + i.amount, 0));
+	const vat = money(subtotal * VAT_RATE);
+	const res = await api.post(`/stakeholder-orgs/${stakeholderOrgId}/invoices`, {
+		stakeholderOrganizationId: stakeholderOrgId,
+		invoiceNumber: input.invoiceNumber.trim(),
+		invoiceType: input.invoiceType,
+		description: input.description,
+		invoiceDate: input.invoiceDate,
+		dueDate: input.dueDate,
+		lineItems: input.lineItems,
+		subtotal,
+		vat,
+		totalAmount: money(subtotal + vat),
+	});
+	return toInvoice(res.data.data ?? res.data);
 }
 
 export async function reviewStakeholderInvoice(
-	stakeholderOrgId: string,
+	_stakeholderOrgId: string,
 	invoiceId: string,
 	reviewStatus: "approved" | "rejected",
 	reviewComments?: string,
 ): Promise<StakeholderInvoice> {
-	const res = await api.post(
-		`/stakeholder-orgs/${stakeholderOrgId}/invoices/${invoiceId}/review`,
-		{ reviewStatus, reviewComments },
-	);
-	return res.data.data ?? res.data;
+	// The server addresses an invoice by id alone.
+	const res = await api.post(`/stakeholder-orgs/invoices/${invoiceId}/review`, {
+		reviewStatus,
+		reviewComments,
+	});
+	return toInvoice(res.data.data ?? res.data);
 }
 
 // ============================================

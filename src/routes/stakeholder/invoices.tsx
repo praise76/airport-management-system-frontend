@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStakeholderInvoices, useCreateStakeholderInvoice } from "@/hooks/stakeholder-portal";
-import type { StakeholderInvoice, InvoiceLineItem } from "@/types/stakeholder-portal";
+import type { StakeholderInvoice, InvoiceLineItem, InvoiceType } from "@/types/stakeholder-portal";
 
 import { useAuthStore } from "@/stores/auth";
 
@@ -41,6 +41,7 @@ function InvoicesPage() {
 	const [showDetailDialog, setShowDetailDialog] = useState(false);
 	const [selectedInvoice, setSelectedInvoice] = useState<StakeholderInvoice | null>(null);
 	const [formData, setFormData] = useState({
+		invoiceNumber: "", invoiceType: "service" as InvoiceType,
 		invoiceDate: new Date().toISOString().split("T")[0], dueDate: "", description: "",
 		lineItems: [{ description: "", quantity: 1, unitPrice: 0, amount: 0 }] as InvoiceLineItem[],
 	});
@@ -74,10 +75,14 @@ function InvoicesPage() {
 
 	const handleCreateInvoice = async () => {
 		const valid = formData.lineItems.filter((i) => i.description && i.amount > 0);
-		if (!formData.dueDate || !valid.length) return;
-		await createInvoice.mutateAsync({ invoiceDate: formData.invoiceDate, dueDate: formData.dueDate, description: formData.description, lineItems: valid });
+		if (!formData.invoiceNumber.trim() || !formData.description.trim() || !formData.dueDate || !valid.length) return;
+		try {
+			await createInvoice.mutateAsync({ invoiceNumber: formData.invoiceNumber, invoiceType: formData.invoiceType, invoiceDate: formData.invoiceDate, dueDate: formData.dueDate, description: formData.description, lineItems: valid });
+		} catch {
+			return; // the hook already showed the server's reason (for example a duplicate invoice number)
+		}
 		setShowCreateDialog(false);
-		setFormData({ invoiceDate: new Date().toISOString().split("T")[0], dueDate: "", description: "", lineItems: [{ description: "", quantity: 1, unitPrice: 0, amount: 0 }] });
+		setFormData({ invoiceNumber: "", invoiceType: "service", invoiceDate: new Date().toISOString().split("T")[0], dueDate: "", description: "", lineItems: [{ description: "", quantity: 1, unitPrice: 0, amount: 0 }] });
 	};
 
 	return (
@@ -103,7 +108,7 @@ function InvoicesPage() {
 					{isLoading ? <div className="bg-white/5 rounded-xl p-12 text-center"><Loader2 className="h-8 w-8 text-purple-400 mx-auto animate-spin" /></div> : filteredInvoices.length === 0 ? <div className="bg-white/5 rounded-xl p-12 text-center"><AlertCircle className="h-12 w-12 text-slate-500 mx-auto mb-4" /><p className="text-slate-400">No invoices found</p><Button onClick={() => setShowCreateDialog(true)} className="mt-4 bg-purple-500"><Plus className="h-4 w-4 mr-2" />Create Invoice</Button></div> : filteredInvoices.map((inv) => (
 						<div key={inv.id} className="bg-white/5 backdrop-blur border border-white/10 rounded-xl p-4 hover:bg-white/10 cursor-pointer" onClick={() => { setSelectedInvoice(inv); setShowDetailDialog(true); }}>
 							<div className="flex items-center justify-between gap-4">
-								<div className="flex items-center gap-4"><div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center"><Receipt className="h-6 w-6 text-purple-400" /></div><div><h3 className="text-white font-medium">{inv.invoiceNumber}</h3><p className="text-sm text-slate-400">{inv.description}</p><div className="mt-2">{getStatusBadge(inv.status)}</div></div></div>
+								<div className="flex items-center gap-4"><div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center"><Receipt className="h-6 w-6 text-purple-400" /></div><div><h3 className="text-white font-medium">{inv.invoiceNumber}</h3><p className="text-sm text-slate-400">{inv.description}</p><div className="mt-2">{getStatusBadge(inv.status)}</div>{inv.status === "rejected" && inv.reviewComments && <p className="mt-2 text-sm text-red-300"><span className="font-medium">Rejected: </span>{inv.reviewComments}</p>}</div></div>
 								<div className="flex items-center gap-4"><div className="text-right"><p className="text-slate-400 text-sm">Amount</p><p className="text-xl font-bold text-white">{formatNaira(inv.total)}</p></div><div className="text-right text-sm"><p className="text-slate-400">Due</p><p className="text-white">{new Date(inv.dueDate).toLocaleDateString()}</p></div><Button size="sm" variant="outline" className="border-slate-700"><Eye className="h-4 w-4" /></Button></div>
 							</div>
 						</div>
@@ -115,22 +120,23 @@ function InvoicesPage() {
 				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
 					<DialogHeader><DialogTitle>Create Invoice</DialogTitle><DialogDescription className="text-slate-400">Submit a new invoice</DialogDescription></DialogHeader>
 					<div className="space-y-4 py-4">
+						<div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label className="text-slate-300">Your invoice number *</Label><Input value={formData.invoiceNumber} onChange={(e) => setFormData((p) => ({ ...p, invoiceNumber: e.target.value }))} placeholder="e.g. INV-2026-014" className="bg-slate-800 border-slate-700" /></div><div className="space-y-2"><Label className="text-slate-300">Invoice type *</Label><Select value={formData.invoiceType} onValueChange={(v) => setFormData((p) => ({ ...p, invoiceType: v as InvoiceType }))}><SelectTrigger className="bg-slate-800 border-slate-700"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="service">Services</SelectItem><SelectItem value="goods">Goods</SelectItem><SelectItem value="rent">Rent</SelectItem><SelectItem value="utilities">Utilities</SelectItem></SelectContent></Select></div></div>
 						<div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label className="text-slate-300">Invoice Date</Label><Input type="date" value={formData.invoiceDate} onChange={(e) => setFormData((p) => ({ ...p, invoiceDate: e.target.value }))} className="bg-slate-800 border-slate-700" /></div><div className="space-y-2"><Label className="text-slate-300">Due Date *</Label><Input type="date" value={formData.dueDate} onChange={(e) => setFormData((p) => ({ ...p, dueDate: e.target.value }))} className="bg-slate-800 border-slate-700" /></div></div>
-						<div className="space-y-2"><Label className="text-slate-300">Description</Label><Textarea value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} className="bg-slate-800 border-slate-700" /></div>
+						<div className="space-y-2"><Label className="text-slate-300">Description *</Label><Textarea value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} className="bg-slate-800 border-slate-700" /></div>
 						<div className="space-y-3">
 							<div className="flex items-center justify-between"><Label className="text-slate-300">Line Items *</Label><Button type="button" size="sm" variant="outline" onClick={addLineItem} className="border-purple-500/50 text-purple-400"><Plus className="h-3 w-3 mr-1" />Add</Button></div>
 							{formData.lineItems.map((item, idx) => (<div key={idx} className="bg-slate-800/50 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Input placeholder="Description" value={item.description} onChange={(e) => updateLineItem(idx, "description", e.target.value)} className="flex-1 bg-slate-800 border-slate-700 text-sm" /><Button type="button" size="icon" variant="ghost" onClick={() => removeLineItem(idx)} className="text-red-400"><Trash2 className="h-4 w-4" /></Button></div><div className="grid grid-cols-3 gap-2"><Input type="number" min="1" value={item.quantity} onChange={(e) => updateLineItem(idx, "quantity", parseInt(e.target.value) || 0)} className="bg-slate-800 border-slate-700 text-sm" placeholder="Qty" /><Input type="number" min="0" value={item.unitPrice} onChange={(e) => updateLineItem(idx, "unitPrice", parseFloat(e.target.value) || 0)} className="bg-slate-800 border-slate-700 text-sm" placeholder="Price" /><Input readOnly value={`₦${item.amount.toLocaleString()}`} className="bg-slate-700/50 border-slate-700 text-sm" /></div></div>))}
 						</div>
 						<div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal</span><span className="text-white">{formatNaira(subtotal)}</span></div><div className="flex justify-between text-sm"><span className="text-slate-400">VAT (7.5%)</span><span className="text-white">₦{tax.toFixed(2)}</span></div><div className="flex justify-between text-lg font-bold border-t border-purple-500/20 pt-2"><span className="text-white">Total</span><span className="text-purple-400">₦{total.toFixed(2)}</span></div></div>
 					</div>
-					<DialogFooter><Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-slate-700 text-slate-300">Cancel</Button><Button onClick={handleCreateInvoice} disabled={!formData.dueDate || createInvoice.isPending} className="bg-purple-500 hover:bg-purple-600">{createInvoice.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}Create</Button></DialogFooter>
+					<DialogFooter><Button variant="outline" onClick={() => setShowCreateDialog(false)} className="border-slate-700 text-slate-300">Cancel</Button><Button onClick={handleCreateInvoice} disabled={!formData.invoiceNumber.trim() || !formData.description.trim() || !formData.dueDate || createInvoice.isPending} className="bg-purple-500 hover:bg-purple-600">{createInvoice.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}Create</Button></DialogFooter>
 				</DialogContent>
 			</Dialog>
 
 			<Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
 				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
 					<DialogHeader><DialogTitle className="flex items-center gap-3"><Receipt className="h-5 w-5 text-purple-400" />Invoice Details</DialogTitle><DialogDescription className="text-slate-400">{selectedInvoice?.invoiceNumber}</DialogDescription></DialogHeader>
-					{selectedInvoice && (<div className="space-y-4 py-4">{getStatusBadge(selectedInvoice.status)}<div className="grid grid-cols-3 gap-4"><div className="bg-slate-800/50 rounded-lg p-3"><p className="text-slate-400 text-sm">Date</p><p className="text-white">{new Date(selectedInvoice.invoiceDate).toLocaleDateString()}</p></div><div className="bg-slate-800/50 rounded-lg p-3"><p className="text-slate-400 text-sm">Due</p><p className="text-white">{new Date(selectedInvoice.dueDate).toLocaleDateString()}</p></div><div className="bg-slate-800/50 rounded-lg p-3"><p className="text-slate-400 text-sm">Total</p><p className="text-white font-bold">{formatNaira(selectedInvoice.total)}</p></div></div><div className="bg-slate-800/50 rounded-lg overflow-hidden"><table className="w-full text-sm"><thead className="bg-slate-700/50"><tr><th className="text-left p-3 text-slate-400">Description</th><th className="text-right p-3 text-slate-400">Qty</th><th className="text-right p-3 text-slate-400">Price</th><th className="text-right p-3 text-slate-400">Amount</th></tr></thead><tbody>{selectedInvoice.lineItems.map((item, i) => (<tr key={i} className="border-t border-slate-700/50"><td className="p-3 text-white">{item.description}</td><td className="p-3 text-right text-slate-300">{item.quantity}</td><td className="p-3 text-right text-slate-300">{formatNaira(item.unitPrice)}</td><td className="p-3 text-right text-white font-medium">{formatNaira(item.amount)}</td></tr>))}</tbody></table></div></div>)}
+					{selectedInvoice && (<div className="space-y-4 py-4">{getStatusBadge(selectedInvoice.status)}{selectedInvoice.status === "rejected" && <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4"><p className="text-red-300 text-sm font-medium">FAAN rejected this invoice</p><p className="text-white mt-1">{selectedInvoice.reviewComments || "No reason was recorded."}</p><p className="text-slate-400 text-sm mt-2">Submit a corrected invoice with a new invoice number.</p></div>}<div className="grid grid-cols-3 gap-4"><div className="bg-slate-800/50 rounded-lg p-3"><p className="text-slate-400 text-sm">Date</p><p className="text-white">{new Date(selectedInvoice.invoiceDate).toLocaleDateString()}</p></div><div className="bg-slate-800/50 rounded-lg p-3"><p className="text-slate-400 text-sm">Due</p><p className="text-white">{new Date(selectedInvoice.dueDate).toLocaleDateString()}</p></div><div className="bg-slate-800/50 rounded-lg p-3"><p className="text-slate-400 text-sm">Total</p><p className="text-white font-bold">{formatNaira(selectedInvoice.total)}</p></div></div><div className="bg-slate-800/50 rounded-lg overflow-hidden"><table className="w-full text-sm"><thead className="bg-slate-700/50"><tr><th className="text-left p-3 text-slate-400">Description</th><th className="text-right p-3 text-slate-400">Qty</th><th className="text-right p-3 text-slate-400">Price</th><th className="text-right p-3 text-slate-400">Amount</th></tr></thead><tbody>{selectedInvoice.lineItems.map((item, i) => (<tr key={i} className="border-t border-slate-700/50"><td className="p-3 text-white">{item.description}</td><td className="p-3 text-right text-slate-300">{item.quantity}</td><td className="p-3 text-right text-slate-300">{formatNaira(item.unitPrice)}</td><td className="p-3 text-right text-white font-medium">{formatNaira(item.amount)}</td></tr>))}</tbody></table></div></div>)}
 					<DialogFooter><Button variant="outline" onClick={() => setShowDetailDialog(false)} className="border-slate-700 text-slate-300">Close</Button></DialogFooter>
 				</DialogContent>
 			</Dialog>

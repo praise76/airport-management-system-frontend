@@ -50,7 +50,10 @@ export type Priority = "low" | "normal" | "high" | "urgent";
 export type PaymentStatus = "pending" | "paid" | "waived";
 export type PermitStatus = "pending" | "approved" | "rejected" | "expired";
 export type StakeholderUserRole = "admin" | "manager" | "user";
-export type FlightStatus = "scheduled" | "boarding" | "departed" | "arrived" | "cancelled" | "delayed";
+export type FlightStatus = "scheduled" | "boarding" | "departed" | "arrived" | "cancelled" | "delayed" | "diverted";
+/** Whether the flight lands at or leaves from this airport. */
+export type FlightType = "arrival" | "departure";
+export type InvoiceType = "service" | "goods" | "rent" | "utilities";
 
 // ============================================
 // STAKEHOLDER STATS (from /stats endpoint)
@@ -305,17 +308,19 @@ export interface StakeholderFlight {
 	stakeholderOrganizationId: string;
 
 	flightNumber: string;
+	flightType: FlightType;
 	aircraftType?: string;
 	aircraftRegistration?: string;
 
 	origin: string;
 	destination: string;
+	/** The scheduled time of this flight's own leg; the other one is the estimate, if any. */
 	scheduledDeparture: string;
 	scheduledArrival: string;
 	actualDeparture?: string;
 	actualArrival?: string;
 
-	status: "scheduled" | "departed" | "arrived" | "cancelled" | "delayed";
+	status: FlightStatus;
 	gate?: string;
 	terminal?: string;
 
@@ -486,19 +491,21 @@ export interface CreatePermitInput {
 
 export interface CreateFlightInput {
 	flightNumber: string;
+	flightType: FlightType;
 	aircraftType?: string;
 	aircraftRegistration?: string;
 	origin: string;
 	destination: string;
-	scheduledDeparture: string;
-	scheduledArrival: string;
-	gate?: string;
-	terminal?: string;
+	/** Local date and time of the arrival or departure, from a datetime-local input. */
+	scheduledAt: string;
+	/** Seats on the aircraft. */
 	passengerCount?: number;
-	cargoWeight?: number;
 }
 
 export interface CreateInvoiceInput {
+	/** The company's own invoice number; it must be unique. */
+	invoiceNumber: string;
+	invoiceType: InvoiceType;
 	invoiceDate: string;
 	dueDate: string;
 	description: string;

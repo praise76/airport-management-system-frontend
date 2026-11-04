@@ -54,14 +54,16 @@ export const Route = createFileRoute("/stakeholder/activities")({
 	component: ActivitiesPage,
 });
 
+// The server accepts a fixed list of activity types; these are the ones that make sense for any company.
 const activityTypes = [
 	{ value: "maintenance_request", label: "Maintenance Request" },
-	{ value: "service_request", label: "Service Request" },
+	{ value: "renovation_request", label: "Renovation Request" },
 	{ value: "complaint", label: "Complaint" },
-	{ value: "information_update", label: "Information Update" },
-	{ value: "security_incident", label: "Security Incident" },
-	{ value: "equipment_request", label: "Equipment Request" },
-	{ value: "training_request", label: "Training Request" },
+	{ value: "incident_report", label: "Incident Report" },
+	{ value: "equipment_declaration", label: "Equipment Declaration" },
+	{ value: "material_delivery", label: "Material Delivery" },
+	{ value: "progress_report", label: "Progress Report" },
+	{ value: "quotation", label: "Quotation" },
 	{ value: "other", label: "Other" },
 ];
 
@@ -188,12 +190,16 @@ function ActivitiesPage() {
 	const handleCreateActivity = async () => {
 		if (!formData.activityType || !formData.activityTitle) return;
 
-		await createActivity.mutateAsync({
-			activityType: formData.activityType,
-			activityTitle: formData.activityTitle,
-			priority: formData.priority,
-			data: { description: formData.description },
-		});
+		try {
+			await createActivity.mutateAsync({
+				activityType: formData.activityType,
+				activityTitle: formData.activityTitle,
+				priority: formData.priority,
+				data: { description: formData.description },
+			});
+		} catch {
+			return; // the hook already showed the server's reason; keep the form open
+		}
 
 		setShowCreateDialog(false);
 		setFormData({
@@ -205,7 +211,11 @@ function ActivitiesPage() {
 	};
 
 	const handleSubmitActivity = async (activityId: string) => {
-		await submitActivity.mutateAsync(activityId);
+		try {
+			await submitActivity.mutateAsync(activityId);
+		} catch {
+			// the hook already showed the server's reason
+		}
 	};
 
 	return (
