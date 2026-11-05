@@ -391,10 +391,17 @@ function UnitCard({ unit }: { unit: any }) {
       <CardContent>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            {(unit.onDutyStaff ?? []).map((staff: any) => (
+            {[...(unit.onDutyStaff ?? [])]
+              // People at their post first, then late, then not yet arrived.
+              .sort((a: any, b: any) => Number(!!b.checkedIn) - Number(!!a.checkedIn))
+              .map((staff: any) => (
               <div
                 key={staff.id}
-                className="flex items-center gap-2 p-1.5 rounded bg-slate-950/50 border border-slate-800/50"
+                className={`flex items-center gap-2 p-1.5 rounded border ${
+                  staff.checkedIn
+                    ? "bg-emerald-950/40 border-emerald-700/50"
+                    : "bg-slate-950/50 border-slate-800/50 opacity-70"
+                }`}
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={staff.avatar} />
@@ -408,6 +415,23 @@ function UnitCard({ unit }: { unit: any }) {
                   </p>
                   <p className="text-[10px] text-slate-500 truncate">
                     {staff.position}
+                  </p>
+                  <p
+                    className={`text-[10px] font-medium truncate ${
+                      staff.checkedIn
+                        ? staff.isLate
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {staff.checkedIn
+                      ? `${staff.isLate ? "Late · " : "On post · "}${
+                          staff.checkedInAt
+                            ? new Date(staff.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                            : ""
+                        }`
+                      : "Not checked in"}
                   </p>
                 </div>
               </div>

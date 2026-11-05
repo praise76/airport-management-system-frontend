@@ -110,7 +110,7 @@ export function RosterPreviewGrid({
 													(list.length > 1 || problems) && "ring-2 ring-red-500",
 												)}
 											>
-												{e.shift?.slice(0, 3)}
+												{e.shift?.slice(0, 3).toUpperCase()}
 											</div>
 										))}
 									</td>
@@ -121,7 +121,11 @@ export function RosterPreviewGrid({
 				</tbody>
 			</table>
 			<p className="p-2 text-xs text-muted-foreground border-t">
-				MOR = morning, AFT = afternoon, NIG = night. Empty = day off. Red = two shifts on one day, or a day the server will refuse (leave or already booked).
+				{/* Built from the shifts actually in this roster (a 12-hour "Day" shift showed as DAY with no key). */}
+				{[...new Map(entries.filter((e) => e.shift).map((e) => [e.shift!.slice(0, 3).toUpperCase(), e])).entries()]
+					.map(([abbr, e]) => `${abbr} = ${e.shift}${e.shiftStartTime ? ` ${String(e.shiftStartTime).slice(0, 5)}–${String(e.shiftEndTime ?? "").slice(0, 5)}` : ""}`)
+					.join(", ")}
+				. Empty = day off. Red = two shifts on one day, or a day the server will refuse (leave or already booked).
 			</p>
 		</div>
 	);

@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Users, ArrowRight, Save, Loader2 } from "lucide-react";
 
 import { toast } from "sonner";
-import { format, addDays } from "date-fns";
+import { format, addDays, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
@@ -330,6 +330,34 @@ function GenerateRosterPage() {
                         <p className="text-[10px] text-muted-foreground">
                           0 = Start at cycle day 1. 1 = Start at cycle day 2.
                         </p>
+                        {/* A 7-day pattern (e.g. Mon–Fri mornings, weekends off) only lines up with the
+                            week if the offset matches the start date. Counting that by hand is easy to
+                            get wrong, so offer the weekday and work the offset out. */}
+                        {selectedTemplate?.rotationCycle?.length === 7 && (
+                          <div className="space-y-1">
+                            <Label htmlFor={`team-${index}-weekday`} className="text-xs">
+                              Cycle day 1 ({selectedTemplate.rotationCycle[0]}) falls on
+                            </Label>
+                            <select
+                              id={`team-${index}-weekday`}
+                              className="h-9 w-full rounded-md border bg-transparent px-2 text-sm"
+                              value={(() => {
+                                const start = parseISO(form.watch("startDate") || format(new Date(), "yyyy-MM-dd"));
+                                const off = Number(form.watch(`teams.${index}.offsetDays`) || 0);
+                                return String((((start.getDay() - off) % 7) + 7) % 7);
+                              })()}
+                              onChange={(e) => {
+                                const start = parseISO(form.watch("startDate") || format(new Date(), "yyyy-MM-dd"));
+                                const weekday = Number(e.target.value);
+                                form.setValue(`teams.${index}.offsetDays`, (start.getDay() - weekday + 7) % 7);
+                              }}
+                            >
+                              {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d, i) => (
+                                <option key={d} value={i}>{d}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
                     </div>
 

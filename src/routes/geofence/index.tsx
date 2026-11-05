@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { label } from "@/lib/labels";
 import {
   GeofenceMapEditor,
+  ZonesOverviewMap,
   type GeofenceMapValue,
 } from "@/components/geofence/GeofenceMapEditor";
 import { Badge } from "@/components/ui/badge";
@@ -115,6 +116,17 @@ function Page() {
         ))}
       </div>
 
+      {/* All zones on one map */}
+      {!!zones?.length && (
+        <ZonesOverviewMap
+          zones={zones as never}
+          onSelect={(id) => {
+            const z = zones?.find((x) => x.id === id);
+            if (z) setSelectedZone(z);
+          }}
+        />
+      )}
+
       {/* High-End List UI */}
       <div className="bg-surface rounded-2xl border overflow-hidden shadow-sm">
         {isLoading ? (
@@ -178,7 +190,7 @@ function Page() {
                       <MapPin className="w-3.5 h-3.5" />
                       {zone.type === "circle"
                         ? `R: ${zone.radius}m`
-                        : `${zone.polygonJson?.coordinates?.[0]?.length || 0} vertices`}
+                        : `${cornerCount(zone)} corners`}
                     </span>
                   </div>
                 </div>
@@ -393,7 +405,7 @@ function ZoneDetailModal({
                   <p className="text-lg font-bold">
                     {zone.type === "circle"
                       ? `${zone.radius}m Radius`
-                      : `${zone.polygonJson?.coordinates?.[0]?.length || 0} Points`}
+                      : `${cornerCount(zone)} corners`}
                   </p>
                 </div>
               </div>
@@ -585,4 +597,11 @@ function CreateZoneModal({ onClose }: { onClose: () => void }) {
       </div>
     </div>
   );
+}
+
+/** The stored ring repeats its first point to close the shape; people count corners. */
+function cornerCount(zone: { polygonJson?: { coordinates?: number[][][] } | null }): number {
+  const ring = zone.polygonJson?.coordinates?.[0] ?? [];
+  const closed = ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1];
+  return closed ? ring.length - 1 : ring.length;
 }

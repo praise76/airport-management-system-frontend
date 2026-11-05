@@ -71,7 +71,7 @@ function RosterPage() {
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
 										<Clock className="h-3 w-3" />
 										<span>
-											{entry.shiftStartTime} - {entry.shiftEndTime}
+											{entry.shiftStartTime?.slice(0, 5)}–{entry.shiftEndTime?.slice(0, 5)}
 										</span>
 										<span>•</span>
 										<span>{entry.shift} Shift</span>
@@ -116,8 +116,8 @@ function RosterPage() {
 								<div className="flex gap-2 mt-2">
 									<StatusPill status={todaysRosterQuery.data.shift} />
 									<span className="text-xs border px-2 py-0.5 rounded-full flex items-center">
-										{todaysRosterQuery.data.shiftStartTime} -{" "}
-										{todaysRosterQuery.data.shiftEndTime}
+										{todaysRosterQuery.data.shiftStartTime?.slice(0, 5)}–
+										{todaysRosterQuery.data.shiftEndTime?.slice(0, 5)}
 									</span>
 								</div>
 							</div>

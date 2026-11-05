@@ -7,6 +7,7 @@ import {
 	MapContainer,
 	Polygon,
 	TileLayer,
+	Tooltip,
 	useMap,
 	useMapEvents,
 } from "react-leaflet";
@@ -409,6 +410,73 @@ export function GeofenceMapEditor({
 					.
 				</p>
 			)}
+		</div>
+	);
+}
+
+type OverviewZone = {
+	id: string;
+	name: string;
+	type?: string;
+	isActive?: boolean;
+	latitude?: number | string;
+	longitude?: number | string;
+	radius?: number | string;
+	polygonJson?: { coordinates?: number[][][] } | null;
+};
+
+function FitAll({ points }: { points: [number, number][] }) {
+	const map = useMap();
+	const key = points.map((p) => p.join(",")).join(";");
+	useEffect(() => {
+		if (points.length) map.fitBounds(points, { padding: [24, 24], maxZoom: 17 });
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [key, map]);
+	return null;
+}
+
+/** Every zone on one map with its name, so gaps and overlaps between terminals are visible. */
+export function ZonesOverviewMap({ zones, onSelect }: { zones: OverviewZone[]; onSelect?: (id: string) => void }) {
+	const shapes = zones.map((z) => {
+		const ring = z.polygonJson?.coordinates?.[0] ?? [];
+		const pts: [number, number][] =
+			z.type === "polygon" ? ring.map(([lng, lat]) => [lat, lng] as [number, number]) : [];
+		const centre: [number, number] | null =
+			z.latitude !== undefined && z.longitude !== undefined ? [Number(z.latitude), Number(z.longitude)] : null;
+		return { z, pts, centre };
+	});
+	const all = shapes.flatMap((s) => (s.pts.length ? s.pts : s.centre ? [s.centre] : []));
+	return (
+		<div className="relative h-[420px] overflow-hidden rounded-2xl border bg-muted">
+			<MapContainer center={all[0] ?? MMIA_CENTER} zoom={15} scrollWheelZoom className="h-full w-full">
+				<TileLayer
+					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+				/>
+				<FitAll points={all} />
+				{shapes.map(({ z, pts, centre }) => {
+					const colour = z.isActive === false ? "#94a3b8" : "#7c3aed";
+					const events = { click: () => onSelect?.(z.id) };
+					const label = (
+						<Tooltip permanent direction="center" className="!bg-white/90 !text-xs !font-semibold">
+							{z.name}
+						</Tooltip>
+					);
+					if (pts.length >= 3)
+						return (
+							<Polygon key={z.id} positions={pts} pathOptions={{ color: colour, weight: 2, fillOpacity: 0.2 }} eventHandlers={events}>
+								{label}
+							</Polygon>
+						);
+					if (centre)
+						return (
+							<Circle key={z.id} center={centre} radius={Number(z.radius) || 100} pathOptions={{ color: colour, weight: 2, fillOpacity: 0.2 }} eventHandlers={events}>
+								{label}
+							</Circle>
+						);
+					return null;
+				})}
+			</MapContainer>
 		</div>
 	);
 }

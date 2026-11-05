@@ -35,9 +35,45 @@ function centreOf(z: ZoneLike): [number, number] | null {
 	return null;
 }
 
+/** True when the point is inside the polygon ring (GeoJSON [lng, lat] pairs), by ray casting. */
+function insideRing(lat: number, lng: number, ring: number[][]): boolean {
+	let inside = false;
+	for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+		const [xi, yi] = ring[i];
+		const [xj, yj] = ring[j];
+		if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+	}
+	return inside;
+}
+
+/** Metres from a point to the nearest point on a segment (flat-earth; fine over a few km). */
+function metresToSegment(lat: number, lng: number, a: number[], b: number[]): number {
+	const k = 111320, kx = k * Math.cos((lat * Math.PI) / 180);
+	const ax = (a[0] - lng) * kx, ay = (a[1] - lat) * k, bx = (b[0] - lng) * kx, by = (b[1] - lat) * k;
+	const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+	const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+	return Math.hypot(ax + t * dx, ay + t * dy);
+}
+
+/** Metres from the point to the zone's edge; 0 when inside. */
+function metresOutside(lat: number, lng: number, z: ZoneLike): number | null {
+	const ring = z.polygonJson?.coordinates?.[0];
+	if (z.type === "polygon" && ring && ring.length >= 3) {
+		if (insideRing(lat, lng, ring)) return 0;
+		let best = Infinity;
+		for (let i = 0; i < ring.length; i++) best = Math.min(best, metresToSegment(lat, lng, ring[i], ring[(i + 1) % ring.length]));
+		return Math.round(best);
+	}
+	const c = centreOf(z);
+	if (!c) return null;
+	return Math.max(0, Math.round(distanceMetres(lat, lng, c[0], c[1]) - (z.radius ?? 0)));
+}
+
 /**
- * The nearest active zone and how far outside its edge the person is (0 when inside a circle).
- * Used only to tell staff where to go; the server makes the real inside/outside decision.
+ * The nearest active zone and how far outside its edge the person is (0 when inside).
+ * Area-shaped zones are measured to their edge; before, they were measured to their centre,
+ * so someone at a terminal's door was told they were hundreds of metres away.
+ * Used only to tell staff where they are; the server decides when they tap Check in.
  */
 export function nearestZone(
 	lat: number,
@@ -47,10 +83,8 @@ export function nearestZone(
 	let best: { zone: ZoneLike; metresAway: number } | null = null;
 	for (const z of zones) {
 		if (z.isActive === false) continue;
-		const c = centreOf(z);
-		if (!c) continue;
-		const d = distanceMetres(lat, lng, c[0], c[1]);
-		const away = Math.max(0, Math.round(d - (z.radius ?? 0)));
+		const away = metresOutside(lat, lng, z);
+		if (away === null) continue;
 		if (!best || away < best.metresAway) best = { zone: z, metresAway: away };
 	}
 	return best;
