@@ -1,6 +1,6 @@
 import "leaflet/dist/leaflet.css";
 import { LocateFixed, Redo2, Trash2 } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
 	Circle,
 	CircleMarker,
@@ -45,6 +45,32 @@ function polygonFromVertices(vertices: Point[]): GeofenceMapValue["polygon"] {
 	const ring = vertices.map(({ lat, lng }) => [lng, lat]);
 	if (ring.length) ring.push([...ring[0]]);
 	return { type: "Polygon", coordinates: [ring] };
+}
+
+/**
+ * Reads typed coordinates, one point per line as "latitude, longitude" (spaces, commas or
+ * semicolons between them). Returns the points or the first problem in plain words.
+ */
+export function parseCoordinates(text: string): { points: Point[] } | { error: string } {
+	const points: Point[] = [];
+	const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean);
+	for (const [i, line] of lines.entries()) {
+		const nums = line.split(/[\s,;]+/).filter(Boolean).map(Number);
+		if (nums.length !== 2 || nums.some((n) => Number.isNaN(n))) {
+			return { error: `Line ${i + 1} ("${line}") needs two numbers: latitude, longitude.` };
+		}
+		const [lat, lng] = nums;
+		if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+			return { error: `Line ${i + 1}: latitude must be between -90 and 90, longitude between -180 and 180.` };
+		}
+		points.push({ lat, lng });
+	}
+	return { points };
+}
+
+/** Lagos is about 6.5° N, 3.3° E; the two numbers swapped is the commonest typing mistake. */
+function looksSwapped(points: Point[]): boolean {
+	return points.length > 0 && points.every((p) => p.lat > 2.5 && p.lat < 4.5 && p.lng > 5.5 && p.lng < 7.5);
 }
 
 function MapClick({
@@ -106,6 +132,47 @@ export function GeofenceMapEditor({
 		onChange({ ...value, polygon: polygonFromVertices([...vertices, point]) });
 	};
 
+	const [typed, setTyped] = useState("");
+	const [typedProblem, setTypedProblem] = useState<string | null>(null);
+
+	const applyTyped = () => {
+		const result = parseCoordinates(typed);
+		if ("error" in result) return setTypedProblem(result.error);
+		const pts = result.points;
+		if (looksSwapped(pts)) {
+			return setTypedProblem(
+				"These look like longitude, latitude. Put latitude first (about 6.5 for Lagos), then longitude (about 3.3).",
+			);
+		}
+		if (value.type === "circle") {
+			if (pts.length !== 1) return setTypedProblem("For a circle, enter one point: the centre.");
+			setTypedProblem(null);
+			onChange?.({ ...value, latitude: pts[0].lat, longitude: pts[0].lng, radius: value.radius || 100 });
+			return;
+		}
+		if (pts.length < 3) return setTypedProblem("An area needs at least three corners, one per line.");
+		setTypedProblem(null);
+		onChange?.({ ...value, polygon: polygonFromVertices(pts) });
+	};
+
+	// Walk the boundary on site and add each corner where you stand.
+	const addMyLocationAsCorner = async () => {
+		if (!onChange) return;
+		try {
+			const position = await getPosition();
+			onChange({
+				...value,
+				polygon: polygonFromVertices([
+					...vertices,
+					{ lat: position.coords.latitude, lng: position.coords.longitude },
+				]),
+			});
+			toast.success(`Corner ${vertices.length + 1} added (accurate to about ${Math.round(position.coords.accuracy)} m).`);
+		} catch (error) {
+			toast.error(locationErrorMessage(error as GeolocationPositionError));
+		}
+	};
+
 	const useCurrentLocation = async () => {
 		if (!onChange) return;
 		try {
@@ -144,6 +211,14 @@ export function GeofenceMapEditor({
 							</button>
 						) : (
 							<>
+								<button
+									type="button"
+									onClick={addMyLocationAsCorner}
+									title="Stand at a corner of the area and tap this; repeat at each corner"
+									className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-medium hover:bg-muted"
+								>
+									<LocateFixed className="h-4 w-4" /> Add my location
+								</button>
 								<button
 									type="button"
 									disabled={!vertices.length}
@@ -243,6 +318,52 @@ export function GeofenceMapEditor({
 					)}
 				</MapContainer>
 			</div>
+
+			{!readOnly && (
+				<details className="rounded-lg border p-3 text-sm">
+					<summary className="cursor-pointer font-medium">
+						Type coordinates instead
+					</summary>
+					<div className="mt-3 space-y-2">
+						<p className="text-muted-foreground">
+							{value.type === "circle"
+								? "Enter the centre as latitude, longitude, for example 6.5774, 3.3212."
+								: "Enter each corner on its own line as latitude, longitude, going round the area in order. For example:"}
+						</p>
+						<textarea
+							aria-label="Coordinates"
+							value={typed}
+							onChange={(e) => setTyped(e.target.value)}
+							rows={value.type === "circle" ? 1 : 5}
+							placeholder={value.type === "circle" ? "6.5774, 3.3212" : "6.5842, 3.3205\n6.5842, 3.3232\n6.5828, 3.3232\n6.5828, 3.3205"}
+							className="w-full rounded-lg border bg-background p-2 font-mono text-sm"
+						/>
+						{typedProblem && (
+							<p role="alert" className="text-destructive">
+								{typedProblem}
+							</p>
+						)}
+						<div className="flex flex-wrap gap-2">
+							<button
+								type="button"
+								onClick={applyTyped}
+								className="rounded-lg bg-primary px-3 py-2 font-medium text-primary-foreground"
+							>
+								Show on map
+							</button>
+							{value.type === "polygon" && vertices.length > 0 && (
+								<button
+									type="button"
+									onClick={() => setTyped(vertices.map((p) => `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`).join("\n"))}
+									className="rounded-lg border px-3 py-2 font-medium hover:bg-muted"
+								>
+									Copy current corners here
+								</button>
+							)}
+						</div>
+					</div>
+				</details>
+			)}
 
 			{!readOnly && value.type === "circle" && (
 				<div className="grid gap-3 sm:grid-cols-[1fr_130px] sm:items-center">
