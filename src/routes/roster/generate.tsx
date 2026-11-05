@@ -76,7 +76,7 @@ function GenerateRosterPage() {
   const conflictDays = new Set(conflicts.map((c) => `${c.staffId}|${c.dutyDate}`)).size;
   const [activeTab, setActiveTab] = useState("config");
 
-  const form = useForm<GenerateFormValues>({
+  const form = useForm<z.input<typeof generateSchema>, unknown, GenerateFormValues>({
     resolver: zodResolver(generateSchema),
     defaultValues: {
       unitDepartmentId: "",

@@ -13,6 +13,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useCreateGroup } from "@/hooks/groups";
+import { useDepartments } from "@/hooks/departments";
 
 export const Route = createFileRoute("/groups/")({
   component: GroupsPage,
@@ -24,6 +37,8 @@ function GroupsPage() {
     queryFn: () => listGroups(),
   });
 
+  const [creating, setCreating] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -33,10 +48,11 @@ function GroupsPage() {
             Manage user groups and department teams.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setCreating(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create Group
         </Button>
+        <CreateGroupDialog open={creating} onOpenChange={setCreating} />
       </div>
 
       {isLoading ? (
@@ -128,5 +144,80 @@ function GroupsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** The "Create Group" button had no action; this is its form (POST /groups, GroupInput in api.json). */
+function CreateGroupDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const create = useCreateGroup();
+  const { data: depts } = useDepartments({ pageSize: 200 } as never);
+  const departments: Array<{ id: string; name: string }> =
+    ((depts as any)?.data ?? (depts as any)?.items ?? (Array.isArray(depts) ? depts : [])) as never;
+  const [name, setName] = useState("");
+  const [groupType, setGroupType] = useState("department");
+  const [departmentId, setDepartmentId] = useState("");
+  const [visibility, setVisibility] = useState("public");
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!name.trim()) return setProblem("Give the group a name.");
+    if (groupType === "department" && !departmentId) return setProblem("Choose the department this group is for.");
+    setProblem(null);
+    try {
+      await create.mutateAsync({ name: name.trim(), groupType, visibility, departmentId: departmentId || (undefined as never) });
+      onOpenChange(false);
+      setName("");
+      setDepartmentId("");
+    } catch {
+      /* the hook shows the server's reason */
+    }
+  };
+
+  const select = "w-full h-9 rounded-md border bg-transparent px-3 text-sm";
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Create group</DialogTitle>
+          <DialogDescription>Add members from the group's page once it exists.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="g-name">Name</Label>
+            <Input id="g-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Passenger Screening Unit" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="g-type">Type</Label>
+            <select id="g-type" className={select} value={groupType} onChange={(e) => setGroupType(e.target.value)}>
+              <option value="department">Department</option>
+              <option value="project">Project</option>
+              <option value="announcement">Announcement</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="g-dept">Department{groupType === "department" ? "" : " (optional)"}</Label>
+            <select id="g-dept" className={select} value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+              <option value="">Choose…</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="g-vis">Who can see it</Label>
+            <select id="g-vis" className={select} value={visibility} onChange={(e) => setVisibility(e.target.value)}>
+              <option value="public">Everyone in the organisation</option>
+              <option value="private">Members only</option>
+            </select>
+          </div>
+          {problem && <p role="alert" className="text-sm text-red-600">{problem}</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={submit} disabled={create.isPending}>Create group</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

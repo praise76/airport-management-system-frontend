@@ -1,4 +1,5 @@
 import { requireStaff, ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
+import { toast } from "sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import {
@@ -181,9 +182,21 @@ function StakeholdersPage() {
 						Manage airlines, contractors, vendors, tenants, and other external partners
 					</p>
 				</div>
-				<Button>
+				{/* Companies register themselves on the portal (that's where their documents are
+				    collected), so this shares the registration link instead of a button that did nothing. */}
+				<Button
+					onClick={async () => {
+						const link = `${window.location.origin}/stakeholder/register`;
+						try {
+							await navigator.clipboard.writeText(link);
+							toast.success("Registration link copied. Send it to the company.", { description: link });
+						} catch {
+							toast.message("Send this registration link to the company", { description: link });
+						}
+					}}
+				>
 					<Plus className="h-4 w-4 mr-2" />
-					Add Stakeholder
+					Invite a company
 				</Button>
 			</div>
 

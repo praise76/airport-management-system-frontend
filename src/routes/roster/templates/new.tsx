@@ -95,7 +95,7 @@ function CreateTemplatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const form = useForm<TemplateFormValues>({
+  const form = useForm<z.input<typeof templateSchema>, unknown, TemplateFormValues>({
     resolver: zodResolver(templateSchema),
     defaultValues: {
       name: "",
