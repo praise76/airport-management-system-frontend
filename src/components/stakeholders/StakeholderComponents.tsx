@@ -206,7 +206,8 @@ export function RatingStars({
 	showValue = true,
 	className,
 }: RatingStarsProps) {
-	if (rating === null) {
+	// Missing as well as null: a newly registered company may have no rating yet.
+	if (rating == null || Number.isNaN(Number(rating))) {
 		return <span className="text-muted-foreground text-sm">Not rated</span>;
 	}
 
@@ -227,7 +228,7 @@ export function RatingStars({
 			))}
 			{showValue && (
 				<span className="text-sm text-muted-foreground ml-1">
-					({rating.toFixed(1)})
+					({Number(rating).toFixed(1)})
 				</span>
 			)}
 		</div>

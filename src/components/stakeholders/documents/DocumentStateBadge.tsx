@@ -18,11 +18,11 @@ export function DocumentStateBadge({
 			variant="outline"
 			className={cn(
 				"whitespace-nowrap",
-				STATE_TONES[state][surface],
+				STATE_TONES[state]?.[surface],
 				className,
 			)}
 		>
-			{STATE_LABELS[state]}
+			{STATE_LABELS[state] ?? String(state ?? "Unknown").replace(/_/g, " ")}
 		</Badge>
 	);
 }

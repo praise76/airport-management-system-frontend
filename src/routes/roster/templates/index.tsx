@@ -80,13 +80,13 @@ function RosterTemplatesPage() {
                   </Badge>
                 </div>
                 <CardDescription>
-                  {template.rotationCycle.length} day rotation cycle
+                  {template.rotationCycle?.length ?? 0} day rotation cycle
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex gap-2 flex-wrap">
-                    {Object.values(template.shiftDefinitions).map((shift) => (
+                    {Object.values(template.shiftDefinitions ?? {}).map((shift) => (
                       <Badge
                         key={shift.name}
                         variant="outline"

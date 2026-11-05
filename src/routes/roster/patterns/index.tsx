@@ -97,7 +97,7 @@ function PatternCard({ pattern }: { pattern: ShiftPattern }) {
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2">
-          {pattern.shiftSequenceJson
+          {[...(pattern.shiftSequenceJson ?? [])]
             .sort((a, b) => a.day - b.day)
             .map((seq, idx) => (
               <Badge

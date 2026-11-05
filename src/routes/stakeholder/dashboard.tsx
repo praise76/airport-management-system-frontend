@@ -302,7 +302,7 @@ function StakeholderDashboardPage() {
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold mb-1">
-                Welcome back, {org.contactPerson.split(" ")[0]}!
+                Welcome back, {org.contactPerson?.split(" ")[0] || org.organizationName || "there"}!
               </h2>
               <p className="opacity-90">
                 Here's what's happening with your account today.
