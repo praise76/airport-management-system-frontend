@@ -102,7 +102,7 @@ function RosterTemplatesPage() {
                       <CalendarClock className="h-4 w-4" />
                       <span>
                         Updated{" "}
-                        {format(new Date(template.updatedAt), "MMM d, yyyy")}
+                        {template.updatedAt && !Number.isNaN(new Date(template.updatedAt).getTime()) ? format(new Date(template.updatedAt), "MMM d, yyyy") : "—"}
                       </span>
                     </div>
                   </div>
