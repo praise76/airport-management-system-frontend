@@ -9,8 +9,11 @@ import {
 import type { GeofenceZone } from "@/types/attendance";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getPosition, locationErrorMessage } from "@/lib/geo";
 import { label } from "@/lib/labels";
+import {
+  GeofenceMapEditor,
+  type GeofenceMapValue,
+} from "@/components/geofence/GeofenceMapEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +40,14 @@ const zoneTypeColors: Record<string, string> = {
   parking: "bg-emerald-500/10 text-emerald-500",
   work: "bg-amber-500/10 text-amber-500",
 };
+
+const mapValueFromZone = (zone: GeofenceZone): GeofenceMapValue => ({
+  type: zone.type,
+  latitude: zone.latitude === undefined ? undefined : Number(zone.latitude),
+  longitude: zone.longitude === undefined ? undefined : Number(zone.longitude),
+  radius: zone.radius,
+  polygon: zone.polygonJson,
+});
 
 function Page() {
   const { data: zones, isLoading } = useGeofenceZones();
@@ -225,6 +236,7 @@ function ZoneDetailModal({
     latitude: zone.latitude || 0,
     longitude: zone.longitude || 0,
     radius: zone.radius || 0,
+    polygon: zone.polygonJson,
     isActive: zone.isActive,
   });
 
@@ -319,59 +331,15 @@ function ZoneDetailModal({
                 </select>
               </div>
 
-              {form.type === "circle" && (
-                <>
-                  <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
-                        Center Latitude
-                      </label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={form.latitude}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            latitude: parseFloat(e.target.value),
-                          })
-                        }
-                        className="w-full px-4 py-3 rounded-xl bg-muted border-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
-                        Center Longitude
-                      </label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={form.longitude}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            longitude: parseFloat(e.target.value),
-                          })
-                        }
-                        className="w-full px-4 py-3 rounded-xl bg-muted border-none"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2 block">
-                      Radius (m)
-                    </label>
-                    <input
-                      type="number"
-                      value={form.radius}
-                      onChange={(e) =>
-                        setForm({ ...form, radius: parseInt(e.target.value) })
-                      }
-                      className="w-full px-4 py-3 rounded-xl bg-muted border-none"
-                    />
-                  </div>
-                </>
-              )}
+              <div className="md:col-span-2 space-y-2">
+                <label className="text-xs font-bold uppercase text-muted-foreground tracking-widest block">
+                  Draw Check-in Boundary
+                </label>
+                <GeofenceMapEditor
+                  value={form}
+                  onChange={(mapValue) => setForm({ ...form, ...mapValue })}
+                />
+              </div>
 
               <div className="md:col-span-2 bg-muted p-4 rounded-xl flex items-center justify-between">
                 <span className="font-semibold text-sm">
@@ -459,6 +427,8 @@ function ZoneDetailModal({
                 </div>
               )}
 
+              <GeofenceMapEditor value={mapValueFromZone(zone)} readOnly />
+
               <Button
                 onClick={() => setIsEditing(true)}
                 className="w-full py-7 rounded-2xl gap-2 shadow-sm border"
@@ -481,24 +451,12 @@ function CreateZoneModal({ onClose }: { onClose: () => void }) {
     description: "",
     zoneType: "work" as any,
     type: "circle" as "circle" | "polygon",
-    latitude: "" as string | number,
-    longitude: "" as string | number,
-    radius: "" as string | number,
-    polygonJson: { type: "Polygon", coordinates: [[]] as any },
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
+    radius: 100,
+    polygon: { type: "Polygon" as const, coordinates: [[]] as number[][][] },
     organizationId: "",
   });
-
-  const [vertices, setVertices] = useState<{ lat: number; lng: number }[]>([]);
-  const [vInput, setVInput] = useState({ lat: "", lng: "" });
-
-  const addVertex = () => {
-    const lat = parseFloat(vInput.lat);
-    const lng = parseFloat(vInput.lng);
-    if (!isNaN(lat) && !isNaN(lng)) {
-      setVertices([...vertices, { lat, lng }]);
-      setVInput({ lat: "", lng: "" });
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -512,14 +470,20 @@ function CreateZoneModal({ onClose }: { onClose: () => void }) {
     };
 
     if (form.type === "circle") {
-      payload.latitude = parseFloat(form.latitude as string);
-      payload.longitude = parseFloat(form.longitude as string);
-      payload.radius = parseInt(form.radius as string);
+      if (form.latitude === undefined || form.longitude === undefined) {
+        toast.error("Click the map to place the centre of this check-in zone.");
+        return;
+      }
+      payload.latitude = form.latitude;
+      payload.longitude = form.longitude;
+      payload.radius = form.radius;
     } else {
-      payload.polygonJson = {
-        type: "Polygon",
-        coordinates: [vertices.map((v) => [v.lng, v.lat])], // GeoJSON is [LNG, LAT]
-      };
+      const pointCount = Math.max(0, (form.polygon.coordinates[0]?.length ?? 0) - 1);
+      if (pointCount < 3) {
+        toast.error("Draw at least three points to create a polygon boundary.");
+        return;
+      }
+      payload.polygon = form.polygon;
     }
 
     createZone.mutate(payload, { onSuccess: onClose });
@@ -527,7 +491,7 @@ function CreateZoneModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-3xl w-full max-w-2xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col text-(--color-text)">
+      <div className="bg-surface rounded-3xl w-full max-w-4xl border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col text-(--color-text)">
         <div className="p-8 border-b flex justify-between items-center bg-muted/40">
           <div>
             <h2 className="text-2xl font-bold">New Operational Perimeter</h2>
@@ -597,143 +561,15 @@ function CreateZoneModal({ onClose }: { onClose: () => void }) {
               </select>
             </div>
 
-            {form.type === "circle" ? (
-              <>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Detection Radius (m)
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    value={form.radius}
-                    onChange={(e) =>
-                      setForm({ ...form, radius: e.target.value })
-                    }
-                    placeholder="e.g. 50"
-                    className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        const p = await getPosition();
-                        setForm({
-                          ...form,
-                          latitude: p.coords.latitude.toFixed(6),
-                          longitude: p.coords.longitude.toFixed(6),
-                        });
-                        toast.success(
-                          `Centre set to where you're standing (accurate to about ${Math.round(p.coords.accuracy)} m).`,
-                        );
-                      } catch (err) {
-                        toast.error(locationErrorMessage(err as GeolocationPositionError));
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium hover:bg-muted"
-                  >
-                    <MapPin className="h-4 w-4" /> Use my current location as the centre
-                  </button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Stand at the middle of the post, tap the button, then set the radius. Indoors, allow
-                    at least 50 m because phone GPS is less accurate inside buildings.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Latitude
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    step="any"
-                    value={form.latitude}
-                    onChange={(e) =>
-                      setForm({ ...form, latitude: e.target.value })
-                    }
-                    placeholder="6.5779"
-                    className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Longitude
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    step="any"
-                    value={form.longitude}
-                    onChange={(e) =>
-                      setForm({ ...form, longitude: e.target.value })
-                    }
-                    placeholder="3.3215"
-                    className="w-full px-5 py-4 rounded-2xl bg-muted border-none h-14"
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="md:col-span-2 space-y-4 bg-muted p-6 rounded-3xl">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                  Boundary Vertices
-                </p>
-                <div className="flex gap-2 text-black">
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="LAT"
-                    value={vInput.lat}
-                    onChange={(e) =>
-                      setVInput({ ...vInput, lat: e.target.value })
-                    }
-                    className="flex-1 bg-surface border-none rounded-xl px-3 py-3"
-                  />
-                  <input
-                    type="number"
-                    step="any"
-                    placeholder="LNG"
-                    value={vInput.lng}
-                    onChange={(e) =>
-                      setVInput({ ...vInput, lng: e.target.value })
-                    }
-                    className="flex-1 bg-surface border-none rounded-xl px-3 py-3"
-                  />
-                  <Button
-                    type="button"
-                    onClick={addVertex}
-                    className="rounded-xl px-5 h-11"
-                  >
-                    Add
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 min-h-12 items-center">
-                  {vertices.map((v, i) => (
-                    <Badge
-                      key={i}
-                      variant="secondary"
-                      className="pl-3 pr-1 py-1 gap-2 rounded-lg border-none"
-                    >
-                      ({v.lat.toFixed(4)}, {v.lng.toFixed(4)})
-                      <button
-                        onClick={() =>
-                          setVertices(vertices.filter((_, idx) => idx !== i))
-                        }
-                        className="hover:text-rose-500"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                  {vertices.length === 0 && (
-                    <span className="text-xs text-muted-foreground/70 italic">
-                      At least 3 points required for polygons.
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Draw Check-in Boundary
+              </label>
+              <GeofenceMapEditor
+                value={form}
+                onChange={(mapValue) => setForm({ ...form, ...mapValue })}
+              />
+            </div>
           </div>
 
           <Button

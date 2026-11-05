@@ -63,3 +63,33 @@ export interface UpdateStaffInput {
   assignedTerminals?: string;
   airportCode?: string;
 }
+
+export interface StaffImportPreviewRow {
+  rowNumber: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  employeeId?: string;
+  role: string;
+  departmentCode?: string;
+  departmentName?: string;
+  terminalCodes: string[];
+  password: "Provided" | "Will be generated";
+  errors: string[];
+}
+
+export interface StaffImportPreview {
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  canImport: boolean;
+  rows: StaffImportPreviewRow[];
+}
+
+export interface StaffImportResult {
+  imported: number;
+  credentials: Array<{
+    email: string;
+    initialPassword: string;
+  }>;
+}

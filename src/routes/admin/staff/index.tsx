@@ -2,7 +2,7 @@ import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useStaff, useDeactivateStaff } from "@/hooks/staff";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Edit, UserX, Search } from "lucide-react";
+import { Plus, Loader2, Edit, UserX, Search, FileSpreadsheet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { label } from "@/lib/labels";
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StaffImportDialog } from "@/components/staff/StaffImportDialog";
 
 export const Route = createFileRoute("/admin/staff/")({
   beforeLoad: requireStaff(ROLE_GROUPS.staffAdmins),
@@ -36,6 +37,7 @@ function StaffListPage() {
   const navigate = useNavigate();
   const { data: staff, isLoading } = useStaff();
   const deactivateMutation = useDeactivateStaff();
+  const [showImport, setShowImport] = useState(false);
 
   const handleDeactivate = (id: string) => {
     deactivateMutation.mutate(id);
@@ -71,10 +73,16 @@ function StaffListPage() {
             Manage staff members and their roles
           </p>
         </div>
-        <Button onClick={() => navigate({ to: "/admin/staff/new" })}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Staff Member
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Import Excel
+          </Button>
+          <Button onClick={() => navigate({ to: "/admin/staff/new" })}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Staff Member
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
@@ -206,6 +214,7 @@ function StaffListPage() {
           </Table>
         </div>
       )}
+      <StaffImportDialog open={showImport} onOpenChange={setShowImport} />
     </div>
   );
 }

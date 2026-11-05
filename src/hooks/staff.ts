@@ -84,3 +84,22 @@ export function useDeactivateStaff() {
     },
   });
 }
+
+export function usePreviewStaffImport() {
+  return useMutation({
+    mutationFn: StaffApi.previewStaffImport,
+    onError: (error: any) => toast.error(error.message || "Could not validate workbook"),
+  });
+}
+
+export function useImportStaffWorkbook() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: StaffApi.importStaffWorkbook,
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: staffKeys.lists() });
+      toast.success(`${result.imported} staff member(s) imported`);
+    },
+    onError: (error: any) => toast.error(error.message || "Could not import staff workbook"),
+  });
+}

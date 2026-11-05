@@ -33,6 +33,11 @@ export async function deleteTerminal(id: string): Promise<void> {
   await api.delete(`/terminals/${id}`);
 }
 
+export async function seedMMIATerminals(): Promise<{ message: string; terminals: Terminal[] }> {
+  const res = await api.post("/terminals/seed-mmia");
+  return res.data.data;
+}
+
 export async function getTerminalStats(id: string): Promise<TerminalStats> {
   const res = await api.get(`/terminals/${id}/stats`);
   return res.data.data;

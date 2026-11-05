@@ -4,6 +4,8 @@ import type {
   StaffMember,
   CreateStaffInput,
   UpdateStaffInput,
+  StaffImportPreview,
+  StaffImportResult,
 } from "@/types/staff";
 
 // Get available roles
@@ -42,5 +44,26 @@ export async function updateStaff(
 // Deactivate staff
 export async function deactivateStaff(id: string): Promise<StaffMember> {
   const res = await api.post(`/admin/staff/${id}/deactivate`);
+  return res.data.data;
+}
+
+export async function downloadStaffImportTemplate(): Promise<Blob> {
+  const res = await api.get("/admin/staff/import/template", { responseType: "blob" });
+  return res.data;
+}
+
+function workbookForm(file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  return form;
+}
+
+export async function previewStaffImport(file: File): Promise<StaffImportPreview> {
+  const res = await api.post("/admin/staff/import/preview", workbookForm(file));
+  return res.data.data;
+}
+
+export async function importStaffWorkbook(file: File): Promise<StaffImportResult> {
+  const res = await api.post("/admin/staff/import", workbookForm(file));
   return res.data.data;
 }

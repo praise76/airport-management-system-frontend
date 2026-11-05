@@ -8,6 +8,7 @@ import {
   useDeleteTerminal,
   useSubmitTerminalReport,
   useTerminalPerformance,
+  useSeedMMIATerminals,
 } from "@/hooks/terminals";
 import type {
   Terminal,
@@ -19,6 +20,8 @@ import type {
 import { useState } from "react";
 import { useAuthStore } from "@/stores/auth";
 import { TerminalTeamWidget } from "@/features/terminals/components/TerminalTeamWidget";
+import { hasAnyRole, ROLE_GROUPS } from "@/lib/access";
+import { DatabaseZap } from "lucide-react";
 
 export const Route = createFileRoute("/terminals/")({
   beforeLoad: () => {
@@ -41,6 +44,9 @@ const typeColors: Record<string, string> = {
 
 function Page() {
   const { data: terminals = [], isLoading } = useTerminals();
+  const user = useAuthStore((state) => state.user);
+  const seedMMIA = useSeedMMIATerminals();
+  const canManage = hasAnyRole(user, ROLE_GROUPS.admins);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTerminal, setSelectedTerminal] = useState<Terminal | null>(
     null,
@@ -56,10 +62,21 @@ function Page() {
             Manage airport terminals and facilities
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition flex items-center gap-2"
-        >
+        <div className="flex flex-wrap gap-2">
+          {canManage && (
+            <button
+              onClick={() => seedMMIA.mutate()}
+              disabled={seedMMIA.isPending}
+              className="px-4 py-2 border border-[var(--color-border)] rounded-lg hover:bg-muted transition flex items-center gap-2 disabled:opacity-50"
+            >
+              <DatabaseZap className="h-4 w-4" />
+              {seedMMIA.isPending ? "Loading..." : "Load MMIA Terminals"}
+            </button>
+          )}
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition flex items-center gap-2"
+          >
           <svg
             className="w-4 h-4"
             fill="none"
@@ -73,8 +90,9 @@ function Page() {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Add Terminal
-        </button>
+            Add Terminal
+          </button>
+        </div>
       </div>
 
       {/* Terminal Grid */}

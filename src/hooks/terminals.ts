@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTerminals, getTerminal, getTerminalStats, createTerminal, updateTerminal, deleteTerminal, getTerminalRepresentatives, addTerminalRepresentative, removeTerminalRepresentative, submitTerminalReport, getTerminalPerformance } from "@/api/terminals";
+import { getTerminals, getTerminal, getTerminalStats, createTerminal, updateTerminal, deleteTerminal, getTerminalRepresentatives, addTerminalRepresentative, removeTerminalRepresentative, submitTerminalReport, getTerminalPerformance, seedMMIATerminals } from "@/api/terminals";
 import type { TerminalUpdate, TerminalRepresentativeInput, TerminalReportInput } from "@/types/terminal";
 import { toast } from "sonner";
 
@@ -84,6 +84,22 @@ export function useCreateTerminal() {
       queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
       toast.success("Terminal created");
     },
+  });
+}
+
+export function useSeedMMIATerminals() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: seedMMIATerminals,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: terminalKeys.lists() });
+      toast.success(
+        result.terminals.length
+          ? `${result.terminals.length} MMIA terminal(s) loaded`
+          : "All MMIA terminals are already loaded",
+      );
+    },
+    onError: (error: any) => toast.error(error.message || "Could not load MMIA terminals"),
   });
 }
 
