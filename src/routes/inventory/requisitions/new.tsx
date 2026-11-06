@@ -1,6 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,8 @@ type LineItemDraft = {
 	notes: string;
 };
 
+type SaveIntent = "draft" | "submit";
+
 let lineKeySeq = 0;
 const newLineDraft = (): LineItemDraft => ({
 	key: `line-${++lineKeySeq}`,
@@ -45,16 +48,16 @@ const newLineDraft = (): LineItemDraft => ({
 	notes: "",
 });
 
-function NewRequisitionPage() {
+export function NewRequisitionPage() {
 	const navigate = useNavigate();
 	const [locationId, setLocationId] = useState("");
 	const [justification, setJustification] = useState("");
 	const [lines, setLines] = useState<LineItemDraft[]>([newLineDraft()]);
-	const [submitImmediately, setSubmitImmediately] = useState(true);
+	const saving = useRef(false);
 
 	const { data: locations } = useInventoryLocations();
 	const { data: items } = useItems({ isActive: true });
-	const createRequisition = useCreateRequisition();
+	const createRequisition = useCreateRequisition({ notifySuccess: false });
 	const submitRequisition = useSubmitRequisition();
 
 	function updateLine(key: string, patch: Partial<LineItemDraft>) {
@@ -76,24 +79,42 @@ function NewRequisitionPage() {
 		lines.length > 0 &&
 		lines.every((l) => l.itemId && l.quantityRequested > 0);
 
-	async function handleSubmit() {
-		if (!isValid) return;
-		const requisition = await createRequisition.mutateAsync({
-			locationId,
-			justification: justification || undefined,
-			lineItems: lines.map((l) => ({
-				itemId: l.itemId,
-				quantityRequested: l.quantityRequested,
-				notes: l.notes || undefined,
-			})),
-		});
-		if (submitImmediately) {
-			await submitRequisition.mutateAsync(requisition.id);
+	async function handleSave(intent: SaveIntent) {
+		if (!isValid || saving.current) return;
+
+		saving.current = true;
+		let requisitionId: string | undefined;
+
+		try {
+			const requisition = await createRequisition.mutateAsync({
+				locationId,
+				justification: justification || undefined,
+				lineItems: lines.map((l) => ({
+					itemId: l.itemId,
+					quantityRequested: l.quantityRequested,
+					notes: l.notes || undefined,
+				})),
+			});
+			requisitionId = requisition.id;
+
+			if (intent === "submit") {
+				await submitRequisition.mutateAsync(requisition.id);
+			} else {
+				toast.success("Requisition saved as draft");
+			}
+		} catch {
+			// The mutation hooks surface the error. If creation succeeded but
+			// submission failed, continue to the created record to avoid duplicates.
+		} finally {
+			saving.current = false;
 		}
-		navigate({
-			to: "/inventory/requisitions/$requisitionId",
-			params: { requisitionId: requisition.id },
-		});
+
+		if (requisitionId) {
+			navigate({
+				to: "/inventory/requisitions/$requisitionId",
+				params: { requisitionId },
+			});
+		}
 	}
 
 	return (
@@ -204,19 +225,17 @@ function NewRequisitionPage() {
 				</Button>
 				<Button
 					variant="secondary"
-					onClick={() => {
-						setSubmitImmediately(false);
-						handleSubmit();
-					}}
-					disabled={!isValid || createRequisition.isPending}
+					onClick={() => handleSave("draft")}
+					disabled={
+						!isValid ||
+						createRequisition.isPending ||
+						submitRequisition.isPending
+					}
 				>
 					Save as Draft
 				</Button>
 				<Button
-					onClick={() => {
-						setSubmitImmediately(true);
-						handleSubmit();
-					}}
+					onClick={() => handleSave("submit")}
 					disabled={
 						!isValid ||
 						createRequisition.isPending ||

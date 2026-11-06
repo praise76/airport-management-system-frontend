@@ -14,7 +14,19 @@ import type {
 // List tasks with optional filters
 export async function getTasks(params?: TaskListParams): Promise<TaskListResponse> {
   const res = await api.get("/tasks", { params });
-  return res.data.data;
+  const payload = res.data.data;
+
+  if (Array.isArray(payload)) {
+    return { data: payload, pagination: res.data.pagination };
+  }
+
+  if (payload && Array.isArray(payload.data)) {
+    return payload;
+  }
+
+  throw new Error(
+    "The server returned an invalid task list. Please try again.",
+  );
 }
 
 // Get single task by ID

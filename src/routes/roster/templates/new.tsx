@@ -142,7 +142,7 @@ function CreateTemplatePage() {
 			navigate({ to: "/roster/templates" });
 		},
 		onError: (error) => {
-			toast.error("Failed to create template");
+			toast.error(error.message || "Failed to create template");
 			console.error(error);
 		},
 	});

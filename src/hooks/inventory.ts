@@ -218,14 +218,17 @@ export function useRequisitionApprovals(id: string) {
 	});
 }
 
-export function useCreateRequisition() {
+export function useCreateRequisition(
+	options: { notifySuccess?: boolean } = {},
+) {
+	const { notifySuccess = true } = options;
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (input: InventoryApi.CreateRequisitionRequest) =>
 			InventoryApi.createRequisition(input),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["requisitions"] });
-			toast.success("Requisition created");
+			if (notifySuccess) toast.success("Requisition created");
 		},
 		onError: (error: unknown) =>
 			toast.error(errorMessage(error) || "Failed to create requisition"),

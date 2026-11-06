@@ -13,7 +13,6 @@ import type {
   TaskStatus,
   TaskPriority,
   TaskInput,
-  TaskCommentInput,
 } from "@/types/task";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -47,7 +46,7 @@ function Page() {
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const { data: tasksData, isLoading } = useTasks({
+  const { data: tasksData, isLoading, error } = useTasks({
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
   });
@@ -117,6 +116,10 @@ function Page() {
         {isLoading ? (
           <div className="p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
             Loading tasks...
+          </div>
+        ) : error ? (
+          <div role="alert" className="p-8 text-center text-red-500">
+            {error.message || "Unable to load tasks. Please try again."}
           </div>
         ) : tasks.length === 0 ? (
           <div className="p-8 text-center text-[color-mix(in_oklab,var(--color-text)_60%,transparent)]">
