@@ -13,9 +13,12 @@ export interface PreviewEntry {
 }
 
 const COLOURS: Record<string, string> = {
-	morning: "bg-yellow-100 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100",
-	afternoon: "bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100",
-	night: "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100",
+	morning:
+		"bg-yellow-100 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100",
+	afternoon:
+		"bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100",
+	night:
+		"bg-indigo-100 text-indigo-900 dark:bg-indigo-900/40 dark:text-indigo-100",
 };
 
 /**
@@ -39,7 +42,10 @@ export function RosterPreviewGrid({
 	const conflictAt = useMemo(() => conflictsByCell(conflicts), [conflicts]);
 	const dates = useMemo(() => {
 		try {
-			return eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) });
+			return eachDayOfInterval({
+				start: parseISO(startDate),
+				end: parseISO(endDate),
+			});
 		} catch {
 			return [];
 		}
@@ -54,7 +60,10 @@ export function RosterPreviewGrid({
 			map.set(k, [...(map.get(k) ?? []), e]);
 		}
 		ids.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
-		return { staff: ids, cell: (id: string, d: string) => map.get(`${id}|${d}`) ?? [] };
+		return {
+			staff: ids,
+			cell: (id: string, d: string) => map.get(`${id}|${d}`) ?? [],
+		};
 	}, [entries, nameOf]);
 
 	if (entries.length === 0) {
@@ -74,9 +83,14 @@ export function RosterPreviewGrid({
 							Staff
 						</th>
 						{dates.map((d) => (
-							<th key={d.toISOString()} className="p-1.5 border-b min-w-[52px] font-medium">
+							<th
+								key={d.toISOString()}
+								className="p-1.5 border-b min-w-[52px] font-medium"
+							>
 								<div>{format(d, "EEE")}</div>
-								<div className="text-muted-foreground font-normal">{format(d, "d MMM")}</div>
+								<div className="text-muted-foreground font-normal">
+									{format(d, "d MMM")}
+								</div>
 							</th>
 						))}
 					</tr>
@@ -98,16 +112,19 @@ export function RosterPreviewGrid({
 											"border-b p-0.5 text-center",
 											problems && "bg-red-100 dark:bg-red-950/60",
 										)}
-										title={problems?.map((c) => CONFLICT_TITLES[c.type]).join("; ")}
+										title={problems
+											?.map((c) => CONFLICT_TITLES[c.type])
+											.join("; ")}
 									>
-										{list.map((e, i) => (
+										{list.map((e) => (
 											<div
-												key={i}
+												key={`${e.staffId}-${e.dutyDate}-${e.shift}-${e.shiftStartTime ?? ""}`}
 												title={`${e.shift} ${e.shiftStartTime?.slice(0, 5) ?? ""}–${e.shiftEndTime?.slice(0, 5) ?? ""}`}
 												className={cn(
 													"rounded px-1 py-1 font-semibold uppercase",
 													COLOURS[e.shift?.toLowerCase()] ?? "bg-muted",
-													(list.length > 1 || problems) && "ring-2 ring-red-500",
+													(list.length > 1 || problems) &&
+														"ring-2 ring-red-500",
 												)}
 											>
 												{e.shift?.slice(0, 3).toUpperCase()}
@@ -122,10 +139,18 @@ export function RosterPreviewGrid({
 			</table>
 			<p className="p-2 text-xs text-muted-foreground border-t">
 				{/* Built from the shifts actually in this roster (a 12-hour "Day" shift showed as DAY with no key). */}
-				{[...new Map(entries.filter((e) => e.shift).map((e) => [e.shift!.slice(0, 3).toUpperCase(), e])).entries()]
-					.map(([abbr, e]) => `${abbr} = ${e.shift}${e.shiftStartTime ? ` ${String(e.shiftStartTime).slice(0, 5)}–${String(e.shiftEndTime ?? "").slice(0, 5)}` : ""}`)
+				{[
+					...new Map(
+						entries.map((e) => [e.shift.slice(0, 3).toUpperCase(), e]),
+					).entries(),
+				]
+					.map(
+						([abbr, e]) =>
+							`${abbr} = ${e.shift}${e.shiftStartTime ? ` ${String(e.shiftStartTime).slice(0, 5)}–${String(e.shiftEndTime ?? "").slice(0, 5)}` : ""}`,
+					)
 					.join(", ")}
-				. Empty = day off. Red = two shifts on one day, or a day the server will refuse (leave or already booked).
+				. Empty = day off. Red = two shifts on one day, or a day the server will
+				refuse (leave or already booked).
 			</p>
 		</div>
 	);

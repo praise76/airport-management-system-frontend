@@ -1,29 +1,27 @@
-import { requireStaff, ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
-import { toast } from "sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
 import {
-	Building2,
-	Search,
-	Eye,
-	CheckCircle,
-	Ban,
 	AlertTriangle,
-	RefreshCw,
-	Plus,
-	Users,
+	Ban,
+	Building2,
+	CheckCircle,
 	Clock,
+	Eye,
+	Plus,
+	RefreshCw,
+	Search,
+	Users,
 	XCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+	RatingStars,
+	StakeholderStatusBadge,
+	StakeholderTypeIcon,
+	VerificationBadge,
+} from "@/components/stakeholders";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
 	Dialog,
 	DialogContent,
@@ -32,32 +30,37 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
-	useStakeholderOrgs,
-	useStakeholderOrgStats,
-	useVerifyStakeholderOrg,
-	useSuspendStakeholderOrg,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
 	useBlacklistStakeholderOrg,
 	useReactivateStakeholderOrg,
+	useStakeholderOrgStats,
+	useStakeholderOrgs,
+	useSuspendStakeholderOrg,
+	useVerifyStakeholderOrg,
 } from "@/hooks/stakeholder-portal";
+import { canReviewStakeholders, ROLE_GROUPS, requireStaff } from "@/lib/access";
 import type {
-	StakeholderType,
-	StakeholderStatus,
 	StakeholderOrganization,
+	StakeholderStatus,
+	StakeholderType,
 } from "@/types/stakeholder-portal";
 import { getStakeholderTypeLabel } from "@/types/stakeholder-portal";
-import {
-	StakeholderTypeIcon,
-	StakeholderStatusBadge,
-	VerificationBadge,
-	RatingStars,
-} from "@/components/stakeholders";
 
 export const Route = createFileRoute("/stakeholders/")({
-	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers, canReviewStakeholders),
+	beforeLoad: requireStaff(
+		ROLE_GROUPS.stakeholderOfficers,
+		canReviewStakeholders,
+	),
 	component: StakeholdersPage,
 });
 
@@ -83,7 +86,9 @@ const statusFilters: (StakeholderStatus | "all")[] = [
 function StakeholdersPage() {
 	const [search, setSearch] = useState("");
 	const [typeFilter, setTypeFilter] = useState<StakeholderType | "all">("all");
-	const [statusFilter, setStatusFilter] = useState<StakeholderStatus | "all">("all");
+	const [statusFilter, setStatusFilter] = useState<StakeholderStatus | "all">(
+		"all",
+	);
 	const [page, setPage] = useState(1);
 
 	// Action dialog states
@@ -128,7 +133,8 @@ function StakeholdersPage() {
 		return {
 			total: pagination?.total ?? stakeholders.length,
 			verified: stakeholders.filter((s) => s.isVerified).length,
-			pending: stakeholders.filter((s) => s.status === "pending_verification").length,
+			pending: stakeholders.filter((s) => s.status === "pending_verification")
+				.length,
 			blacklisted: stakeholders.filter((s) => s.isBlacklisted).length,
 			active: stakeholders.filter((s) => s.status === "active").length,
 		};
@@ -179,7 +185,8 @@ function StakeholdersPage() {
 				<div>
 					<h1 className="text-2xl font-bold">Stakeholder Management</h1>
 					<p className="text-muted-foreground mt-1">
-						Manage airlines, contractors, vendors, tenants, and other external partners
+						Manage airlines, contractors, vendors, tenants, and other external
+						partners
 					</p>
 				</div>
 				{/* Companies register themselves on the portal (that's where their documents are
@@ -189,9 +196,14 @@ function StakeholdersPage() {
 						const link = `${window.location.origin}/stakeholder/register`;
 						try {
 							await navigator.clipboard.writeText(link);
-							toast.success("Registration link copied. Send it to the company.", { description: link });
+							toast.success(
+								"Registration link copied. Send it to the company.",
+								{ description: link },
+							);
 						} catch {
-							toast.message("Send this registration link to the company", { description: link });
+							toast.message("Send this registration link to the company", {
+								description: link,
+							});
 						}
 					}}
 				>
@@ -330,27 +342,39 @@ function StakeholdersPage() {
 					<tbody className="divide-y">
 						{isLoading && (
 							<tr>
-								<td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+								<td
+									colSpan={6}
+									className="px-6 py-8 text-center text-muted-foreground"
+								>
 									Loading stakeholders...
 								</td>
 							</tr>
 						)}
 						{error && (
 							<tr>
-								<td colSpan={6} className="px-6 py-8 text-center text-destructive">
+								<td
+									colSpan={6}
+									className="px-6 py-8 text-center text-destructive"
+								>
 									Failed to load stakeholders
 								</td>
 							</tr>
 						)}
 						{!isLoading && stakeholders.length === 0 && (
 							<tr>
-								<td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
+								<td
+									colSpan={6}
+									className="px-6 py-8 text-center text-muted-foreground"
+								>
 									No stakeholders found matching your criteria.
 								</td>
 							</tr>
 						)}
 						{stakeholders.map((stakeholder) => (
-							<tr key={stakeholder.id} className="hover:bg-muted/30 transition-colors">
+							<tr
+								key={stakeholder.id}
+								className="hover:bg-muted/30 transition-colors"
+							>
 								<td className="px-6 py-4">
 									<div className="flex items-center gap-3">
 										<StakeholderTypeIcon
@@ -358,7 +382,9 @@ function StakeholdersPage() {
 											size="sm"
 										/>
 										<div>
-											<p className="font-medium">{stakeholder.organizationName}</p>
+											<p className="font-medium">
+												{stakeholder.organizationName}
+											</p>
 											{stakeholder.registrationNumber && (
 												<p className="text-xs text-muted-foreground font-mono">
 													RC: {stakeholder.registrationNumber}
@@ -380,11 +406,16 @@ function StakeholdersPage() {
 								<td className="px-6 py-4">
 									<div className="flex flex-col gap-1">
 										<StakeholderStatusBadge status={stakeholder.status} />
-										<VerificationBadge status={stakeholder.verificationStatus} />
+										<VerificationBadge
+											status={stakeholder.verificationStatus}
+										/>
 									</div>
 								</td>
 								<td className="px-6 py-4">
-									<RatingStars rating={stakeholder.performanceRating} size="sm" />
+									<RatingStars
+										rating={stakeholder.performanceRating}
+										size="sm"
+									/>
 								</td>
 								<td className="px-6 py-4">
 									<div className="text-sm">
@@ -478,7 +509,8 @@ function StakeholdersPage() {
 				<div className="flex items-center justify-between">
 					<p className="text-sm text-muted-foreground">
 						Showing {(page - 1) * 20 + 1} to{" "}
-						{Math.min(page * 20, pagination.total)} of {pagination.total} results
+						{Math.min(page * 20, pagination.total)} of {pagination.total}{" "}
+						results
 					</p>
 					<div className="flex gap-2">
 						<Button
@@ -504,17 +536,21 @@ function StakeholdersPage() {
 			{/* Action Dialogs */}
 			<Dialog
 				open={actionDialog.type === "verify"}
-				onOpenChange={(open) => !open && setActionDialog({ type: null, stakeholder: null })}
+				onOpenChange={(open) =>
+					!open && setActionDialog({ type: null, stakeholder: null })
+				}
 			>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Verify Stakeholder</DialogTitle>
 						<DialogDescription>
-							Confirm verification for {actionDialog.stakeholder?.organizationName}
+							Confirm verification for{" "}
+							{actionDialog.stakeholder?.organizationName}
 						</DialogDescription>
 					</DialogHeader>
 					<p className="text-sm">
-						This will mark the stakeholder as verified and allow them full portal access.
+						This will mark the stakeholder as verified and allow them full
+						portal access.
 					</p>
 					<DialogFooter>
 						<Button
@@ -531,13 +567,18 @@ function StakeholdersPage() {
 			</Dialog>
 
 			<Dialog
-				open={actionDialog.type === "suspend" || actionDialog.type === "blacklist"}
-				onOpenChange={(open) => !open && setActionDialog({ type: null, stakeholder: null })}
+				open={
+					actionDialog.type === "suspend" || actionDialog.type === "blacklist"
+				}
+				onOpenChange={(open) =>
+					!open && setActionDialog({ type: null, stakeholder: null })
+				}
 			>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>
-							{actionDialog.type === "suspend" ? "Suspend" : "Blacklist"} Stakeholder
+							{actionDialog.type === "suspend" ? "Suspend" : "Blacklist"}{" "}
+							Stakeholder
 						</DialogTitle>
 						<DialogDescription>
 							{actionDialog.type === "suspend"
@@ -584,7 +625,9 @@ function StakeholdersPage() {
 
 			<ConfirmDialog
 				open={actionDialog.type === "reactivate"}
-				onOpenChange={(open) => !open && setActionDialog({ type: null, stakeholder: null })}
+				onOpenChange={(open) =>
+					!open && setActionDialog({ type: null, stakeholder: null })
+				}
 				title="Reactivate Stakeholder"
 				description={`Are you sure you want to reactivate ${actionDialog.stakeholder?.organizationName}? This will restore their portal access.`}
 				confirmLabel="Reactivate"

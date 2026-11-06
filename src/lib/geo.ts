@@ -12,7 +12,12 @@ export interface ZoneLike {
 }
 
 /** Distance in metres between two points (haversine). */
-export function distanceMetres(aLat: number, aLng: number, bLat: number, bLng: number): number {
+export function distanceMetres(
+	aLat: number,
+	aLng: number,
+	bLat: number,
+	bLng: number,
+): number {
 	const R = 6371000;
 	const toRad = (d: number) => (d * Math.PI) / 180;
 	const dLat = toRad(bLat - aLat);
@@ -24,7 +29,8 @@ export function distanceMetres(aLat: number, aLng: number, bLat: number, bLng: n
 }
 
 function centreOf(z: ZoneLike): [number, number] | null {
-	if (typeof z.latitude === "number" && typeof z.longitude === "number") return [z.latitude, z.longitude];
+	if (typeof z.latitude === "number" && typeof z.longitude === "number")
+		return [z.latitude, z.longitude];
 	const ring = z.polygonJson?.coordinates?.[0];
 	if (ring?.length) {
 		// GeoJSON stores [lng, lat]
@@ -41,16 +47,31 @@ function insideRing(lat: number, lng: number, ring: number[][]): boolean {
 	for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
 		const [xi, yi] = ring[i];
 		const [xj, yj] = ring[j];
-		if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+		if (
+			yi > lat !== yj > lat &&
+			lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi
+		)
+			inside = !inside;
 	}
 	return inside;
 }
 
 /** Metres from a point to the nearest point on a segment (flat-earth; fine over a few km). */
-function metresToSegment(lat: number, lng: number, a: number[], b: number[]): number {
-	const k = 111320, kx = k * Math.cos((lat * Math.PI) / 180);
-	const ax = (a[0] - lng) * kx, ay = (a[1] - lat) * k, bx = (b[0] - lng) * kx, by = (b[1] - lat) * k;
-	const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+function metresToSegment(
+	lat: number,
+	lng: number,
+	a: number[],
+	b: number[],
+): number {
+	const k = 111320,
+		kx = k * Math.cos((lat * Math.PI) / 180);
+	const ax = (a[0] - lng) * kx,
+		ay = (a[1] - lat) * k,
+		bx = (b[0] - lng) * kx,
+		by = (b[1] - lat) * k;
+	const dx = bx - ax,
+		dy = by - ay,
+		len2 = dx * dx + dy * dy;
 	const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
 	return Math.hypot(ax + t * dx, ay + t * dy);
 }
@@ -61,12 +82,19 @@ function metresOutside(lat: number, lng: number, z: ZoneLike): number | null {
 	if (z.type === "polygon" && ring && ring.length >= 3) {
 		if (insideRing(lat, lng, ring)) return 0;
 		let best = Infinity;
-		for (let i = 0; i < ring.length; i++) best = Math.min(best, metresToSegment(lat, lng, ring[i], ring[(i + 1) % ring.length]));
+		for (let i = 0; i < ring.length; i++)
+			best = Math.min(
+				best,
+				metresToSegment(lat, lng, ring[i], ring[(i + 1) % ring.length]),
+			);
 		return Math.round(best);
 	}
 	const c = centreOf(z);
 	if (!c) return null;
-	return Math.max(0, Math.round(distanceMetres(lat, lng, c[0], c[1]) - (z.radius ?? 0)));
+	return Math.max(
+		0,
+		Math.round(distanceMetres(lat, lng, c[0], c[1]) - (z.radius ?? 0)),
+	);
 }
 
 /**
@@ -91,7 +119,9 @@ export function nearestZone(
 }
 
 /** Plain-language reason for a failed GPS read. */
-export function locationErrorMessage(err: GeolocationPositionError | { code?: number }): string {
+export function locationErrorMessage(
+	err: GeolocationPositionError | { code?: number },
+): string {
 	switch (err?.code) {
 		case 1:
 			return "Location is turned off for this site. Allow location access in your browser settings, then try again.";

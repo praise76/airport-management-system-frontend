@@ -52,17 +52,29 @@ function polygonFromVertices(vertices: Point[]): GeofenceMapValue["polygon"] {
  * Reads typed coordinates, one point per line as "latitude, longitude" (spaces, commas or
  * semicolons between them). Returns the points or the first problem in plain words.
  */
-export function parseCoordinates(text: string): { points: Point[] } | { error: string } {
+export function parseCoordinates(
+	text: string,
+): { points: Point[] } | { error: string } {
 	const points: Point[] = [];
-	const lines = text.split(/\n/).map((l) => l.trim()).filter(Boolean);
+	const lines = text
+		.split(/\n/)
+		.map((l) => l.trim())
+		.filter(Boolean);
 	for (const [i, line] of lines.entries()) {
-		const nums = line.split(/[\s,;]+/).filter(Boolean).map(Number);
+		const nums = line
+			.split(/[\s,;]+/)
+			.filter(Boolean)
+			.map(Number);
 		if (nums.length !== 2 || nums.some((n) => Number.isNaN(n))) {
-			return { error: `Line ${i + 1} ("${line}") needs two numbers: latitude, longitude.` };
+			return {
+				error: `Line ${i + 1} ("${line}") needs two numbers: latitude, longitude.`,
+			};
 		}
 		const [lat, lng] = nums;
 		if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-			return { error: `Line ${i + 1}: latitude must be between -90 and 90, longitude between -180 and 180.` };
+			return {
+				error: `Line ${i + 1}: latitude must be between -90 and 90, longitude between -180 and 180.`,
+			};
 		}
 		points.push({ lat, lng });
 	}
@@ -71,7 +83,12 @@ export function parseCoordinates(text: string): { points: Point[] } | { error: s
 
 /** Lagos is about 6.5° N, 3.3° E; the two numbers swapped is the commonest typing mistake. */
 function looksSwapped(points: Point[]): boolean {
-	return points.length > 0 && points.every((p) => p.lat > 2.5 && p.lat < 4.5 && p.lng > 5.5 && p.lng < 7.5);
+	return (
+		points.length > 0 &&
+		points.every(
+			(p) => p.lat > 2.5 && p.lat < 4.5 && p.lng > 5.5 && p.lng < 7.5,
+		)
+	);
 }
 
 function MapClick({
@@ -146,12 +163,21 @@ export function GeofenceMapEditor({
 			);
 		}
 		if (value.type === "circle") {
-			if (pts.length !== 1) return setTypedProblem("For a circle, enter one point: the centre.");
+			if (pts.length !== 1)
+				return setTypedProblem("For a circle, enter one point: the centre.");
 			setTypedProblem(null);
-			onChange?.({ ...value, latitude: pts[0].lat, longitude: pts[0].lng, radius: value.radius || 100 });
+			onChange?.({
+				...value,
+				latitude: pts[0].lat,
+				longitude: pts[0].lng,
+				radius: value.radius || 100,
+			});
 			return;
 		}
-		if (pts.length < 3) return setTypedProblem("An area needs at least three corners, one per line.");
+		if (pts.length < 3)
+			return setTypedProblem(
+				"An area needs at least three corners, one per line.",
+			);
 		setTypedProblem(null);
 		onChange?.({ ...value, polygon: polygonFromVertices(pts) });
 	};
@@ -168,7 +194,9 @@ export function GeofenceMapEditor({
 					{ lat: position.coords.latitude, lng: position.coords.longitude },
 				]),
 			});
-			toast.success(`Corner ${vertices.length + 1} added (accurate to about ${Math.round(position.coords.accuracy)} m).`);
+			toast.success(
+				`Corner ${vertices.length + 1} added (accurate to about ${Math.round(position.coords.accuracy)} m).`,
+			);
 		} catch (error) {
 			toast.error(locationErrorMessage(error as GeolocationPositionError));
 		}
@@ -336,7 +364,11 @@ export function GeofenceMapEditor({
 							value={typed}
 							onChange={(e) => setTyped(e.target.value)}
 							rows={value.type === "circle" ? 1 : 5}
-							placeholder={value.type === "circle" ? "6.5774, 3.3212" : "6.5842, 3.3205\n6.5842, 3.3232\n6.5828, 3.3232\n6.5828, 3.3205"}
+							placeholder={
+								value.type === "circle"
+									? "6.5774, 3.3212"
+									: "6.5842, 3.3205\n6.5842, 3.3232\n6.5828, 3.3232\n6.5828, 3.3205"
+							}
 							className="w-full rounded-lg border bg-background p-2 font-mono text-sm"
 						/>
 						{typedProblem && (
@@ -355,7 +387,13 @@ export function GeofenceMapEditor({
 							{value.type === "polygon" && vertices.length > 0 && (
 								<button
 									type="button"
-									onClick={() => setTyped(vertices.map((p) => `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`).join("\n"))}
+									onClick={() =>
+										setTyped(
+											vertices
+												.map((p) => `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`)
+												.join("\n"),
+										)
+									}
 									className="rounded-lg border px-3 py-2 font-medium hover:bg-muted"
 								>
 									Copy current corners here
@@ -428,27 +466,45 @@ type OverviewZone = {
 function FitAll({ points }: { points: [number, number][] }) {
 	const map = useMap();
 	const key = points.map((p) => p.join(",")).join(";");
+	// biome-ignore lint/correctness/useExhaustiveDependencies: key tracks coordinate content without rerunning for array identity changes
 	useEffect(() => {
-		if (points.length) map.fitBounds(points, { padding: [24, 24], maxZoom: 17 });
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		if (points.length)
+			map.fitBounds(points, { padding: [24, 24], maxZoom: 17 });
 	}, [key, map]);
 	return null;
 }
 
 /** Every zone on one map with its name, so gaps and overlaps between terminals are visible. */
-export function ZonesOverviewMap({ zones, onSelect }: { zones: OverviewZone[]; onSelect?: (id: string) => void }) {
+export function ZonesOverviewMap({
+	zones,
+	onSelect,
+}: {
+	zones: OverviewZone[];
+	onSelect?: (id: string) => void;
+}) {
 	const shapes = zones.map((z) => {
 		const ring = z.polygonJson?.coordinates?.[0] ?? [];
 		const pts: [number, number][] =
-			z.type === "polygon" ? ring.map(([lng, lat]) => [lat, lng] as [number, number]) : [];
+			z.type === "polygon"
+				? ring.map(([lng, lat]) => [lat, lng] as [number, number])
+				: [];
 		const centre: [number, number] | null =
-			z.latitude !== undefined && z.longitude !== undefined ? [Number(z.latitude), Number(z.longitude)] : null;
+			z.latitude !== undefined && z.longitude !== undefined
+				? [Number(z.latitude), Number(z.longitude)]
+				: null;
 		return { z, pts, centre };
 	});
-	const all = shapes.flatMap((s) => (s.pts.length ? s.pts : s.centre ? [s.centre] : []));
+	const all = shapes.flatMap((s) =>
+		s.pts.length ? s.pts : s.centre ? [s.centre] : [],
+	);
 	return (
 		<div className="relative h-[420px] overflow-hidden rounded-2xl border bg-muted">
-			<MapContainer center={all[0] ?? MMIA_CENTER} zoom={15} scrollWheelZoom className="h-full w-full">
+			<MapContainer
+				center={all[0] ?? MMIA_CENTER}
+				zoom={15}
+				scrollWheelZoom
+				className="h-full w-full"
+			>
 				<TileLayer
 					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -458,19 +514,35 @@ export function ZonesOverviewMap({ zones, onSelect }: { zones: OverviewZone[]; o
 					const colour = z.isActive === false ? "#94a3b8" : "#7c3aed";
 					const events = { click: () => onSelect?.(z.id) };
 					const label = (
-						<Tooltip permanent direction="center" className="!bg-white/90 !text-xs !font-semibold">
+						<Tooltip
+							key={`${z.id}-label`}
+							permanent
+							direction="center"
+							className="!bg-white/90 !text-xs !font-semibold"
+						>
 							{z.name}
 						</Tooltip>
 					);
 					if (pts.length >= 3)
 						return (
-							<Polygon key={z.id} positions={pts} pathOptions={{ color: colour, weight: 2, fillOpacity: 0.2 }} eventHandlers={events}>
+							<Polygon
+								key={z.id}
+								positions={pts}
+								pathOptions={{ color: colour, weight: 2, fillOpacity: 0.2 }}
+								eventHandlers={events}
+							>
 								{label}
 							</Polygon>
 						);
 					if (centre)
 						return (
-							<Circle key={z.id} center={centre} radius={Number(z.radius) || 100} pathOptions={{ color: colour, weight: 2, fillOpacity: 0.2 }} eventHandlers={events}>
+							<Circle
+								key={z.id}
+								center={centre}
+								radius={Number(z.radius) || 100}
+								pathOptions={{ color: colour, weight: 2, fillOpacity: 0.2 }}
+								eventHandlers={events}
+							>
 								{label}
 							</Circle>
 						);

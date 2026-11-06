@@ -1,37 +1,37 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { getAccessToken } from "@/utils/auth";
-import { useDutyBoardData } from "@/hooks/useDutyBoard";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
-  Loader2,
-  Users,
-  Shield,
-  Briefcase,
-  AlertTriangle,
-  CheckCircle,
+	AlertTriangle,
+	Briefcase,
+	CheckCircle,
+	Loader2,
+	Settings as SettingsIcon,
+	Shield,
+	Users,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useId, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
-import { useTerminals } from "@/hooks/terminals";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Settings as SettingsIcon } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useTerminals } from "@/hooks/terminals";
+import { useDutyBoardData } from "@/hooks/useDutyBoard";
+import type { DutyUnit } from "@/types/dutyBoard";
+import { getAccessToken } from "@/utils/auth";
 
 // Custom CSS for coverage status pulsing
 const coverageStyles = `
@@ -44,406 +44,420 @@ const coverageStyles = `
 `;
 
 export const Route = createFileRoute("/public/duty-board")({
-  component: PublicDutyBoardPage,
-  validateSearch: (search: Record<string, unknown>) => {
-    return {
-      terminalId: (search.terminalId as string) || undefined,
-    };
-  },
+	component: PublicDutyBoardPage,
+	validateSearch: (search: Record<string, unknown>) => {
+		return {
+			terminalId: (search.terminalId as string) || undefined,
+		};
+	},
 });
 
 function PublicDutyBoardPage() {
-  const search = Route.useSearch();
-  const navigate = useNavigate();
-  const { data, loading, error } = useDutyBoardData("all", search.terminalId);
-  const [currentTime, setCurrentTime] = useState(new Date());
+	const search = Route.useSearch();
+	const navigate = useNavigate();
+	const { data, loading, error } = useDutyBoardData("all", search.terminalId);
+	const [currentTime, setCurrentTime] = useState(new Date());
 
-  const { data: terminals } = useTerminals();
-  const [settingsOpen, setSettingsOpen] = useState(false);
+	const { data: terminals } = useTerminals();
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const terminalFilterId = useId();
 
-  const currentTerminal = terminals?.find((t) => t.id === search.terminalId);
+	const currentTerminal = terminals?.find((t) => t.id === search.terminalId);
 
-  const handleTerminalChange = (val: string) => {
-    navigate({
-      to: "/public/duty-board",
-      search: {
-        terminalId: val === "all" ? undefined : val,
-      },
-    });
-    setSettingsOpen(false);
-  };
+	const handleTerminalChange = (val: string) => {
+		navigate({
+			to: "/public/duty-board",
+			search: {
+				terminalId: val === "all" ? undefined : val,
+			},
+		});
+		setSettingsOpen(false);
+	};
 
-  // Clock
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+	// Clock
+	useEffect(() => {
+		const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+		return () => clearInterval(timer);
+	}, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-lg">Loading Duty Board...</p>
-        </div>
-      </div>
-    );
-  }
+	if (loading) {
+		return (
+			<div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
+				<div className="text-center">
+					<Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-500" />
+					<p className="text-lg">Loading Duty Board...</p>
+				</div>
+			</div>
+		);
+	}
 
-  if (error || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
-        <div className="text-center max-w-md p-8 border border-red-800 bg-red-950/30 rounded-xl">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-          <p className="text-xl font-bold mb-2">System Offline</p>
-          <p className="text-slate-400">
-            {error || "Unable to connect to duty service."}
-          </p>
-        </div>
-      </div>
-    );
-  }
+	if (error || !data) {
+		return (
+			<div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
+				<div className="text-center max-w-md p-8 border border-red-800 bg-red-950/30 rounded-xl">
+					<AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+					<p className="text-xl font-bold mb-2">System Offline</p>
+					<p className="text-slate-400">
+						{error || "Unable to connect to duty service."}
+					</p>
+				</div>
+			</div>
+		);
+	}
 
-  // Missing lists from the server show as empty instead of crashing the board.
-  const departments = data.departments ?? [];
-  const contractors = data.contractors ?? [];
+	// Missing lists from the server show as empty instead of crashing the board.
+	const departments = data.departments ?? [];
+	const contractors = data.contractors ?? [];
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6 lg:overflow-hidden flex flex-col">
-      <style>{coverageStyles}</style>
+	return (
+		<div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 md:p-6 lg:overflow-hidden flex flex-col">
+			<style>{coverageStyles}</style>
 
-      {/* Header */}
-      <header className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center mb-6 md:mb-8 pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-4 min-w-0">
-          <div className="h-12 w-12 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
-            <Shield className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
-              Airport Operations
-            </h1>
-            <p className="text-slate-400">
-              Duty Roster Live Status{" "}
-              {currentTerminal && `• ${currentTerminal.terminalName}`}
-            </p>
-          </div>
-        </div>
+			{/* Header */}
+			<header className="flex flex-col gap-4 md:flex-row md:justify-between md:items-center mb-6 md:mb-8 pb-4 border-b border-slate-800">
+				<div className="flex items-center gap-4 min-w-0">
+					<div className="h-12 w-12 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/50">
+						<Shield className="h-7 w-7 text-white" />
+					</div>
+					<div>
+						<h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+							Airport Operations
+						</h1>
+						<p className="text-slate-400">
+							Duty Roster Live Status{" "}
+							{currentTerminal && `• ${currentTerminal.terminalName}`}
+						</p>
+					</div>
+				</div>
 
-        <div className="flex items-center justify-between gap-4 md:gap-8">
-          {getAccessToken() && (
-            <Link
-              to="/"
-              className="text-sm text-slate-400 hover:text-slate-100 underline-offset-4 hover:underline"
-            >
-              ← Staff app
-            </Link>
-          )}
-          <div className="md:text-right">
-            <div className="text-2xl md:text-3xl font-mono font-bold tracking-wider md:tracking-widest">
-              {format(currentTime, "HH:mm:ss")}
-            </div>
-            <div className="text-xs md:text-sm text-slate-400 uppercase tracking-wider md:tracking-widest">
-              {format(currentTime, "EEEE, MMM d, yyyy")}
-            </div>
-          </div>
-          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-slate-600 hover:text-slate-300"
-              >
-                <SettingsIcon className="h-5 w-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-slate-900 border-slate-800 text-slate-100">
-              <DialogHeader>
-                <DialogTitle>Display Settings</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-400">
-                    Filter by Terminal
-                  </label>
-                  <Select
-                    value={search.terminalId || "all"}
-                    onValueChange={handleTerminalChange}
-                  >
-                    <SelectTrigger className="bg-slate-950 border-slate-800 text-slate-100">
-                      <SelectValue placeholder="Select Terminal" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
-                      <SelectItem value="all">All Terminals</SelectItem>
-                      {terminals?.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.terminalName} ({t.terminalCode})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </header>
+				<div className="flex items-center justify-between gap-4 md:gap-8">
+					{getAccessToken() && (
+						<Link
+							to="/"
+							className="text-sm text-slate-400 hover:text-slate-100 underline-offset-4 hover:underline"
+						>
+							← Staff app
+						</Link>
+					)}
+					<div className="md:text-right">
+						<div className="text-2xl md:text-3xl font-mono font-bold tracking-wider md:tracking-widest">
+							{format(currentTime, "HH:mm:ss")}
+						</div>
+						<div className="text-xs md:text-sm text-slate-400 uppercase tracking-wider md:tracking-widest">
+							{format(currentTime, "EEEE, MMM d, yyyy")}
+						</div>
+					</div>
+					<Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+						<DialogTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon"
+								className="text-slate-600 hover:text-slate-300"
+							>
+								<SettingsIcon className="h-5 w-5" />
+							</Button>
+						</DialogTrigger>
+						<DialogContent className="bg-slate-900 border-slate-800 text-slate-100">
+							<DialogHeader>
+								<DialogTitle>Display Settings</DialogTitle>
+							</DialogHeader>
+							<div className="space-y-4 py-4">
+								<div className="space-y-2">
+									<label
+										htmlFor={terminalFilterId}
+										className="text-sm font-medium text-slate-400"
+									>
+										Filter by Terminal
+									</label>
+									<Select
+										value={search.terminalId || "all"}
+										onValueChange={handleTerminalChange}
+									>
+										<SelectTrigger
+											id={terminalFilterId}
+											className="bg-slate-950 border-slate-800 text-slate-100"
+										>
+											<SelectValue placeholder="Select Terminal" />
+										</SelectTrigger>
+										<SelectContent className="bg-slate-900 border-slate-800 text-slate-100">
+											<SelectItem value="all">All Terminals</SelectItem>
+											{terminals?.map((t) => (
+												<SelectItem key={t.id} value={t.id}>
+													{t.terminalName} ({t.terminalCode})
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+						</DialogContent>
+					</Dialog>
+				</div>
+			</header>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
-        <StatCard
-          label="Total On Duty"
-          value={data.totalOnDuty}
-          total={data.totalScheduled}
-          icon={<Users className="h-5 w-5 text-blue-400" />}
-        />
-        <StatCard
-          label="Security Staff"
-          value={
-            departments.find((d) => d.name.includes("Security"))
-              ?.onDutyCount || 0
-          }
-          icon={<Shield className="h-5 w-5 text-emerald-400" />}
-        />
-        <StatCard
-          label="Operations Staff"
-          value={
-            departments.find((d) => d.name.includes("Operations"))
-              ?.onDutyCount || 0
-          }
-          icon={<Briefcase className="h-5 w-5 text-amber-400" />}
-        />
-        <StatCard
-          label="Contractors"
-          value={contractors.reduce(
-            (acc, c) => acc + (c.onDutyPersonnel?.length ?? 0),
-            0,
-          )}
-          icon={<Users className="h-5 w-5 text-purple-400" />}
-        />
-      </div>
+			{/* Stats Row */}
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+				<StatCard
+					label="Total On Duty"
+					value={data.totalOnDuty}
+					total={data.totalScheduled}
+					icon={<Users className="h-5 w-5 text-blue-400" />}
+				/>
+				<StatCard
+					label="Security Staff"
+					value={
+						departments.find((d) => d.name.includes("Security"))?.onDutyCount ||
+						0
+					}
+					icon={<Shield className="h-5 w-5 text-emerald-400" />}
+				/>
+				<StatCard
+					label="Operations Staff"
+					value={
+						departments.find((d) => d.name.includes("Operations"))
+							?.onDutyCount || 0
+					}
+					icon={<Briefcase className="h-5 w-5 text-amber-400" />}
+				/>
+				<StatCard
+					label="Contractors"
+					value={contractors.reduce(
+						(acc, c) => acc + (c.onDutyPersonnel?.length ?? 0),
+						0,
+					)}
+					icon={<Users className="h-5 w-5 text-purple-400" />}
+				/>
+			</div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden">
-        {/* Left: Department Units */}
-        <div className="lg:col-span-8 lg:overflow-y-auto lg:pr-2 space-y-8 no-scrollbar">
-          {departments.map((dept) => (
-            <div key={dept.id} className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg md:text-xl font-semibold text-blue-100 flex flex-wrap items-center gap-2">
-                  {dept.name}
-                  <Badge
-                    variant="outline"
-                    className="text-xs bg-slate-900 border-slate-700 text-slate-400"
-                  >
-                    {dept.currentShift} Shift
-                  </Badge>
-                </h2>
-              </div>
+			{/* Main Content Grid */}
+			<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden">
+				{/* Left: Department Units */}
+				<div className="lg:col-span-8 lg:overflow-y-auto lg:pr-2 space-y-8 no-scrollbar">
+					{departments.map((dept) => (
+						<div key={dept.id} className="space-y-4">
+							<div className="flex items-center justify-between">
+								<h2 className="text-lg md:text-xl font-semibold text-blue-100 flex flex-wrap items-center gap-2">
+									{dept.name}
+									<Badge
+										variant="outline"
+										className="text-xs bg-slate-900 border-slate-700 text-slate-400"
+									>
+										{dept.currentShift} Shift
+									</Badge>
+								</h2>
+							</div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(dept.units ?? []).map((unit) => (
-                  <UnitCard key={unit.id} unit={unit} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								{(dept.units ?? []).map((unit) => (
+									<UnitCard key={unit.id} unit={unit} />
+								))}
+							</div>
+						</div>
+					))}
+				</div>
 
-        {/* Right: Contractors & Notices */}
-        <div className="lg:col-span-4 space-y-6 flex flex-col">
-          <Card className="bg-slate-900/50 border-slate-800 flex-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-200">
-                <Briefcase className="h-5 w-5" />
-                Contractors On Site
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {contractors.length === 0 && (
-                <p className="text-sm text-slate-500">No contractors checked in.</p>
-              )}
-              {contractors.map((org) => (
-                <div key={org.orgId}>
-                  <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
-                    {org.organizationName} ({org.contractType})
-                  </h4>
-                  <div className="space-y-3">
-                    {org.onDutyPersonnel.map((person) => (
-                      <div
-                        key={person.id}
-                        className="flex items-center gap-3 bg-slate-950 p-2 rounded-lg border border-slate-800/50"
-                      >
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback className="bg-purple-900 text-purple-200 text-xs">
-                            {person.name.substring(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate text-slate-100">
-                            {person.name}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <span className="truncate">{person.role}</span>
-                            <span>•</span>
-                            <span className="truncate text-blue-400/80">
-                              {person.currentLocation}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {org.onDutyPersonnel.length === 0 && (
-                      <p className="text-xs text-slate-600 italic">
-                        No personnel checked in.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+				{/* Right: Contractors & Notices */}
+				<div className="lg:col-span-4 space-y-6 flex flex-col">
+					<Card className="bg-slate-900/50 border-slate-800 flex-1">
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2 text-purple-200">
+								<Briefcase className="h-5 w-5" />
+								Contractors On Site
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-6">
+							{contractors.length === 0 && (
+								<p className="text-sm text-slate-500">
+									No contractors checked in.
+								</p>
+							)}
+							{contractors.map((org) => (
+								<div key={org.orgId}>
+									<h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
+										{org.organizationName} ({org.contractType})
+									</h4>
+									<div className="space-y-3">
+										{org.onDutyPersonnel.map((person) => (
+											<div
+												key={person.id}
+												className="flex items-center gap-3 bg-slate-950 p-2 rounded-lg border border-slate-800/50"
+											>
+												<Avatar className="h-8 w-8">
+													<AvatarFallback className="bg-purple-900 text-purple-200 text-xs">
+														{person.name.substring(0, 2)}
+													</AvatarFallback>
+												</Avatar>
+												<div className="flex-1 min-w-0">
+													<p className="text-sm font-medium truncate text-slate-100">
+														{person.name}
+													</p>
+													<div className="flex items-center gap-2 text-xs text-slate-500">
+														<span className="truncate">{person.role}</span>
+														<span>•</span>
+														<span className="truncate text-blue-400/80">
+															{person.currentLocation}
+														</span>
+													</div>
+												</div>
+											</div>
+										))}
+										{org.onDutyPersonnel.length === 0 && (
+											<p className="text-xs text-slate-600 italic">
+												No personnel checked in.
+											</p>
+										)}
+									</div>
+								</div>
+							))}
+						</CardContent>
+					</Card>
 
-          <div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-xl">
-            <div className="flex gap-3">
-              <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
-              <div>
-                <h4 className="font-semibold text-emerald-100 text-sm">
-                  Live data
-                </h4>
-                <p className="text-xs text-emerald-400/70 mt-1">
-                  Refreshes every minute. Last updated:{" "}
-                  {format(
-                    data.lastUpdated ? new Date(data.lastUpdated) : new Date(),
-                    "HH:mm",
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+					<div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-xl">
+						<div className="flex gap-3">
+							<CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
+							<div>
+								<h4 className="font-semibold text-emerald-100 text-sm">
+									Live data
+								</h4>
+								<p className="text-xs text-emerald-400/70 mt-1">
+									Refreshes every minute. Last updated:{" "}
+									{format(
+										data.lastUpdated ? new Date(data.lastUpdated) : new Date(),
+										"HH:mm",
+									)}
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 function StatCard({
-  label,
-  value,
-  total,
-  icon,
+	label,
+	value,
+	total,
+	icon,
 }: {
-  label: string;
-  value: number;
-  total?: number;
-  icon: React.ReactNode;
+	label: string;
+	value: number;
+	total?: number;
+	icon: React.ReactNode;
 }) {
-  return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 md:p-4 flex items-center justify-between gap-2">
-      <div className="min-w-0">
-        <p className="text-xs md:text-sm text-slate-400 font-medium mb-1 truncate">{label}</p>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-bold">{value}</span>
-          {total !== undefined && (
-            <span className="text-sm text-slate-600">/ {total}</span>
-          )}
-        </div>
-      </div>
-      <div className="hidden sm:block shrink-0 p-3 bg-slate-950 rounded-lg border border-slate-800">
-        {icon}
-      </div>
-    </div>
-  );
+	return (
+		<div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3 md:p-4 flex items-center justify-between gap-2">
+			<div className="min-w-0">
+				<p className="text-xs md:text-sm text-slate-400 font-medium mb-1 truncate">
+					{label}
+				</p>
+				<div className="flex items-baseline gap-2">
+					<span className="text-2xl font-bold">{value}</span>
+					{total !== undefined && (
+						<span className="text-sm text-slate-600">/ {total}</span>
+					)}
+				</div>
+			</div>
+			<div className="hidden sm:block shrink-0 p-3 bg-slate-950 rounded-lg border border-slate-800">
+				{icon}
+			</div>
+		</div>
+	);
 }
 
-function UnitCard({ unit }: { unit: any }) {
-  const statusColor =
-    {
-      adequate: "border-emerald-900/50 bg-emerald-950/10",
-      understaffed: "border-amber-900/50 bg-amber-950/10",
-      critical: "border-red-900/50 bg-red-950/10 coverage-critical",
-    }[unit.coverageStatus as string] || "border-slate-800 bg-slate-900/50";
+function UnitCard({ unit }: { unit: DutyUnit }) {
+	const statusColor =
+		{
+			adequate: "border-emerald-900/50 bg-emerald-950/10",
+			understaffed: "border-amber-900/50 bg-amber-950/10",
+			critical: "border-red-900/50 bg-red-950/10 coverage-critical",
+		}[unit.coverageStatus] || "border-slate-800 bg-slate-900/50";
 
-  const statusText =
-    {
-      adequate: "text-emerald-400",
-      understaffed: "text-amber-400",
-      critical: "text-red-400",
-    }[unit.coverageStatus as string] || "text-slate-400";
+	const statusText =
+		{
+			adequate: "text-emerald-400",
+			understaffed: "text-amber-400",
+			critical: "text-red-400",
+		}[unit.coverageStatus] || "text-slate-400";
 
-  return (
-    <Card className={`border ${statusColor} transition-colors`}>
-      <CardHeader className="pb-2">
-        <div className="flex flex-wrap justify-between items-start gap-2">
-          <div className="min-w-0">
-            <CardTitle className="text-base text-slate-100">
-              {unit.name}
-            </CardTitle>
-            <p className="text-xs text-slate-500">{unit.location}</p>
-          </div>
-          <Badge
-            variant="outline"
-            className={`shrink-0 bg-slate-950 uppercase text-[10px] tracking-wider ${statusText} border-opacity-20`}
-          >
-            {unit.coverageStatus}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            {[...(unit.onDutyStaff ?? [])]
-              // People at their post first, then late, then not yet arrived.
-              .sort((a: any, b: any) => Number(!!b.checkedIn) - Number(!!a.checkedIn))
-              .map((staff: any) => (
-              <div
-                key={staff.id}
-                className={`flex items-center gap-2 p-1.5 rounded border ${
-                  staff.checkedIn
-                    ? "bg-emerald-950/40 border-emerald-700/50"
-                    : "bg-slate-950/50 border-slate-800/50 opacity-70"
-                }`}
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={staff.avatar} />
-                  <AvatarFallback className="text-[10px] bg-slate-800 text-slate-300">
-                    {staff.name.substring(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 overflow-hidden">
-                  <p className="text-xs font-medium truncate text-slate-200">
-                    {staff.name}
-                  </p>
-                  <p className="text-[10px] text-slate-500 truncate">
-                    {staff.position}
-                  </p>
-                  <p
-                    className={`text-[10px] font-medium truncate ${
-                      staff.checkedIn
-                        ? staff.isLate
-                          ? "text-amber-400"
-                          : "text-emerald-400"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {staff.checkedIn
-                      ? `${staff.isLate ? "Late · " : "On post · "}${
-                          staff.checkedInAt
-                            ? new Date(staff.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                            : ""
-                        }`
-                      : "Not checked in"}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          {(unit.onDutyStaff ?? []).length === 0 && (
-            <div className="text-center py-4 text-xs text-slate-600">
-              No staff currently logged at this post.
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+	return (
+		<Card className={`border ${statusColor} transition-colors`}>
+			<CardHeader className="pb-2">
+				<div className="flex flex-wrap justify-between items-start gap-2">
+					<div className="min-w-0">
+						<CardTitle className="text-base text-slate-100">
+							{unit.name}
+						</CardTitle>
+						<p className="text-xs text-slate-500">{unit.location}</p>
+					</div>
+					<Badge
+						variant="outline"
+						className={`shrink-0 bg-slate-950 uppercase text-[10px] tracking-wider ${statusText} border-opacity-20`}
+					>
+						{unit.coverageStatus}
+					</Badge>
+				</div>
+			</CardHeader>
+			<CardContent>
+				<div className="space-y-3">
+					<div className="grid grid-cols-2 gap-2">
+						{[...(unit.onDutyStaff ?? [])]
+							// People at their post first, then late, then not yet arrived.
+							.sort((a, b) => Number(b.checkedIn) - Number(a.checkedIn))
+							.map((staff) => (
+								<div
+									key={staff.id}
+									className={`flex items-center gap-2 p-1.5 rounded border ${
+										staff.checkedIn
+											? "bg-emerald-950/40 border-emerald-700/50"
+											: "bg-slate-950/50 border-slate-800/50 opacity-70"
+									}`}
+								>
+									<Avatar className="h-6 w-6">
+										<AvatarImage src={staff.avatar ?? undefined} />
+										<AvatarFallback className="text-[10px] bg-slate-800 text-slate-300">
+											{staff.name.substring(0, 2)}
+										</AvatarFallback>
+									</Avatar>
+									<div className="min-w-0 overflow-hidden">
+										<p className="text-xs font-medium truncate text-slate-200">
+											{staff.name}
+										</p>
+										<p className="text-[10px] text-slate-500 truncate">
+											{staff.position}
+										</p>
+										<p
+											className={`text-[10px] font-medium truncate ${
+												staff.checkedIn
+													? staff.isLate
+														? "text-amber-400"
+														: "text-emerald-400"
+													: "text-slate-500"
+											}`}
+										>
+											{staff.checkedIn
+												? `${staff.isLate ? "Late · " : "On post · "}${
+														staff.checkedInAt
+															? new Date(staff.checkedInAt).toLocaleTimeString(
+																	[],
+																	{ hour: "2-digit", minute: "2-digit" },
+																)
+															: ""
+													}`
+												: "Not checked in"}
+										</p>
+									</div>
+								</div>
+							))}
+					</div>
+					{(unit.onDutyStaff ?? []).length === 0 && (
+						<div className="text-center py-4 text-xs text-slate-600">
+							No staff currently logged at this post.
+						</div>
+					)}
+				</div>
+			</CardContent>
+		</Card>
+	);
 }

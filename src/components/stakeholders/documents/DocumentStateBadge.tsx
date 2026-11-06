@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { STATE_LABELS, STATE_TONES } from "@/lib/stakeholder-documents";
+import { cn } from "@/lib/utils";
 import type { ChecklistState } from "@/types/stakeholder-documents";
 
 /** Status of a document or checklist row. `surface` picks colours for the dark portal or the staff app. */

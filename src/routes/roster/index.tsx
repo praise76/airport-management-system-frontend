@@ -71,7 +71,8 @@ function RosterPage() {
 									<div className="flex items-center gap-2 text-sm text-muted-foreground">
 										<Clock className="h-3 w-3" />
 										<span>
-											{entry.shiftStartTime?.slice(0, 5)}–{entry.shiftEndTime?.slice(0, 5)}
+											{entry.shiftStartTime?.slice(0, 5)}–
+											{entry.shiftEndTime?.slice(0, 5)}
 										</span>
 										<span>•</span>
 										<span>{entry.shift} Shift</span>
