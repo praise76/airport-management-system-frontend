@@ -197,7 +197,12 @@ function CreateTaskModal({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createTask.mutate(form, { onSuccess: onClose });
+    // QA finding TSK-01: the date input gives "2026-11-10" but the API's dueAt is an ISO
+    // date-time, so any task with a due date was rejected. Send end of that local day.
+    const dueAt = form.dueAt && /^\d{4}-\d{2}-\d{2}$/.test(form.dueAt)
+      ? new Date(`${form.dueAt}T17:00:00`).toISOString()
+      : form.dueAt || undefined;
+    createTask.mutate({ ...form, dueAt }, { onSuccess: onClose });
   };
 
   return (

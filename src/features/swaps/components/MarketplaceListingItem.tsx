@@ -58,7 +58,7 @@ export function MarketplaceListingItem({
         </div>
 
         <div className="bg-muted/50 p-3 rounded-md text-sm">
-          <p>"{listing.reason}"</p>
+          <p>{listing.reason ? `"${listing.reason}"` : "No reason given."}</p>
           {listing.compensationOffered && (
             <p className="mt-2 text-primary font-medium flex items-center gap-1">
               🎁 {listing.compensationOffered}

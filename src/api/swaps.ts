@@ -11,19 +11,39 @@ import type {
 
 // --- Swap Requests ---
 
+/**
+ * The API stores the reason as `swapReason` and returns people only as ids unless it joins them.
+ * Screens read `reason` and want names, so normalise here (QA finding RST-05: approvers saw
+ * `""` for the reason and a raw user id instead of the requester's name).
+ */
+const fullName = (p?: { firstName?: string; lastName?: string } | null) =>
+  p ? [p.firstName, p.lastName].filter(Boolean).join(' ') || undefined : undefined;
+
+export function normalizeSwap(r: any): SwapRequest {
+  const requester = r.requestingStaff ?? r.requester ?? r.requestingUser;
+  const target = r.targetStaff ?? r.target ?? r.targetUser;
+  return {
+    ...r,
+    reason: r.reason ?? r.swapReason ?? '',
+    requesterName: r.requesterName ?? fullName(requester),
+    targetName: r.targetName ?? fullName(target),
+  };
+}
+const normalizeList = (list: any): SwapRequest[] => (Array.isArray(list) ? list.map(normalizeSwap) : []);
+
 export async function createSwapRequest(data: CreateSwapRequest): Promise<SwapRequest> {
   const res = await api.post('/roster/swaps', data);
-  return res.data.data;
+  return normalizeSwap(res.data.data);
 }
 
 export async function getMySwapRequests(status?: string): Promise<SwapRequest[]> {
   const res = await api.get('/roster/swaps/my-requests', { params: { status } });
-  return res.data.data;
+  return normalizeList(res.data.data);
 }
 
 export async function getIncomingSwapRequests(): Promise<SwapRequest[]> {
   const res = await api.get('/roster/swaps/incoming');
-  return res.data.data;
+  return normalizeList(res.data.data);
 }
 
 export async function respondToSwapRequest(id: string, data: SwapResponse): Promise<void> {
@@ -74,4 +94,10 @@ export async function getSwapCreditHistory(): Promise<any[]> {
 export async function getSwapRules(unitId: string): Promise<any> {
     const res = await api.get(`/roster/swaps/rules/${unitId}`);
     return res.data.data;
+}
+
+/** Swap requests waiting for this supervisor/manager's decision. */
+export async function getSwapApprovals(): Promise<SwapRequest[]> {
+  const res = await api.get('/roster/swaps/approvals');
+  return normalizeList(res.data.data);
 }

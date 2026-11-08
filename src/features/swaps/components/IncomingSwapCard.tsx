@@ -55,7 +55,7 @@ export function IncomingSwapCard({ request }: IncomingSwapCardProps) {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg">
-              From: {request.requestingStaffId}{" "}
+              From: {request.requesterName ?? "A colleague"}{" "}
               {/* Ideally this should be a name resolved from ID or included in payload */}
             </CardTitle>
             <CardDescription>
@@ -89,7 +89,7 @@ export function IncomingSwapCard({ request }: IncomingSwapCardProps) {
           <div>
             <p className="text-sm font-medium">Reason:</p>
             <p className="text-sm text-muted-foreground italic">
-              "{request.reason}"
+              {request.reason ? `"${request.reason}"` : "No reason given."}
             </p>
           </div>
         </div>

@@ -106,7 +106,7 @@ export function SwapRequestList() {
             </div>
 
             <p className="text-sm text-muted-foreground italic">
-              "{req.reason}"
+              {req.reason ? `"${req.reason}"` : "No reason given."}
             </p>
 
             {req.expiresAt && (

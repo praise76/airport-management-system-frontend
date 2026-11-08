@@ -20,7 +20,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCreateSwap } from "@/hooks/swaps";
 // import { useMyRoster } from "@/features/roster/api"; // Assuming this exists or using the one from hooks
-import { useUsers } from "@/hooks/users";
+import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { useAuthStore } from "@/stores/auth";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -60,14 +60,6 @@ export function CreateSwapModal({ open, onOpenChange }: CreateSwapModalProps) {
   const { data: shifts } = useUpcomingShifts();
   // Swaps only make sense within your own unit: same posts, same qualifications.
   const me = useAuthStore((st) => st.user);
-  const { data: users } = useUsers({ limit: 500, departmentId: me?.departmentId || undefined });
-  const colleagues = (users?.data ?? []).filter(
-    (u: any) =>
-      u.id !== me?.userId &&
-      u.id !== me?.id &&
-      (!me?.departmentId || !u.departmentId || u.departmentId === me.departmentId),
-  );
-
   const handleSubmit = () => {
     if (!selectedShiftId || !reason) {
       toast.error("Please fill in all required fields");
@@ -166,22 +158,15 @@ export function CreateSwapModal({ open, onOpenChange }: CreateSwapModalProps) {
 
           {swapType === "direct_swap" && (
             <div className="space-y-2">
-              <Label>Colleague in your unit</Label>
-              <Select value={targetUserId} onValueChange={setTargetUserId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select colleague" />
-                </SelectTrigger>
-                <SelectContent>
-                  {colleagues.length === 0 && (
-                    <div className="p-2 text-sm text-muted-foreground">No colleagues found in your unit</div>
-                  )}
-                  {colleagues.map((u: any) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.firstName} {u.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="swap-colleague">Colleague in your unit</Label>
+              <ColleaguePicker
+                id="swap-colleague"
+                value={targetUserId || undefined}
+                onChange={(id) => setTargetUserId(id ?? "")}
+                departmentId={me?.departmentId}
+                excludeIds={[me?.id, me?.userId]}
+                placeholder="Search for a colleague"
+              />
             </div>
           )}
 

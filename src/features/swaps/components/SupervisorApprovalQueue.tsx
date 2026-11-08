@@ -8,30 +8,32 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
-// NOTE: Ideally we'd have a specific `useSupervisorPendingSwaps` hook.
-// For now, I'll simulate it or assume `useIncomingSwaps` can handle it if parameterized.
-// I'll assume a new hook `usePendingApprovals` for clarity in this file,
-// even if I have to add it to hooks/swaps.ts later or mock it here.
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/api/client";
+import { getSwapApprovals } from "@/api/swaps";
 
-const usePendingApprovals = () => {
-  return useQuery({
+const usePendingApprovals = () =>
+  useQuery({
     queryKey: ["swaps", "approvals"],
-    queryFn: async () => {
-      const res = await api.get("/roster/swaps/approvals");
-      return res.data.data as SwapRequest[];
-    },
+    queryFn: getSwapApprovals,
+    // A 403 won't fix itself; retrying left the tab on "Loading approvals..." for a long time.
+    retry: (count, err: any) => err?.status !== 403 && count < 2,
   });
-};
 
 export function SupervisorApprovalQueue() {
-  const { data: requests, isLoading } = usePendingApprovals();
+  const { data: requests, isLoading, isError, error } = usePendingApprovals();
   const { mutate: review, isPending } = useReviewSwap();
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [comments, setComments] = useState("");
 
   if (isLoading) return <div>Loading approvals...</div>;
+  if (isError)
+    return (
+      <div className="p-4 text-destructive" role="alert">
+        {(error as any)?.status === 403
+          ? "Your account can't approve swaps. Ask an administrator to check your role."
+          : "Couldn't load swap approvals. Please refresh the page."}
+      </div>
+    );
   if (!requests?.length)
     return (
       <div className="text-muted-foreground p-4">No pending approvals</div>
@@ -79,7 +81,7 @@ export function SupervisorApprovalQueue() {
                   )}
                 </div>
                 <h4 className="font-semibold">
-                  {req.requestingStaffId} ↔ {req.targetStaffId || "Marketplace"}
+                  {req.requesterName ?? "Requester"} ↔ {req.targetName ?? (req.targetStaffId ? "Colleague" : "Marketplace")}
                 </h4>
                 <div className="text-sm mt-1 space-y-1">
                   <p>
@@ -95,7 +97,7 @@ export function SupervisorApprovalQueue() {
                   )}
                 </div>
                 <p className="text-sm italic text-muted-foreground mt-2">
-                  "{req.reason}"
+                  {req.reason ? `"${req.reason}"` : "No reason given."}
                 </p>
               </div>
               <div className="flex flex-col gap-2">

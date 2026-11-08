@@ -28,6 +28,9 @@ export interface SwapRequest {
   status: SwapStatus;
   
   reason: string;
+  /** Filled in by normalizeSwap when the API includes the people. */
+  requesterName?: string;
+  targetName?: string;
   
   requesterGivesShift: {
     date: string;
