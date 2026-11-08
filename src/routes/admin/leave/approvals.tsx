@@ -28,7 +28,7 @@ export const Route = createFileRoute("/admin/leave/approvals")({
 function LeaveApprovalsPage() {
   const user = useAuthStore((s) => s.user);
   const levels = approvalLevelsFor(user);
-  const { data: approvals, isLoading, isError } = usePendingApprovals();
+  const { data: approvals, isLoading, isError, error } = usePendingApprovals();
   const processMutation = useProcessApproval();
   const { data: staff } = useUsers({ limit: 500 });
   const nameOf = (id?: string) => {
@@ -75,8 +75,10 @@ function LeaveApprovalsPage() {
   }
   if (isError) {
     return (
-      <div className="p-8 text-destructive">
-        Couldn't load leave requests. Please refresh the page.
+      <div className="p-8 text-destructive" role="alert">
+        {(error as Error | null)?.message?.includes("approval queue")
+          ? (error as Error).message
+          : "Couldn't load leave requests. Please refresh the page."}
       </div>
     );
   }
@@ -108,15 +110,15 @@ function LeaveApprovalsPage() {
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                      {app.staffName ? (
-                        app.staffName[0]
+                      {(app.staffName || nameOf(app.staffId)) ? (
+                        (app.staffName || nameOf(app.staffId) || "?")[0]
                       ) : (
                         <UserIcon className="h-5 w-5" />
                       )}
                     </div>
                     <div>
                       <CardTitle className="text-base">
-                        {app.staffName || "Unknown Staff"}
+                        {app.staffName || nameOf(app.staffId) || "Name not available"}
                       </CardTitle>
                       <CardDescription>
                         Applied {app.createdAt ? format(new Date(app.createdAt), "d MMM") : ""}

@@ -15,7 +15,8 @@ import type {
  *   GET  /self-service/leave/balance             my balance
  *   POST /self-service/leave/apply               apply
  *   GET  /self-service/leave/pending/{level}     requests waiting at supervisor | hod | hr
- *   POST /self-service/leave/{id}/review/{level} { decision: "approve" | "reject", comments }
+ *   POST /self-service/leave/{id}/review/{level} { decision: "approve" | "reject", approved: boolean, comments }
+ *        (api.json documents `decision`; the deployed backend validates `approved`. We send both.)
  *
  * Before this change the lists were sample data written into this file and approving did
  * nothing. The functions below translate between the server's format (lower-case leave types,
@@ -47,8 +48,9 @@ export function countWeekdays(start: string, end: string): number {
 }
 
 function toApplication(r: any, level?: ApprovalLevel): LeaveApplication {
-	const first = r.user?.firstName ?? r.staff?.firstName ?? r.firstName;
-	const last = r.user?.lastName ?? r.staff?.lastName ?? r.lastName;
+	const person = r.user ?? r.staff ?? r.applicant ?? r.requester ?? r.employee;
+	const first = person?.firstName ?? r.firstName ?? r.userFirstName;
+	const last = person?.lastName ?? r.lastName ?? r.userLastName;
 	return {
 		id: r.id,
 		applicationNumber: r.applicationNumber ?? r.requestNumber ?? `LV-${String(r.id).slice(0, 8).toUpperCase()}`,
@@ -125,6 +127,7 @@ export const getMyLeaveBalances = async (): Promise<LeaveBalance[]> => {
 export const getPendingApprovals = async (
 	levels: ApprovalLevel[],
 ): Promise<LeaveApplication[]> => {
+	const forbidden: ApprovalLevel[] = [];
 	const lists = await Promise.all(
 		levels.map(async (level) => {
 			try {
@@ -133,12 +136,25 @@ export const getPendingApprovals = async (
 				const items = Array.isArray(data) ? data : (data?.items ?? []);
 				return items.map((r) => toApplication(r, level));
 			} catch (err: any) {
-				// A 403 just means this user can't approve at that level.
-				if (err?.status === 403) return [];
+				// Admins ask for every level, so one refused level is fine. But if the server refuses
+				// every level this user's role should approve at, saying "All caught up" would hide
+				// real requests (QA finding LV-02). Report it instead.
+				if (err?.status === 403) {
+					forbidden.push(level);
+					return [];
+				}
 				throw err;
 			}
 		}),
 	);
+	if (levels.length > 0 && forbidden.length === levels.length) {
+		const e: Error & { status?: number; code?: string } = new Error(
+			`Your account isn't allowed to see the ${forbidden.join(", ")} approval queue. Ask an administrator to check your approval permissions.`,
+		);
+		e.status = 403;
+		e.code = "APPROVAL_QUEUE_FORBIDDEN";
+		throw e;
+	}
 	const byId = new Map<string, LeaveApplication>();
 	for (const a of lists.flat()) if (!byId.has(a.id)) byId.set(a.id, a);
 	return [...byId.values()].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
@@ -150,9 +166,12 @@ export const processApproval = async (
 	decision: "approve" | "reject",
 	comments?: string,
 ) => {
+	// QA finding LV-01: the deployed backend rejects `{decision}` with
+	// "approved: expected boolean". Send both shapes so either backend version accepts it.
 	const res = await api.post(`/self-service/leave/${id}/review/${level}`, {
 		decision,
-		comments,
+		approved: decision === "approve",
+		comments: comments?.trim() || undefined,
 	});
 	return unwrap(res);
 };

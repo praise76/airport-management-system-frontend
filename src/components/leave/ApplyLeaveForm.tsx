@@ -31,23 +31,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { calculateWorkingDays } from "@/api/leave";
-import { useUsers } from "@/hooks/users";
+import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { useAuthStore } from "@/stores/auth";
 import { CreateLeaveRequest } from "@/types/leave";
 
 const formSchema = z.object({
-  leaveType: z.enum([
-    "Annual",
-    "Sick",
-    "Compassionate",
-    "Unpaid",
-    "Maternity",
-    "Paternity",
-  ] as const),
-  dateRange: z.object({
-    from: z.date(),
-    to: z.date(),
-  }),
+  // Custom messages replace zod's generic "Invalid input" (QA finding LV-06).
+  leaveType: z.enum(
+    ["Annual", "Sick", "Compassionate", "Unpaid", "Maternity", "Paternity"] as const,
+    { message: "Choose a leave type" },
+  ),
+  dateRange: z
+    .object(
+      {
+        from: z.date({ message: "Pick the first day of leave" }),
+        to: z.date({ message: "Pick the last day of leave" }),
+      },
+      { message: "Pick the dates you'll be away" },
+    )
+    .refine((r) => r.to >= r.from, { message: "The last day must be on or after the first day" }),
   reason: z.string().min(5, "Reason must be at least 5 characters"),
   handoverToUserId: z.string().optional(),
   handoverNotes: z.string().optional(),
@@ -71,17 +73,6 @@ export function ApplyLeaveForm({
   const [totalDays, setTotalDays] = useState<number | null>(null);
 
   const me = useAuthStore((st) => st.user);
-  const { data: staffData } = useUsers({
-    limit: 500,
-    departmentId: me?.departmentId || undefined,
-  });
-  const colleagues = (staffData?.data ?? []).filter(
-    (u: any) =>
-      u.id !== me?.userId &&
-      u.id !== me?.id &&
-      (!me?.departmentId || !u.departmentId || u.departmentId === me.departmentId),
-  );
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -255,23 +246,15 @@ export function ApplyLeaveForm({
                 <FormItem>
                   <FormLabel>Handover to</FormLabel>
                   {/* A colleague from the same department; the value sent is their staff ID. */}
-                  <Select value={field.value || ""} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a colleague" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {colleagues.length === 0 && (
-                        <div className="p-2 text-sm text-muted-foreground">No colleagues found</div>
-                      )}
-                      {colleagues.map((c: any) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.firstName} {c.lastName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ColleaguePicker
+                      value={field.value}
+                      onChange={(id) => field.onChange(id)}
+                      departmentId={me?.departmentId}
+                      excludeIds={[me?.id, me?.userId]}
+                      placeholder="Choose a colleague"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
