@@ -34,6 +34,7 @@ import {
 	useGetShiftPatterns,
 } from "@/features/roster/api";
 import type { ShiftPattern } from "@/features/roster/types";
+import { CrewsPanel } from "@/features/roster/components/CrewsPanel";
 import {
 	PATTERN_PRESETS,
 	PATTERN_SHIFT_OPTIONS,
@@ -55,9 +56,9 @@ function ShiftPatternsPage() {
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Shift Patterns</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Patterns &amp; crews</h1>
 					<p className="text-muted-foreground">
-						Define recurring shift patterns for your team.
+						Define rotation patterns, then put staff into crews that work them.
 					</p>
 				</div>
 				<CreatePatternDialog />
@@ -82,6 +83,8 @@ function ShiftPatternsPage() {
 					))}
 				</div>
 			)}
+
+			<CrewsPanel />
 		</div>
 	);
 }

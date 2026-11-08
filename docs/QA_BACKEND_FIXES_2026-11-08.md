@@ -309,3 +309,31 @@ and tells planners how to stagger crews. The backend needs to:
 6. **Working hours.** 2-2-2 averages **56 hours a week** (4 × 12 h every 6 days), compared with
    42 h for the 4-shift 2-2-2-2 and 40 h for permanent morning. Confirm this is within FAAN's
    conditions of service and any union agreement before rolling it out.
+
+---
+
+## Crews and crew / shift groups
+
+The frontend now has **Patterns & crews** (`/roster/patterns`). A crew is a named team in a
+department (Crew A, B, C …) that works one pattern from one start date. Planners add and remove
+people, apply the pattern to everyone's roster, open a crew chat, and see "On duty today",
+which lists the crews on each shift.
+
+**How it works today (no backend change needed):** crews are stored as Groups
+(`groupType: "cross_functional"`). The pattern id, start date and chat id sit in a tagged line
+at the end of the group description (`[crew:v1]{…}`). Applying a pattern calls
+`POST /roster/patterns/assign` for each member with `effectiveFrom` = the crew's start date.
+The crew chat is a messaging group conversation, and adding a member to the crew also adds them
+to the chat.
+
+**Recommended backend changes** (the frontend already reads these fields when they exist):
+1. Add `groupType: "crew"` and nullable columns `shiftPatternId`, `crewStartDate` (date) and
+   `conversationId` to groups, returned by `GET /groups`. Then drop the description tag.
+2. A person should be in at most one crew per department. Enforce this on
+   `POST /groups/:id/members` for crew groups.
+3. When membership changes, update that person's pattern assignment and the crew chat members on
+   the server, so nothing depends on the browser doing it.
+4. `GET /roster/crews/on-duty?date=&departmentId=` that returns, for each shift, the crews and
+   their members. This drives the duty board and lets notices go to "everyone on Night today".
+5. Generate roster entries from crew assignments (see "Roster patterns" above), skipping
+   approved leave.

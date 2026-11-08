@@ -152,6 +152,12 @@ const navGroups: NavGroup[] = [
 				roles: [...ROLE_GROUPS.rosterPlanners],
 			},
 			{
+				label: "Patterns & crews",
+				to: "/roster/patterns",
+				icon: Users,
+				roles: [...ROLE_GROUPS.rosterPlanners],
+			},
+			{
 				label: "Roster templates",
 				to: "/roster/templates",
 				icon: LayoutTemplate,
