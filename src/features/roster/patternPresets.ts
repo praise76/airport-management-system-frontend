@@ -20,18 +20,30 @@ const seq = (codes: string[]) => codes.map((shift, i) => ({ day: i + 1, shift })
 
 /**
  * The three patterns FAAN operations asked for:
- * - 4-shift rotation: Morning, Afternoon, Night, Off (8-hour shifts).
+ * - 4-shift 2-2-2-2: two afternoons, two mornings, two nights, two off (8-hour shifts),
+ *   plus a forward-rotating version that avoids the 8-hour afternoon-to-morning gap.
  * - 12-hour 2-2-2: two days, two nights, two off.
  * - Permanent morning: Morning Monday to Friday, weekends off.
  */
 export const PATTERN_PRESETS: PatternPreset[] = [
 	{
 		key: "four-shift",
-		patternName: "4-shift rotation (M-A-N-Off)",
+		patternName: "4-shift 2-2-2-2 (A-A-M-M-N-N-Off-Off)",
 		patternType: "rotating",
-		cycleLengthDays: 4,
-		shiftSequenceJson: seq(["morning", "afternoon", "night", "off"]),
-		summary: "Morning, Afternoon, Night, then a day off. 4 crews give 24-hour cover.",
+		cycleLengthDays: 8,
+		shiftSequenceJson: seq(["afternoon", "afternoon", "morning", "morning", "night", "night", "off", "off"]),
+		summary:
+			"2 afternoons, 2 mornings, 2 nights, 2 off. 4 crews give 24-hour cover. Note: only 8 h rest from the last afternoon (ends 22:00) to the first morning (06:00).",
+		hours: "Morning 06:00-14:00, Afternoon 14:00-22:00, Night 22:00-06:00",
+	},
+	{
+		key: "four-shift-forward",
+		patternName: "4-shift 2-2-2-2 forward (M-M-A-A-N-N-Off-Off)",
+		patternType: "rotating",
+		cycleLengthDays: 8,
+		shiftSequenceJson: seq(["morning", "morning", "afternoon", "afternoon", "night", "night", "off", "off"]),
+		summary:
+			"Same shifts, rotating forward: at least 24 h rest at every changeover. 4 crews give 24-hour cover.",
 		hours: "Morning 06:00-14:00, Afternoon 14:00-22:00, Night 22:00-06:00",
 	},
 	{
@@ -79,7 +91,7 @@ export type CrewPlan = {
 /**
  * Smallest set of evenly staggered crews that puts exactly one crew on each working shift
  * every day. For 2-2-2 that's 3 crews starting 0, 2 and 4 days apart; for M-A-N-Off it's
- * 4 crews one day apart. Returns null for patterns where even staggering can't do that
+ * 4 crews two days apart. Returns null for patterns where even staggering can't do that
  * (for example permanent morning, which isn't meant to give 24-hour cover).
  */
 export function planCrews(pattern: Pick<ShiftPattern, "cycleLengthDays" | "shiftSequenceJson">): CrewPlan | null {

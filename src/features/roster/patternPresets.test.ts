@@ -15,10 +15,16 @@ describe("roster pattern presets", () => {
 		expect(hoursPerWeek(p)).toBe(56);
 	});
 
-	it("4-shift M-A-N-Off needs 4 crews one day apart, 42 h/week", () => {
-		const p = preset("four-shift");
-		expect(planCrews(p)).toEqual({ crews: 4, offsets: [0, 1, 2, 3], fullCover: true });
-		expect(hoursPerWeek(p)).toBe(42);
+	it("4-shift 2-2-2-2 needs 4 crews starting 2 days apart, 42 h/week", () => {
+		for (const key of ["four-shift", "four-shift-forward"]) {
+			const p = preset(key);
+			expect(p.cycleLengthDays).toBe(8);
+			expect(planCrews(p)).toEqual({ crews: 4, offsets: [0, 2, 4, 6], fullCover: true });
+			expect(hoursPerWeek(p)).toBe(42);
+		}
+		expect(preset("four-shift").shiftSequenceJson.map((s) => s.shift)).toEqual([
+			"afternoon", "afternoon", "morning", "morning", "night", "night", "off", "off",
+		]);
 	});
 
 	it("permanent morning is 40 h/week and isn't a 24-hour cover pattern", () => {

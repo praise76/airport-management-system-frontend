@@ -283,7 +283,7 @@ the stakeholder's Activities tab.
 
 ---
 
-## Roster patterns: 4-shift, 12-hour 2-2-2 and permanent morning
+## Roster patterns: 4-shift 2-2-2-2, 12-hour 2-2-2 and permanent morning
 
 The frontend now has presets for these three patterns (`src/features/roster/patternPresets.ts`)
 and tells planners how to stagger crews. The backend needs to:
@@ -299,11 +299,13 @@ and tells planners how to stagger crews. The backend needs to:
 4. **Crew staggering** works through `effectiveFrom`:
    * 12-hour 2-2-2 (D D N N O O): 3 crews, start dates 0, +2 and +4 days. Exactly one crew on
      days and one on nights every day.
-   * 4-shift (M A N O): 4 crews, start dates 0, +1, +2 and +3 days.
+   * 4-shift 2-2-2-2 (A A M M N N O O): 4 crews, start dates 0, +2, +4 and +6 days.
+     The afternoon-to-morning changeover leaves only 8 h rest (22:00 to 06:00); the rest-time
+     check will flag it. The forward version (M M A A N N O O) avoids this.
    * Permanent morning: assign from a Monday; no staggering.
 5. **Night shifts cross midnight.** Book a 19:00-07:00 night to its start date. The rest-time
    check must use the real end time (07:00 the next day). Attendance lateness and "on duty"
    must also handle it (see ATT-03 on timezones).
 6. **Working hours.** 2-2-2 averages **56 hours a week** (4 × 12 h every 6 days), compared with
-   42 h for M-A-N-Off and 40 h for permanent morning. Confirm this is within FAAN's
+   42 h for the 4-shift 2-2-2-2 and 40 h for permanent morning. Confirm this is within FAAN's
    conditions of service and any union agreement before rolling it out.
