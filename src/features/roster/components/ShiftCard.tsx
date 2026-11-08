@@ -1,4 +1,5 @@
 
+import { useZoneLabel } from "@/hooks/geofence";
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ interface ShiftCardProps {
 }
 
 export function ShiftCard({ entry }: ShiftCardProps) {
+  const zoneLabel = useZoneLabel();
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   
   const dateObj = new Date(entry.dutyDate);
@@ -66,7 +68,7 @@ export function ShiftCard({ entry }: ShiftCardProps) {
           {entry.dutyLocation && (
              <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span>{entry.dutyLocation}</span>
+                <span>{zoneLabel(entry.dutyLocation)}</span>
              </div>
           )}
           

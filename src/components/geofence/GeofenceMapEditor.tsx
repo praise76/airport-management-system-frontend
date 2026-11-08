@@ -114,6 +114,7 @@ function Recenter({ center }: { center: [number, number] }) {
 	return null;
 }
 
+// Map wrappers use `isolate z-0` so Leaflet panes (z-index 400-1000) stay below page dialogs (QA GEO-02).
 export function GeofenceMapEditor({
 	value,
 	onChange,
@@ -277,7 +278,7 @@ export function GeofenceMapEditor({
 				</div>
 			)}
 
-			<div className="relative h-[360px] overflow-hidden rounded-2xl border bg-muted">
+			<div className="relative isolate z-0 h-[360px] overflow-hidden rounded-2xl border bg-muted">
 				<MapContainer
 					center={center}
 					zoom={16}
@@ -498,7 +499,7 @@ export function ZonesOverviewMap({
 		s.pts.length ? s.pts : s.centre ? [s.centre] : [],
 	);
 	return (
-		<div className="relative h-[420px] overflow-hidden rounded-2xl border bg-muted">
+		<div className="relative isolate z-0 h-[420px] overflow-hidden rounded-2xl border bg-muted">
 			<MapContainer
 				center={all[0] ?? MMIA_CENTER}
 				zoom={15}

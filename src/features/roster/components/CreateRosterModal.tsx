@@ -67,6 +67,11 @@ export function CreateRosterModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // QA finding RST-01: a roster from 21 Nov to 8 Nov was accepted.
+    if (startDate && endDate && endDate < startDate) {
+      toast.error("The end date must be on or after the start date.");
+      return;
+    }
     mutate(
       {
         rosterName: name,
@@ -129,6 +134,7 @@ export function CreateRosterModal({
               <Input
                 id="end"
                 type="date"
+                min={startDate || undefined}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 required

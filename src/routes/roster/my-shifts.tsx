@@ -1,3 +1,4 @@
+import { useZoneLabel } from "@/hooks/geofence";
 import { createFileRoute } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/roster/my-shifts")({
 });
 
 function MySchedulePage() {
+	const zoneLabel = useZoneLabel();
 	// useMyRoster resolves to a flat array of upcoming entries, not a single roster
 	// object with an `entries` field.
 	const { data: myRoster, isLoading: rosterLoading } = useMyRoster();
@@ -47,7 +49,7 @@ function MySchedulePage() {
 									<span> as {todayEntry.dutyPosition}</span>
 								)}
 								{todayEntry.dutyLocation && (
-									<span> at {todayEntry.dutyLocation}</span>
+									<span> at {zoneLabel(todayEntry.dutyLocation)}</span>
 								)}
 								.
 							</div>

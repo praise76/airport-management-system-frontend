@@ -1,3 +1,4 @@
+import { label } from "@/lib/labels";
 import { useMemo } from "react";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 
@@ -86,7 +87,7 @@ export function RosterGrid({ roster, users, onCellClick }: RosterGridProps) {
                       {user.firstName} {user.lastName}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {user.position?.name || "Staff"}
+                      {user.position?.name || (user.role ? label(user.role) : "Staff")}
                     </div>
                   </div>
                 </div>

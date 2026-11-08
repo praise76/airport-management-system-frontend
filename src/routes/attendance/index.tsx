@@ -1,3 +1,4 @@
+import { useZoneLabel } from "@/hooks/geofence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { format, isAfter, parse } from "date-fns";
@@ -55,9 +56,23 @@ export const Route = createFileRoute("/attendance/")({
 
 type Fix = { lat: number; lng: number; accuracy: number; at: Date };
 
-const toTime = (t?: string) => (t ? t.slice(0, 5) : "");
+/**
+ * "06:00:00" -> "06:00"; a full ISO date-time -> local "HH:mm".
+ * QA finding ATT-03: slicing an ISO string gave "Your shift started at 2026-.".
+ */
+const toTime = (t?: string) => {
+	if (!t) return "";
+	if (/^\d{4}-\d{2}-\d{2}T/.test(t)) {
+		const d = new Date(t);
+		return Number.isNaN(d.getTime())
+			? ""
+			: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+	}
+	return t.slice(0, 5);
+};
 
 function AttendancePage() {
+	const zoneLabel = useZoneLabel();
 	const { data: todayRecord, isLoading: loadingToday } = useMyAttendanceToday();
 	const { data: history, isLoading: loadingHistory } = useAttendance({
 		pageSize: 30,
@@ -208,6 +223,10 @@ function AttendancePage() {
 				: "not_checked_in";
 
 	const insideZone = !!locStatus?.inside;
+	// QA finding ATT-01: the button stayed active (and the server accepted the check-in) while the
+	// page itself said "Move closer to check in". Block it once we know the person is outside.
+	// The server must enforce this too; this only stops the obvious case on screen.
+	const knownOutside = !!locStatus && locStatus.inside === false;
 
 	// If the server says one thing and the screen another, refetch rather than leave a button that won't work.
 	const serverCheckedIn = locStatus?.checkedIn;
@@ -248,7 +267,7 @@ function AttendancePage() {
 								{(todayShift.dutyPosition || todayShift.dutyLocation) && (
 									<div className="flex items-center gap-1 text-sm text-muted-foreground">
 										<MapPin className="h-4 w-4" />
-										{[todayShift.dutyPosition, todayShift.dutyLocation]
+										{[todayShift.dutyPosition, zoneLabel(todayShift.dutyLocation)]
 											.filter(Boolean)
 											.join(", ")}
 									</div>
@@ -309,7 +328,8 @@ function AttendancePage() {
 
 								<Button
 									onClick={handleCheckIn}
-									disabled={busy || checkInMutation.isPending}
+									disabled={busy || checkInMutation.isPending || knownOutside}
+									title={knownOutside ? "Move inside your check-in zone first" : undefined}
 									size="lg"
 									className="w-full sm:w-auto"
 								>

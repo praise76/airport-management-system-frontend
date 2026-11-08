@@ -89,6 +89,20 @@ export function ManageEntryModal({
   }, [existingEntry, open]);
 
   // Handle Shift Definition Selection
+  /** Shift type from the preset's name, else from its start hour (05-12 morning, 12-20 afternoon). */
+  const inferShiftType = (name?: string, start?: string): string => {
+    const n = (name ?? "").toLowerCase();
+    if (n.includes("night")) return "night";
+    if (n.includes("afternoon") || n.includes("evening")) return "afternoon";
+    if (n.includes("morning")) return "morning";
+    const h = Number((start ?? "").slice(0, 2));
+    if (Number.isFinite(h)) {
+      if (h >= 5 && h < 12) return "morning";
+      if (h >= 12 && h < 20) return "afternoon";
+    }
+    return "night";
+  };
+
   const handleShiftSelect = (val: string) => {
     setShiftDefinitionId(val);
     if (val === "custom") return;
@@ -97,8 +111,9 @@ export function ManageEntryModal({
     if (selected) {
       setStartTime(selected.startTime?.slice(0, 5) || "08:00");
       setEndTime(selected.endTime?.slice(0, 5) || "16:00");
-      // Optionally deduce morning/afternoon/night based on time
-      // Just keeping current shift type for now or could infer
+      // QA finding RST-04: choosing the Afternoon or Night preset left Shift Type on
+      // "Morning", so 14:00-22:00 shifts were saved and shown as morning.
+      setShift(inferShiftType(selected.name, selected.startTime) as ShiftType);
     }
   };
 

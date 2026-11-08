@@ -6,6 +6,8 @@ interface RotationCycleTableProps {
   patterns?: Array<{ name: string; pattern: string[] }>;
   cycleLength?: number;
   shifts?: ShiftDefinition[];
+  /** The patterns request failed (it returned 500 in QA, RST-03); say so instead of "none defined". */
+  loadFailed?: boolean;
 }
 
 export function RotationCycleTable({
@@ -13,6 +15,7 @@ export function RotationCycleTable({
   patterns = [],
   cycleLength = 8,
   shifts = [],
+  loadFailed = false,
 }: RotationCycleTableProps) {
   const DAYS = Array.from({ length: cycleLength }, (_, i) => `Day ${i + 1}`);
 
@@ -27,11 +30,19 @@ export function RotationCycleTable({
     return {};
   };
 
+  if (loadFailed) {
+    return (
+      <div role="alert" className={cn("rounded-2xl border border-destructive/40 bg-destructive/5 p-12 text-center text-destructive", className)}>
+        <p>Couldn't load rotation patterns. The server returned an error; try again later or contact support.</p>
+      </div>
+    );
+  }
+
   if (patterns.length === 0) {
     return (
       <div
         className={cn(
-          "rounded-2xl bg-[#121212] p-12 text-center text-white/40 border border-white/5",
+          "rounded-2xl border bg-muted/30 p-12 text-center text-muted-foreground",
           className,
         )}
       >
