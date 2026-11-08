@@ -34,6 +34,13 @@ import {
 	useGetShiftPatterns,
 } from "@/features/roster/api";
 import type { ShiftPattern } from "@/features/roster/types";
+import {
+	PATTERN_PRESETS,
+	PATTERN_SHIFT_OPTIONS,
+	crewLabel,
+	hoursPerWeek,
+	planCrews,
+} from "@/features/roster/patternPresets";
 import { ROLE_GROUPS, requireStaff } from "@/lib/access";
 
 export const Route = createFileRoute("/roster/patterns/")({
@@ -90,7 +97,7 @@ function PatternCard({ pattern }: { pattern: ShiftPattern }) {
 					<Badge variant="outline">{pattern.patternType}</Badge>
 				</div>
 				<CardDescription>
-					{pattern.cycleLengthDays} day cycle length
+					{pattern.cycleLengthDays}-day cycle · about {hoursPerWeek(pattern)} hours a week
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -103,10 +110,11 @@ function PatternCard({ pattern }: { pattern: ShiftPattern }) {
 								variant="secondary"
 								className="font-mono text-xs"
 							>
-								D{seq.day}: {seq.shift}
+								D{seq.day}: {PATTERN_SHIFT_OPTIONS.find((o) => o.value === seq.shift)?.label ?? seq.shift}
 							</Badge>
 						))}
 				</div>
+				<CrewPlanNote pattern={pattern} />
 			</CardContent>
 		</Card>
 	);
@@ -173,6 +181,31 @@ function CreatePatternDialog() {
 					<DialogTitle>Create Shift Pattern</DialogTitle>
 				</DialogHeader>
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+					<div className="space-y-2">
+						<Label>Start from a common pattern</Label>
+						<div className="grid gap-2 sm:grid-cols-3">
+							{PATTERN_PRESETS.map((p) => (
+								<button
+									key={p.key}
+									type="button"
+									onClick={() =>
+										reset({
+											patternName: p.patternName,
+											patternType: p.patternType,
+											cycleLengthDays: p.cycleLengthDays,
+											shiftSequenceJson: p.shiftSequenceJson,
+										})
+									}
+									className="rounded-md border p-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+								>
+									<span className="block font-medium">{p.patternName}</span>
+									<span className="mt-1 block text-xs text-muted-foreground">{p.summary}</span>
+									<span className="mt-1 block text-xs text-muted-foreground">{p.hours}</span>
+								</button>
+							))}
+						</div>
+					</div>
+
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
 							<Label>Pattern Name</Label>
@@ -251,10 +284,11 @@ function CreatePatternDialog() {
 														<SelectValue placeholder="Select shift" />
 													</SelectTrigger>
 													<SelectContent>
-														<SelectItem value="morning">Morning</SelectItem>
-														<SelectItem value="afternoon">Afternoon</SelectItem>
-														<SelectItem value="night">Night</SelectItem>
-														<SelectItem value="off">Off</SelectItem>
+														{PATTERN_SHIFT_OPTIONS.map((o) => (
+															<SelectItem key={o.value} value={o.value}>
+																{o.label}
+															</SelectItem>
+														))}
 													</SelectContent>
 												</Select>
 											)}
@@ -280,6 +314,34 @@ function CreatePatternDialog() {
 				</form>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+/** How to stagger crews so every working shift is covered every day. */
+function CrewPlanNote({ pattern }: { pattern: ShiftPattern }) {
+	if (pattern.patternType === "permanent") {
+		return (
+			<p className="mt-3 text-xs text-muted-foreground">
+				Fixed pattern: assign it from a Monday. It isn't meant to give 24-hour cover.
+			</p>
+		);
+	}
+	const plan = planCrews(pattern);
+	if (!plan) {
+		return (
+			<p className="mt-3 text-xs text-muted-foreground">
+				Staggered crews can't cover every shift every day with this pattern.
+			</p>
+		);
+	}
+	return (
+		<p className="mt-3 text-xs text-muted-foreground">
+			For 24-hour cover use {plan.crews} crews. Assign the pattern with start dates{" "}
+			{plan.offsets
+				.map((o, i) => `${crewLabel(i)}: ${o === 0 ? "day 0" : `+${o} days`}`)
+				.join(", ")}
+			.
+		</p>
 	);
 }
 

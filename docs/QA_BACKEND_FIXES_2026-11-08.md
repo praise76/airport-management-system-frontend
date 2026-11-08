@@ -280,3 +280,30 @@ the stakeholder's Activities tab.
 * **Messaging search** (`GET /messages/users/search`) is now used by the colleague pickers.
   It requires `q` (1+ characters) and caps `limit` at 20. That's fine for type-to-search,
   but it should respect `departmentId`, which the pickers send.
+
+---
+
+## Roster patterns: 4-shift, 12-hour 2-2-2 and permanent morning
+
+The frontend now has presets for these three patterns (`src/features/roster/patternPresets.ts`)
+and tells planners how to stagger crews. The backend needs to:
+
+1. **Fix `GET /roster/patterns` (500, RST-03).** Nothing pattern-related works until it does.
+2. **Accept a `day` shift type** (12-hour day, e.g. 07:00-19:00) in patterns and roster
+   entries. Today `shiftType` is `morning | afternoon | night | off`. Add `day` to the enum,
+   and map it in reports, the duty board and the rest-time rules.
+3. **Generate entries from assignments.** `POST /roster/patterns/assign {userId, shiftPatternId,
+   effectiveFrom}` should, for a roster's date range, create one entry per day using
+   `pattern.shiftSequenceJson[(daysSince(effectiveFrom) mod cycleLengthDays)]`, taking the
+   times from the unit's shift definitions. Skip days with approved leave (LV-03).
+4. **Crew staggering** works through `effectiveFrom`:
+   * 12-hour 2-2-2 (D D N N O O): 3 crews, start dates 0, +2 and +4 days. Exactly one crew on
+     days and one on nights every day.
+   * 4-shift (M A N O): 4 crews, start dates 0, +1, +2 and +3 days.
+   * Permanent morning: assign from a Monday; no staggering.
+5. **Night shifts cross midnight.** Book a 19:00-07:00 night to its start date. The rest-time
+   check must use the real end time (07:00 the next day). Attendance lateness and "on duty"
+   must also handle it (see ATT-03 on timezones).
+6. **Working hours.** 2-2-2 averages **56 hours a week** (4 × 12 h every 6 days), compared with
+   42 h for M-A-N-Off and 40 h for permanent morning. Confirm this is within FAAN's
+   conditions of service and any union agreement before rolling it out.
