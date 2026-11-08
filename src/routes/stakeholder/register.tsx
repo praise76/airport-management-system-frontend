@@ -31,6 +31,39 @@ import type {
   StakeholderRegistrationInput,
 } from "@/types/stakeholder-portal";
 
+const TENANT_TYPES: [string, string][] = [
+  ["restaurant", "Restaurant / food & beverage"],
+  ["retail", "Retail shop"],
+  ["duty_free", "Duty free"],
+  ["bureau_de_change", "Bureau de change"],
+  ["bank", "Bank / ATM"],
+  ["car_rental", "Car rental"],
+  ["hotel_lounge", "Hotel or lounge"],
+  ["advertising", "Advertising"],
+  ["other", "Other"],
+];
+
+/** At least 8 characters with a letter and a number (QA finding STK-05: "abc" was accepted). */
+const passwordProblem = (pw?: string): string | null => {
+  if (!pw) return null;
+  if (pw.length < 8) return "Use at least 8 characters.";
+  if (!/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return "Include at least one letter and one number.";
+  return null;
+};
+
+/** Turn the API's field errors into readable lines for the Review step. */
+const describeRegisterError = (err: any): string[] => {
+  const details = err?.details;
+  if (details && typeof details === "object") {
+    const lines = Object.entries(details as Record<string, unknown>).map(([field, msgs]) => {
+      const text = Array.isArray(msgs) ? msgs.join(", ") : String(msgs);
+      return `${field}: ${text}`;
+    });
+    if (lines.length) return lines;
+  }
+  return [err?.message || "Registration failed. Please check your details and try again."];
+};
+
 export const Route = createFileRoute("/stakeholder/register")({
   component: RegisterPage,
 });
@@ -86,18 +119,21 @@ function RegisterPage() {
     Partial<StakeholderRegistrationInput>
   >({});
   const registerMutation = useStakeholderRegister();
+  const [submitErrors, setSubmitErrors] = useState<string[]>([]);
 
   const updateForm = (data: Partial<StakeholderRegistrationInput>) =>
     setFormData((prev) => ({ ...prev, ...data }));
 
   const handleSubmit = async () => {
+    setSubmitErrors([]);
     try {
       await registerMutation.mutateAsync(
         formData as StakeholderRegistrationInput,
       );
       navigate({ to: "/stakeholder/registration-success" });
     } catch (e) {
-      /* Error handled by hook */
+      // The hook shows a short toast; keep the full reason on screen so it can be fixed (QA STK-01).
+      setSubmitErrors(describeRegisterError(e));
     }
   };
 
@@ -110,7 +146,8 @@ function RegisterPage() {
         !!formData.contactPerson &&
         !!formData.contactEmail &&
         !!formData.contactPhone &&
-        !!formData.password
+        !!formData.password &&
+        !passwordProblem(formData.password)
       );
     return true;
   };
@@ -282,14 +319,23 @@ function RegisterPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-300">Tenant Type</Label>
-                      <Input
+                      {/* QA finding STK-01: this was free text ("e.g. Retail, F&B"), but the API only
+                          accepts these values, so typing what the hint suggested failed. */}
+                      <Select
                         value={formData.tenantType || ""}
-                        onChange={(e) =>
-                          updateForm({ tenantType: e.target.value })
-                        }
-                        placeholder="e.g. Retail, F&B"
-                        className="bg-slate-800 text-white border-slate-700"
-                      />
+                        onValueChange={(v) => updateForm({ tenantType: v })}
+                      >
+                        <SelectTrigger className="bg-slate-800 text-white border-slate-700">
+                          <SelectValue placeholder="Choose tenant type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TENANT_TYPES.map(([value, text]) => (
+                            <SelectItem key={value} value={value}>
+                              {text}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-slate-300">
@@ -364,13 +410,31 @@ function RegisterPage() {
                     onChange={(e) => updateForm({ password: e.target.value })}
                     placeholder="Create a secure password"
                     className="bg-slate-800 text-white border-slate-700 h-12"
+                    aria-describedby="pw-help"
                   />
+                  <p
+                    id="pw-help"
+                    className={passwordProblem(formData.password) ? "text-sm text-red-400" : "text-sm text-slate-400"}
+                  >
+                    {passwordProblem(formData.password) ?? "At least 8 characters, with a letter and a number."}
+                  </p>
                 </div>
               </div>
             </div>
           )}
 
           {/* Step 4: Review */}
+          {step === 4 && submitErrors.length > 0 && (
+            <div role="alert" className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-300">
+              <p className="font-semibold text-red-200">Registration wasn't accepted:</p>
+              <ul className="mt-1 list-disc pl-5">
+                {submitErrors.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+              <p className="mt-2">Use Back to correct these details, then submit again.</p>
+            </div>
+          )}
           {step === 4 && (
             <div className="space-y-6">
               <div>
@@ -406,6 +470,19 @@ function RegisterPage() {
                         {formData.officeAddress}
                       </span>
                     </div>
+                    {[
+                      ["CAC number", formData.registrationNumber],
+                      ["TIN", formData.tin],
+                      ["Tenant type", TENANT_TYPES.find(([v]) => v === formData.tenantType)?.[1]],
+                      ["Location in airport", formData.locationInAirport],
+                    ]
+                      .filter(([, v]) => !!v)
+                      .map(([k, v]) => (
+                        <div key={k as string}>
+                          <span className="text-slate-400">{k}:</span>
+                          <span className="text-white ml-2">{v}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
                 <div className="bg-slate-800 text-white/50 rounded-xl p-4">

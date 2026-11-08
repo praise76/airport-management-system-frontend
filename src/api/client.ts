@@ -28,6 +28,20 @@ export function fileUrl(path?: string | null): string | undefined {
 }
 
 /**
+ * Send the user to the right sign-in page once their session can't be renewed, keeping where
+ * they were. QA finding PLAT-01: the session was cleared but forms stayed on screen and their
+ * submits failed with 401.
+ */
+function redirectToLogin() {
+	if (typeof window === "undefined") return;
+	const { pathname, search } = window.location;
+	if (/\/(auth|stakeholder)\/(login|register|forgot-password|reset-password)/.test(pathname)) return;
+	const loginPath = pathname.startsWith("/stakeholder/") ? "/stakeholder/login" : "/auth/login";
+	const next = encodeURIComponent(pathname + search);
+	window.location.assign(`${loginPath}?next=${next}&reason=session-expired`);
+}
+
+/**
  * Base axios instance WITHOUT the 401 interceptor.
  * Used for refresh token calls to avoid recursion/deadlocks.
  */
@@ -101,20 +115,24 @@ function createApiClient(): AxiosInstance {
 					
 					return instance(original);
 				} catch (e) {
-					// Clear pending requests and logout on total failure
-					pendingRequests = [];
+					// Refresh failed: end the session. Run the queued callbacks first; with no token
+					// they reject, where before they were dropped and those requests never settled.
 					useAuthStore.getState().logout();
-						useAuthStore.getState().logout();
+					const queued = pendingRequests;
+					pendingRequests = [];
+					queued.forEach((callback) => callback());
+					redirectToLogin();
 					return Promise.reject(normalizeError(error));
 				} finally {
 					isRefreshing = false;
 				}
 			}
 
-            // If 401 and it was a retry, or some other non-retryable 401
-            if (status === 401) {
-                useAuthStore.getState().logout();
-            }
+			// If 401 and it was a retry, or some other non-retryable 401
+			if (status === 401) {
+				useAuthStore.getState().logout();
+				redirectToLogin();
+			}
 
 			return Promise.reject(normalizeError(error));
 		},

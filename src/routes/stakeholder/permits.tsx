@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import {
@@ -164,6 +165,11 @@ function PermitsPage() {
 			!formData.accessLevel
 		)
 			return;
+		// QA finding STK-02: a permit valid from 31 Dec until 15 Nov was accepted and approved.
+		if (formData.validUntil < formData.validFrom) {
+			toast.error("“Valid Until” must be on or after “Valid From”.");
+			return;
+		}
 
 		await createPermit.mutateAsync({
 			permitType: formData.permitType,
@@ -476,6 +482,7 @@ function PermitsPage() {
 								<Label className="text-slate-300">Valid Until *</Label>
 								<Input
 									type="date"
+									min={formData.validFrom || undefined}
 									value={formData.validUntil}
 									onChange={(e) =>
 										setFormData((prev) => ({

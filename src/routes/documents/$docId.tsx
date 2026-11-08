@@ -10,7 +10,7 @@ import {
 	UserPlus,
 	XCircle,
 } from "lucide-react";
-import { cloneElement, useId, useMemo, useState } from "react";
+import { cloneElement, useId, useState } from "react";
 import { fileUrl } from "@/api/client";
 import { DepartmentSelector } from "@/components/departments";
 import { Button } from "@/components/ui/button";
@@ -24,13 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentJourney } from "@/features/documents/components/DocumentJourney";
@@ -44,7 +37,7 @@ import {
 	useReturnDocument,
 	useRgmForwardDocument,
 } from "@/hooks/documents";
-import { useUsers } from "@/hooks/users";
+import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { hasAnyRole, ROLE_GROUPS } from "@/lib/access";
 import { label } from "@/lib/labels";
 import { useAuthStore } from "@/stores/auth";
@@ -256,18 +249,11 @@ function ActionDialog({
 
 function ForwardToPersonDialog({ docId }: { docId: string }) {
 	const forward = useForwardDocument(docId);
-	const { data } = useUsers({ limit: 500 });
 	const [toUserId, setToUserId] = useState("");
+	const [toRole, setToRole] = useState<string | undefined>();
 	const [deadline, setDeadline] = useState("");
-	const [q, setQ] = useState("");
 	const deadlineId = useId();
-	const people = useMemo(() => {
-		const all = (data?.data ?? []) as any[];
-		const needle = q.trim().toLowerCase();
-		return needle
-			? all.filter((u) => `${u.firstName} ${u.lastName} ${u.email ?? ""}`.toLowerCase().includes(needle))
-			: all;
-	}, [data, q]);
+	const officerId = useId();
 	return (
 		<ActionDialog
 			trigger={<Button size="sm"><UserPlus className="h-4 w-4" /> Assign to officer</Button>}
@@ -279,19 +265,19 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 			extra={
 				<>
 					<div className="space-y-2">
-						<Label>Officer</Label>
-						<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name" />
-						<Select value={toUserId} onValueChange={setToUserId}>
-							<SelectTrigger><SelectValue placeholder="Choose an officer" /></SelectTrigger>
-							<SelectContent>
-								{people.slice(0, 100).map((u: any) => (
-									<SelectItem key={u.id} value={u.id}>
-										{u.firstName} {u.lastName}
-										{u.department?.name ? ` · ${u.department.name}` : ""}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
+						<Label htmlFor={officerId}>Officer</Label>
+						{/* QA finding DOC-03: the list came from /admin/staff (empty for HODs) and offered
+						    people the API can't assign to. The API needs toRole = hod | manager | officer. */}
+						<ColleaguePicker
+							id={officerId}
+							value={toUserId || undefined}
+							onChange={(id, person) => {
+								setToUserId(id ?? "");
+								setToRole(person?.role ? String(person.role).toLowerCase() : undefined);
+							}}
+							roles={ASSIGNABLE_ROLES}
+							placeholder="Search for an officer, manager or HOD"
+						/>
 					</div>
 					<div className="space-y-2">
 						<Label htmlFor={deadlineId}>Act by (optional)</Label>
@@ -303,15 +289,19 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 				forward.mutate(
 					{
 						toUserId,
+						toRole,
 						comments: minute || undefined,
 						deadline: deadline ? new Date(`${deadline}T17:00:00`).toISOString() : undefined,
 					},
-					{ onSuccess: () => { setToUserId(""); setDeadline(""); close(); } },
+					{ onSuccess: () => { setToUserId(""); setToRole(undefined); setDeadline(""); close(); } },
 				)
 			}
 		/>
 	);
 }
+
+/** Roles the document-forward API accepts as `toRole`. */
+const ASSIGNABLE_ROLES = ["hod", "manager", "officer"];
 
 function ForwardToDeptDialog({ docId }: { docId: string }) {
 	const forward = useRgmForwardDocument(docId);

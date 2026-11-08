@@ -2,7 +2,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useReviewSwap } from "@/hooks/swaps"; // Assuming incoming swaps endpoint can be filtered for supervisor or a new hook is needed
-import { SwapRequest } from "@/types/swaps";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useState } from "react";

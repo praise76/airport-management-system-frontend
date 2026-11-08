@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatNaira } from "@/lib/labels";
 import { useState, useMemo } from "react";
@@ -75,7 +76,20 @@ function InvoicesPage() {
 
 	const handleCreateInvoice = async () => {
 		const valid = formData.lineItems.filter((i) => i.description && i.amount > 0);
-		if (!formData.invoiceNumber.trim() || !formData.description.trim() || !formData.dueDate || !valid.length) return;
+		// QA finding STK-05: a quantity of -2 showed a negative total and Create silently did nothing.
+		if (formData.lineItems.some((i) => i.quantity < 1 || i.unitPrice < 0)) {
+			toast.error("Each line needs a quantity of at least 1 and a price of 0 or more.");
+			return;
+		}
+		if (!valid.length) {
+			toast.error("Add at least one line item with a description and an amount.");
+			return;
+		}
+		if (formData.invoiceDate && formData.dueDate < formData.invoiceDate) {
+			toast.error("The due date can't be before the invoice date.");
+			return;
+		}
+		if (!formData.invoiceNumber.trim() || !formData.description.trim() || !formData.dueDate) return;
 		try {
 			await createInvoice.mutateAsync({ invoiceNumber: formData.invoiceNumber, invoiceType: formData.invoiceType, invoiceDate: formData.invoiceDate, dueDate: formData.dueDate, description: formData.description, lineItems: valid });
 		} catch {
@@ -125,7 +139,7 @@ function InvoicesPage() {
 						<div className="space-y-2"><Label className="text-slate-300">Description *</Label><Textarea value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} className="bg-slate-800 border-slate-700" /></div>
 						<div className="space-y-3">
 							<div className="flex items-center justify-between"><Label className="text-slate-300">Line Items *</Label><Button type="button" size="sm" variant="outline" onClick={addLineItem} className="border-purple-500/50 text-purple-400"><Plus className="h-3 w-3 mr-1" />Add</Button></div>
-							{formData.lineItems.map((item, idx) => (<div key={idx} className="bg-slate-800/50 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Input placeholder="Description" value={item.description} onChange={(e) => updateLineItem(idx, "description", e.target.value)} className="flex-1 bg-slate-800 border-slate-700 text-sm" /><Button type="button" size="icon" variant="ghost" onClick={() => removeLineItem(idx)} className="text-red-400"><Trash2 className="h-4 w-4" /></Button></div><div className="grid grid-cols-3 gap-2"><Input type="number" min="1" value={item.quantity} onChange={(e) => updateLineItem(idx, "quantity", parseInt(e.target.value) || 0)} className="bg-slate-800 border-slate-700 text-sm" placeholder="Qty" /><Input type="number" min="0" value={item.unitPrice} onChange={(e) => updateLineItem(idx, "unitPrice", parseFloat(e.target.value) || 0)} className="bg-slate-800 border-slate-700 text-sm" placeholder="Price" /><Input readOnly value={`₦${item.amount.toLocaleString()}`} className="bg-slate-700/50 border-slate-700 text-sm" /></div></div>))}
+							{formData.lineItems.map((item, idx) => (<div key={idx} className="bg-slate-800/50 rounded-lg p-3 space-y-2"><div className="flex items-center gap-2"><Input placeholder="Description" value={item.description} onChange={(e) => updateLineItem(idx, "description", e.target.value)} className="flex-1 bg-slate-800 border-slate-700 text-sm" /><Button type="button" size="icon" variant="ghost" onClick={() => removeLineItem(idx)} className="text-red-400"><Trash2 className="h-4 w-4" /></Button></div><div className="grid grid-cols-3 gap-2"><Input type="number" min="1" value={item.quantity} onChange={(e) => updateLineItem(idx, "quantity", Math.max(1, parseInt(e.target.value) || 1))} className="bg-slate-800 border-slate-700 text-sm" placeholder="Qty" /><Input type="number" min="0" value={item.unitPrice} onChange={(e) => updateLineItem(idx, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))} className="bg-slate-800 border-slate-700 text-sm" placeholder="Price" /><Input readOnly value={`₦${item.amount.toLocaleString()}`} className="bg-slate-700/50 border-slate-700 text-sm" /></div></div>))}
 						</div>
 						<div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 space-y-2"><div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal</span><span className="text-white">{formatNaira(subtotal)}</span></div><div className="flex justify-between text-sm"><span className="text-slate-400">VAT (7.5%)</span><span className="text-white">₦{tax.toFixed(2)}</span></div><div className="flex justify-between text-lg font-bold border-t border-purple-500/20 pt-2"><span className="text-white">Total</span><span className="text-purple-400">₦{total.toFixed(2)}</span></div></div>
 					</div>

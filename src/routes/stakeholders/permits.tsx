@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Printer, Search } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -151,7 +152,14 @@ function PermitQueuePage() {
 										(reject.isPending && reject.variables?.permitId === p.id)
 									}
 									rejectTitle={`Reject ${p.personName}'s permit?`}
-									onApprove={() => approve.mutate(p.id)}
+									onApprove={() => {
+												// QA finding STK-02: don't approve a permit that ends before it starts.
+												if (p.validFrom && p.validUntil && new Date(p.validUntil) < new Date(p.validFrom)) {
+													toast.error("This permit ends before it starts. Reject it and ask the company to correct the dates.");
+													return;
+												}
+												approve.mutate(p.id);
+											}}
 									onReject={(reason) => reject.mutate({ permitId: p.id, reason })}
 								/>
 							)}

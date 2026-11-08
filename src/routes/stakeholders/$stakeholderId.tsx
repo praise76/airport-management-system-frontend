@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { requireStaff, ROLE_GROUPS, canReviewStakeholders, isSuperAdmin } from "@/lib/access";
 import { useAuthStore } from "@/stores/auth";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
@@ -738,7 +739,14 @@ function PermitsTab({
 												(reject.isPending && reject.variables?.permitId === permit.id)
 											}
 											rejectTitle={`Reject ${permit.personName}'s permit?`}
-											onApprove={() => approve.mutate(permit.id)}
+											onApprove={() => {
+												// QA finding STK-02: don't approve a permit that ends before it starts.
+												if (permit.validFrom && permit.validUntil && new Date(permit.validUntil) < new Date(permit.validFrom)) {
+													toast.error("This permit ends before it starts. Reject it and ask the company to correct the dates.");
+													return;
+												}
+												approve.mutate(permit.id);
+											}}
 											onReject={(reason) => reject.mutate({ permitId: permit.id, reason })}
 										/>
 									)}
