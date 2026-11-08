@@ -1,0 +1,282 @@
+# Backend fixes from the 8 Nov 2026 QA run
+
+The frontend fixes for these findings are on branch `qa-fixes-2026-11-08` of this repo.
+The items below need changes in the **backend** repository, which wasn't available to the
+person who did the testing. Each item lists what was observed against the live API
+(`airport-management-system-backend-ed7t.onrender.com`), the likely cause, and a concrete
+fix. The code is written for an Express + zod service; adapt names to the real modules.
+
+Finding IDs match the QA report (ATT-01, LV-02, …).
+
+---
+
+## Critical
+
+### ATT-01 / ATT-02: Check-in ignores the geofence
+
+**Observed:** `POST /api/attendance/location-status` returned `{inside:false, zone:null}`,
+then `POST /api/attendance/check-in` returned `200 clocked_in` from 2.4 km away. An officer
+rostered at IT1 also checked in at MMA2.
+
+**Fix:** run the point-in-zone test on the server, in the check-in handler, against the
+rostered zone.
+
+```ts
+// attendance/check-in.handler.ts
+const body = z.object({
+  lat: z.number().gte(-90).lte(90),
+  lng: z.number().gte(-180).lte(180),
+  accuracy: z.number().nonnegative().max(500).optional(),
+  terminalCode: z.string().optional(),
+  clockInMethod: z.enum(['geofence', 'manual']).default('geofence'),
+  deviceId: z.string().optional(),
+}).parse(req.body);
+
+const entry = await rosterRepo.findEntryForDuty(req.user.id, nowInOrgTz(org));   // see ATT-03
+const candidates = entry?.dutyLocation && isUuid(entry.dutyLocation)
+  ? [await zonesRepo.getActive(entry.dutyLocation)].filter(Boolean)
+  : await zonesRepo.listActive(req.user.organizationId);
+
+const hit = candidates.find(z => isInsideZone(z, body.lat, body.lng, body.accuracy ?? 0));
+if (!hit) {
+  return res.status(403).json({
+    success: false,
+    error: entry?.dutyLocation
+      ? 'You are outside your rostered check-in zone'
+      : 'You are outside every check-in zone',
+    code: 'OUTSIDE_ZONE',
+  });
+}
+// only privileged roles may use clockInMethod 'manual', and it must be audited
+await attendanceRepo.clockIn({ userId: req.user.id, zoneId: hit.id, ...body });
+```
+
+`isInsideZone` should allow for GPS accuracy, e.g. `distance <= radius + min(accuracy, 50)`,
+and handle polygons with a point-in-polygon test. Store the zone id on the log, not only the
+zone name.
+
+**Tests:** check-in outside every zone → 403; inside a zone other than the rostered one → 403;
+inside the rostered zone → 200; not rostered and inside any active zone → 200.
+
+### SEC-01: Officers receive other people's attendance
+
+**Observed:** `GET /api/attendance?pageSize=30` with an officer token returned the CEO's,
+the System Administrator's and a manager's records.
+
+```ts
+const canSeeAll = hasAnyRole(req.user, ['super_admin', 'org_admin', 'hr', 'hod', 'rgm', 'acos'])
+  || hasPermission(req.user, 'attendance.view_all');
+const where = { organizationId: req.user.organizationId, ...(canSeeAll ? {} : { userId: req.user.id }) };
+```
+
+HODs should probably be limited to their own department and its child units.
+
+### SEC-02: Any officer can create terminals
+
+**Observed:** `POST /api/terminals` with an officer token returned 201.
+
+```ts
+router.post('/terminals', requireRole('super_admin', 'org_admin'), createTerminal);
+router.patch('/terminals/:id', requireRole('super_admin', 'org_admin'), updateTerminal);
+router.delete('/terminals/:id', requireRole('super_admin', 'org_admin'), deleteTerminal);
+router.post('/terminals/seed-mmia', requireRole('super_admin'), seedMmia);
+```
+
+Add a test that loops over every non-GET route and calls it as `officer`, expecting 403
+unless the route is on an explicit allow-list.
+
+### LV-01: Leave review contract mismatch
+
+**Observed:** the API validates `{approved: boolean}`, but `api.json` documents
+`{decision: "approve"|"reject"}`. The frontend now sends both. Make the backend accept either,
+and update `api.json` to match.
+
+```ts
+const ReviewLeaveInput = z.object({
+  decision: z.enum(['approve', 'reject']).optional(),
+  approved: z.boolean().optional(),
+  comments: z.string().max(2000).optional(),
+}).refine(v => v.decision !== undefined || v.approved !== undefined, 'decision is required')
+  .transform(v => ({ approved: v.approved ?? v.decision === 'approve', comments: v.comments }));
+```
+
+Also, once a request is final (`approved`, `rejected` or `cancelled`), reject further reviews
+with 409. In QA the HR stage accepted an approval on an already-approved request. Return
+400 "Invalid level" only for unknown levels.
+
+### LV-02: Approvers are refused their own queue
+
+**Observed:** `GET /self-service/leave/pending/hod` → 403 for the HOD; `/hr` → 403 for HR;
+`/supervisor` → 403 for the supervisor.
+
+```ts
+const LEVEL_ROLES = {
+  supervisor: ['supervisor', 'hou', 'manager'],
+  hod: ['hod', 'acos', 'rgm'],
+  hr: ['hr'],
+} as const;
+const ADMIN = ['super_admin', 'org_admin'];
+
+router.get('/self-service/leave/pending/:level', (req, res, next) => {
+  const level = req.params.level as keyof typeof LEVEL_ROLES;
+  if (!LEVEL_ROLES[level]) return res.status(400).json({ success: false, error: 'Invalid level' });
+  if (!hasAnyRole(req.user, [...LEVEL_ROLES[level], ...ADMIN])) return res.status(403).json({ success: false, error: 'Forbidden' });
+  next();
+}, listPendingLeave);
+```
+
+Scope the list to the approver's department (and child units) unless they're an admin or HR.
+Include `user: {id, firstName, lastName}` in each item; the screen showed "Unknown Staff".
+If managers should approve at supervisor level, also add `MANAGER` to `approvalLevelsFor`
+in `src/hooks/leave.ts` and to the route guard of `/admin/leave/approvals` (the manager was
+redirected away from that page).
+
+---
+
+## High
+
+### LV-03: Approved leave doesn't touch the roster
+When a request becomes `approved`, mark overlapping roster entries (same user, dutyDate
+between startDate and endDate) as `on_leave`, or release them, inside the same transaction.
+Add a `leave_conflict` rule to the roster's publish checks.
+
+### LV-04: Overlapping leave accepted
+```ts
+const clash = await leaveRepo.findFirst({
+  userId, status: { in: ['pending', 'approved'] },
+  startDate: { lte: endDate }, endDate: { gte: startDate },
+});
+if (clash) return res.status(409).json({ success: false,
+  error: `You already have ${clash.leaveType} leave from ${clash.startDate} to ${clash.endDate}` });
+```
+
+### LV-05: No leave balances
+`GET /self-service/leave/balance` returns `[]` for every user. Create entitlement rows when a
+user is created (including through the Excel import), using the organisation's leave policy.
+Check `remaining >= totalDays` on apply (warn) and on final approval (block, or allow with
+override).
+
+### ATT-03: Shift times treated as UTC
+`scheduledStart` was `2026-11-08T06:00:00.000Z` for a 06:00 Lagos shift, so lateness was
+238 minutes instead of 298. Build the instant from the duty date and the shift's wall-clock
+time in the organisation's timezone:
+
+```ts
+import { fromZonedTime } from 'date-fns-tz';
+const tz = org.timezone ?? 'Africa/Lagos';
+const scheduledStart = fromZonedTime(`${entry.dutyDate}T${entry.shiftStartTime}`, tz);
+// a night shift that ends before it starts finishes the next day
+```
+
+Use the same helper for the registry, the duty board, reports and the swap rest-time rule.
+
+### ATT-04: Attendance Registry duplicates and misses check-ins
+The registry listed people twice (System Administrator, Chidi Okafor, Emeka Eze), showed no
+shift, and showed Emeka "Not clocked in" while he was checked in. Likely a join that fans out
+(roster entries × group memberships) and a date match done in UTC. Group by `user.id`, join
+roster entries on `(userId, dutyDate)`, and match attendance logs on the local duty date.
+
+### RST-02: Roster silently attached to a unit
+With no unit chosen, `POST /roster` saved `unitDepartmentId` = Operations Registry. Remove
+the fallback to the department's first child unit; a department-level roster should have
+`unitDepartmentId: null`. Shift definitions created for it inherited the wrong unit too.
+
+### RST-03: `GET /roster/patterns` returns 500
+It fails on every call. Check the server log; a missing table or column after a migration is
+the most likely cause. Add a smoke test that calls it on an empty organisation.
+
+### RST-05: Swaps
+1. `GET /roster/swaps/approvals` → 403 for `supervisor`; allow `supervisor`, `hou`,
+   `manager`, `hod`, scoped to their unit.
+2. A marketplace post approved by a manager became `approved` with no taker, and never
+   appeared in `GET /roster/swaps/marketplace`. Approval of a marketplace post should set
+   `open_marketplace` (listed), and only a claim should move the shift and set `completed`.
+3. `GET /roster/swaps?status=all` → 500.
+4. Include `requestingStaff` and `targetStaff` `{id, firstName, lastName}` in swap responses.
+   The frontend now reads them via `normalizeSwap`.
+
+### DOC-01: Forwarded documents invisible to the department
+After "Forward to department: Operations", the Operations HOD's `GET /documents` list was
+empty; the document only opened by direct link. Include
+`currentDepartmentId IN (user's department + child units)` in the list filter for HODs,
+managers and registry clerks.
+
+### DOC-02: Sender fields dropped on register
+`senderOrg`, `senderName` and `senderRef` were sent but the document shows "Not recorded".
+Align the zod schema keys with the form, or map them, and add a round-trip test
+(register → GET shows the same sender).
+
+### DOC-03: Forward needs `toRole`
+`POST /documents/:id/forward` returns 400 `toRole: expected hod|manager|officer` when it's
+missing. The frontend now sends it, but the server can derive it from `toUserId`'s role and
+should reject ineligible users with a readable message.
+
+### INV-01: Requisition status changes even when submit fails
+`POST /inventory/requisitions/:id/submit` returned 400 "Requester has no position in the
+approval hierarchy above them", yet the requisition then showed status `submitted`. Run the
+approval-route lookup **before** changing the status, in one transaction. Fall back to the
+department HOD when the requester has no position. Imported staff have no position because
+the import template has no Position column (STF-02).
+
+### TSK-01: Task due dates
+`dueAt` is `date-time`. The frontend now sends one; also consider accepting a plain date
+(`z.union([z.string().datetime(), z.string().date()])`) and treating it as end of day in the
+organisation's timezone.
+
+### STK-01: Tenant type enum
+Fine as an enum. Return the allowed values in the error message, which the frontend now
+shows, or expose them through `GET /stakeholder-orgs/meta`.
+
+### STK-02: Permit dates
+Validate `validUntil >= validFrom` in both the create and approve handlers. In QA the admin
+approved a permit valid from 31 Dec 2026 until 15 Nov 2026.
+
+### STK-03: Unverified companies and verification without documents
+* Add `requireVerifiedStakeholder` to permit, invoice and activity create routes. An
+  unverified company applied for an **airside** permit minutes after registering.
+* `POST /stakeholder-orgs/:id/verify` succeeded with 0 of 4 required documents approved.
+  Return 409 with the outstanding list unless `{override: true, reason}` is sent, and audit
+  the override.
+
+### STK-04: No admin actions for partner activities
+Add `POST /stakeholder-orgs/activities/:id/review` `{decision, comments}` (and an assign
+endpoint if needed), following the permit and invoice pattern. The UI then needs buttons on
+the stakeholder's Activities tab.
+
+---
+
+## Medium / Low
+
+* **STF-01:** set `mustChangePassword = true` for imported and admin-created users. Return
+  403 `PASSWORD_CHANGE_REQUIRED` from protected routes until it's changed.
+* **STF-02:** add a `Position Code` column to the import template. After import, add users to
+  their department's and units' chat channels (the Operations Registry "All Staff" channel
+  had 1 member after 8 Operations staff were imported). Insert in one transaction; 12 rows
+  took more than 8 s.
+* **GEO-01:** `seed-mmia` creates terminals without coordinates, omits MMA2, and lists
+  Bi-Courtney as MMA1's operator (Bi-Courtney runs MMA2). Coordinates from OpenStreetMap
+  terminal outlines (centre, radius covering the building + 40 m):
+
+  | Terminal | Lat | Lng | Radius |
+  |---|---|---|---|
+  | International Terminal 1 (IT1) | 6.578953 | 3.321075 | 280 m |
+  | International Terminal 2 (IT2) | 6.576957 | 3.323516 | 200 m |
+  | MMA1 Domestic Terminal | 6.590091 | 3.331905 | 120 m |
+  | MMA2 Domestic Terminal (Bi-Courtney) | 6.584775 | 3.332757 | 180 m |
+  | Cargo Terminal & Apron | 6.568633 | 3.317434 | 200 m |
+
+  GAT, Hajj and Presidential aren't mapped in OpenStreetMap; get their coordinates on site.
+  Consider a `terminalId` on geofence zones so a roster entry's terminal implies its zone.
+* **ATT-05:** dashboard "Attendance today" is always 0/0, and "Unread 0" sits next to
+  "14 conversations with new messages". Reuse the duty-board query; count unread messages,
+  not conversations.
+* **ATT-06:** record the check-out location and flag out-of-zone check-outs. The duty board
+  should show the rostered terminal name, not "Main Terminal".
+* **PERF-01:** creating a shift definition took about 30 s and assigning a shift about 7 s;
+  a cold start took more than 90 s. The client timeout is 20 s, so slow calls can fail on
+  screen while succeeding on the server. Index `organizationId`, `unitDepartmentId`,
+  `rosterId` and `(userId, dutyDate)`, and keep the service warm (paid plan, or a scheduled
+  ping of `/health`).
+* **Messaging search** (`GET /messages/users/search`) is now used by the colleague pickers.
+  It requires `q` (1+ characters) and caps `limit` at 20. That's fine for type-to-search,
+  but it should respect `departmentId`, which the pickers send.
