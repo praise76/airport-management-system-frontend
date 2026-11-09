@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { fileUrl } from "@/api/client";
 import { label } from "@/lib/labels";
+import { useAuthStore } from "@/stores/auth";
 import { useDocuments, useInternalBroadcast } from "@/hooks/documents";
 import type { DocumentDirection } from "@/types/document";
 import {
@@ -62,10 +63,17 @@ const isOverdue = (d?: string, status?: string) =>
 
 function DocumentsPage() {
   const navigate = useNavigate();
+  const role = useAuthStore((state) => state.user?.role);
   const [status, setStatus] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [direction, setDirection] = useState<DocumentDirection | "">("");
-  const [scope, setScope] = useState<"personal" | "department">("personal");
+  const [scope, setScope] = useState<"personal" | "department">(() =>
+    ["hod", "hou", "manager", "supervisor", "registry_clerk"].includes(
+      role ?? "",
+    )
+      ? "department"
+      : "personal",
+  );
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useDocuments({
