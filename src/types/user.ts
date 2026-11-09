@@ -9,7 +9,7 @@ export type User = {
   departmentId?: string
   roles?: string[]
   employeeId?: string
-  /** Grade level 1-16 (sets annual leave). */
+  /** Grade level 1-15 (sets annual leave). */
   gradeLevel?: number | null
   createdAt: string
   updatedAt: string
