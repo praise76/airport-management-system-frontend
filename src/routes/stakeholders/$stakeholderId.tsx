@@ -61,6 +61,7 @@ import { getStakeholderTypeLabel } from "@/types/stakeholder-portal";
 import { formatNaira, label } from "@/lib/labels";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
+	ActivitiesReviewTab,
 	DecisionButtons,
 	InvoicesReviewTab,
 	ReasonDialog,
@@ -262,7 +263,10 @@ function StakeholderDetailPage() {
 					<UsersTab users={users ?? []} />
 				)}
 				{activeTab === "activities" && (
-					<ActivitiesTab activities={activitiesData?.data ?? []} />
+					<ActivitiesReviewTab
+						stakeholderOrgId={stakeholderId}
+						activities={activitiesData?.data ?? []}
+					/>
 				)}
 				{activeTab === "permits" && (
 					<PermitsTab stakeholderId={stakeholderId} permits={permitsData?.data ?? []} />
@@ -394,7 +398,6 @@ function StakeholderDetailPage() {
 import type {
 	StakeholderOrganization,
 	StakeholderUser,
-	StakeholderActivity,
 	StakeholderPermit,
 } from "@/types/stakeholder-portal";
 
@@ -632,50 +635,6 @@ function UsersTab({
 									<Badge variant="destructive">Inactive</Badge>
 								)}
 							</div>
-						</div>
-					))}
-				</div>
-			)}
-		</div>
-	);
-}
-
-function ActivitiesTab({ activities }: { activities: StakeholderActivity[] }) {
-	return (
-		<div className="space-y-4">
-			<div className="flex justify-between items-center">
-				<h3 className="font-semibold">Recent Activities</h3>
-			</div>
-			{activities.length === 0 ? (
-				<div className="text-center py-12 text-muted-foreground">
-					No activities recorded for this stakeholder.
-				</div>
-			) : (
-				<div className="border rounded-lg divide-y">
-					{activities.map((activity) => (
-						<div key={activity.id} className="p-4">
-							<div className="flex items-start justify-between">
-								<div>
-									<p className="font-medium">{activity.activityTitle}</p>
-									<p className="text-sm text-muted-foreground">
-										{activity.activityType} • {activity.activityReference}
-									</p>
-								</div>
-								<Badge
-									variant={
-										activity.status === "approved"
-											? "default"
-											: activity.status === "rejected"
-												? "destructive"
-												: "outline"
-									}
-								>
-									{activity.status.replace(/_/g, " ")}
-								</Badge>
-							</div>
-							<p className="text-xs text-muted-foreground mt-2">
-								Submitted: {new Date(activity.createdAt).toLocaleString()}
-							</p>
 						</div>
 					))}
 				</div>

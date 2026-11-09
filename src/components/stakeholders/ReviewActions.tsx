@@ -12,13 +12,14 @@ import {
 import { StatusPill } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import {
+	useReviewStakeholderActivity,
 	useReviewStakeholderInvoice,
 	useStakeholderInvoices,
 } from "@/hooks/stakeholder-portal";
 import { canReviewStakeholders } from "@/lib/access";
 import { formatNaira } from "@/lib/labels";
 import { useAuthStore } from "@/stores/auth";
-import type { StakeholderInvoice } from "@/types/stakeholder-portal";
+import type { StakeholderActivity, StakeholderInvoice } from "@/types/stakeholder-portal";
 
 /** Asks for a reason before a "no" decision. The reason is sent to the company. */
 export function ReasonDialog({
@@ -131,6 +132,70 @@ export function DecisionButtons({
 }
 
 const REVIEWABLE = new Set(["submitted", "under_review"]);
+
+/** Partner activities submitted to FAAN, with reviewer approve/reject actions. */
+export function ActivitiesReviewTab({
+	stakeholderOrgId,
+	activities,
+}: {
+	stakeholderOrgId: string;
+	activities: StakeholderActivity[];
+}) {
+	const review = useReviewStakeholderActivity(stakeholderOrgId);
+
+	if (activities.length === 0)
+		return (
+			<p className="py-12 text-center text-muted-foreground">
+				No activities recorded for this stakeholder.
+			</p>
+		);
+
+	return (
+		<div className="space-y-4">
+			<div className="flex items-center justify-between gap-3">
+				<h3 className="font-semibold">Recent Activities</h3>
+				<span className="text-sm text-muted-foreground">
+					{activities.filter((activity) => REVIEWABLE.has(activity.status)).length} waiting for a decision
+				</span>
+			</div>
+			<div className="divide-y rounded-lg border">
+				{activities.map((activity) => (
+					<div key={activity.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+						<div className="min-w-0">
+							<div className="flex flex-wrap items-center gap-2">
+								<p className="font-medium">{activity.activityTitle}</p>
+								<StatusPill status={activity.status} />
+							</div>
+							<p className="text-sm text-muted-foreground">
+								{activity.activityType} · {activity.activityReference}
+							</p>
+							<p className="mt-1 text-xs text-muted-foreground">
+								Submitted {new Date(activity.submittedAt ?? activity.createdAt).toLocaleString()}
+								{activity.reviewComments && ` · Review note: ${activity.reviewComments}`}
+							</p>
+						</div>
+						{REVIEWABLE.has(activity.status) && (
+							<DecisionButtons
+								busy={review.isPending && review.variables?.activityId === activity.id}
+								rejectTitle={`Reject activity ${activity.activityReference || activity.activityTitle}?`}
+								onApprove={() =>
+									review.mutate({ activityId: activity.id, status: "approved" })
+								}
+								onReject={(reason) =>
+									review.mutate({
+										activityId: activity.id,
+										status: "rejected",
+										reviewComments: reason,
+									})
+								}
+							/>
+						)}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
 
 /** Invoices a company has sent to FAAN, with approve/reject for ones awaiting review. */
 export function InvoicesReviewTab({ stakeholderOrgId }: { stakeholderOrgId: string }) {
