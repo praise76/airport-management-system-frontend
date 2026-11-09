@@ -1,4 +1,8 @@
-import axios, { type AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
+import axios, {
+	type AxiosError,
+	type AxiosInstance,
+	type InternalAxiosRequestConfig,
+} from "axios";
 import { useAuthStore } from "@/stores/auth";
 
 export type ApiError = {
@@ -15,7 +19,8 @@ export type ApiError = {
 // 2026-09-26 (Render web service + Neon Postgres, see SESSION_HANDOFF.md in the
 // backend repo for the full deployment record).
 export const API_BASE_URL: string =
-	import.meta.env.VITE_API_BASE_URL || "https://airport-management-system-backend-ed7t.onrender.com/api";
+	import.meta.env.VITE_API_BASE_URL ||
+	"https://airport-management-system-backend-ed7t.onrender.com/api";
 
 /** The server's root address (no "/api"), used for uploaded files and the live-update socket. */
 export const API_ORIGIN: string = API_BASE_URL.replace(/\/api\/?$/, "");
@@ -35,10 +40,26 @@ export function fileUrl(path?: string | null): string | undefined {
 function redirectToLogin() {
 	if (typeof window === "undefined") return;
 	const { pathname, search } = window.location;
-	if (/\/(auth|stakeholder)\/(login|register|forgot-password|reset-password)/.test(pathname)) return;
-	const loginPath = pathname.startsWith("/stakeholder/") ? "/stakeholder/login" : "/auth/login";
+	if (
+		/\/(auth|stakeholder)\/(login|register|forgot-password|reset-password)/.test(
+			pathname,
+		)
+	)
+		return;
+	const loginPath = pathname.startsWith("/stakeholder/")
+		? "/stakeholder/login"
+		: "/auth/login";
 	const next = encodeURIComponent(pathname + search);
 	window.location.assign(`${loginPath}?next=${next}&reason=session-expired`);
+}
+
+function redirectToPasswordChange() {
+	if (
+		typeof window === "undefined" ||
+		window.location.pathname === "/auth/change-password"
+	)
+		return;
+	window.location.assign("/auth/change-password");
 }
 
 /**
@@ -74,8 +95,17 @@ function createApiClient(): AxiosInstance {
 	instance.interceptors.response.use(
 		(res) => res,
 		async (error: AxiosError) => {
-			const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+			const original = error.config as InternalAxiosRequestConfig & {
+				_retry?: boolean;
+			};
 			const status = error.response?.status;
+			const responseCode = (
+				error.response?.data as { code?: string } | undefined
+			)?.code;
+
+			if (status === 403 && responseCode === "PASSWORD_CHANGE_REQUIRED") {
+				redirectToPasswordChange();
+			}
 
 			if (status === 401 && original && !original._retry) {
 				if (isRefreshing) {
@@ -92,7 +122,7 @@ function createApiClient(): AxiosInstance {
 								}
 							});
 						});
-					} catch (e) {
+					} catch {
 						return Promise.reject(normalizeError(error));
 					}
 				}
@@ -105,22 +135,26 @@ function createApiClient(): AxiosInstance {
 					useAuthStore
 						.getState()
 						.setTokens(refreshed.accessToken, refreshed.refreshToken);
-					
+
 					// Update original request Header
 					original.headers.Authorization = `Bearer ${refreshed.accessToken}`;
 
 					// Process queued requests
-					pendingRequests.forEach((callback) => callback());
+					pendingRequests.forEach((callback) => {
+						callback();
+					});
 					pendingRequests = [];
-					
+
 					return instance(original);
-				} catch (e) {
+				} catch {
 					// Refresh failed: end the session. Run the queued callbacks first; with no token
 					// they reject, where before they were dropped and those requests never settled.
 					useAuthStore.getState().logout();
 					const queued = pendingRequests;
 					pendingRequests = [];
-					queued.forEach((callback) => callback());
+					queued.forEach((callback) => {
+						callback();
+					});
 					redirectToLogin();
 					return Promise.reject(normalizeError(error));
 				} finally {
@@ -144,9 +178,14 @@ function createApiClient(): AxiosInstance {
 export const api = createApiClient();
 
 interface ApiErrorResponse {
-	success: false;
-	error: string;
-	errors?: Record<string, string[]>;
+	success?: false;
+	error?: string;
+	message?: string;
+	code?: string;
+	errors?:
+		| Record<string, string[] | string>
+		| Array<string | { message?: string }>;
+	details?: unknown;
 }
 
 /**
@@ -154,7 +193,7 @@ interface ApiErrorResponse {
  * { success: false, error: "..." }, plus { message }, field maps { errors: { field: ["..."] } }
  * and lists { errors: [{ message }] }, so the server's own reason reaches the screen.
  */
-const extractErrorMessage = (error: AxiosError<any>): string => {
+const extractErrorMessage = (error: AxiosError<ApiErrorResponse>): string => {
 	const data = error.response?.data;
 	const errors = data?.errors;
 	if (Array.isArray(errors) && errors.length) {
@@ -170,17 +209,19 @@ const extractErrorMessage = (error: AxiosError<any>): string => {
 	}
 	if (typeof data?.error === "string" && data.error) return data.error;
 	if (typeof data?.message === "string" && data.message) return data.message;
-	if (error.code === "ECONNABORTED") return "The server took too long to respond. Please try again.";
-	if (!error.response) return "Can't reach the server. Check your internet connection.";
+	if (error.code === "ECONNABORTED")
+		return "The server took too long to respond. Please try again.";
+	if (!error.response)
+		return "Can't reach the server. Check your internet connection.";
 	return error.message ?? "";
 };
 
-export function normalizeError(err: AxiosError<any>): ApiError {
-	if (axios.isAxiosError(err)) {
+export function normalizeError(err: unknown): ApiError {
+	if (axios.isAxiosError<ApiErrorResponse>(err)) {
 		const data = err.response?.data;
 		return {
 			status: err.response?.status ?? 0,
-			code: data?.error,
+			code: data?.code,
 			message: extractErrorMessage(err),
 			// `details` is the structured payload some 409s carry (document checklist, roster conflicts)
 			details: data?.details ?? data?.errors,
@@ -197,13 +238,14 @@ async function refreshToken(): Promise<{
 	const token = state.refreshToken;
 	if (!token) throw new Error("No refresh token");
 
-	const endpoint = state.user?.type === "stakeholder" 
-		? "/stakeholder-orgs/auth/refresh" 
-		: "/auth/refresh";
+	const endpoint =
+		state.user?.type === "stakeholder"
+			? "/stakeholder-orgs/auth/refresh"
+			: "/auth/refresh";
 
 	const res = await authApi.post(endpoint, { refreshToken: token });
 	const payload = res.data?.data ?? res.data;
-	
+
 	if (!payload.accessToken || !payload.refreshToken) {
 		throw new Error("Invalid refresh response");
 	}

@@ -41,8 +41,10 @@ function LoginPage() {
 	const passwordId = useId();
 
 	async function onSubmit(values: FormValues) {
-		await mutateAsync(values);
-		navigate({ to: "/" });
+		const result = await mutateAsync(values);
+		navigate({
+			to: result.user.mustChangePassword ? "/auth/change-password" : "/",
+		});
 	}
 
 	return (

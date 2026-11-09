@@ -13,6 +13,7 @@ export type LoginResponse = {
 		email: string;
 		role: string;
 		organizationId?: string;
+		mustChangePassword?: boolean;
 	};
 };
 

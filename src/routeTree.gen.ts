@@ -63,6 +63,7 @@ import { Route as DocumentsDocIdRouteImport } from './routes/documents/$docId'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthChangePasswordRouteImport } from './routes/auth/change-password'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
 import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
 import { Route as RosterPatternsIndexRouteImport } from './routes/roster/patterns/index'
@@ -356,6 +357,11 @@ const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
   path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthChangePasswordRoute = AuthChangePasswordRouteImport.update({
+  id: '/auth/change-password',
+  path: '/auth/change-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminStaffRoute = AdminStaffRouteImport.update({
   id: '/admin/staff',
   path: '/admin/staff',
@@ -450,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
   '/admin/staff': typeof AdminStaffRouteWithChildren
+  '/auth/change-password': typeof AuthChangePasswordRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -521,6 +528,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth/change-password': typeof AuthChangePasswordRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -595,6 +603,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
   '/admin/staff': typeof AdminStaffRouteWithChildren
+  '/auth/change-password': typeof AuthChangePasswordRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -670,6 +679,7 @@ export interface FileRouteTypes {
     | '/'
     | '/messages'
     | '/admin/staff'
+    | '/auth/change-password'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -741,6 +751,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth/change-password'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -814,6 +825,7 @@ export interface FileRouteTypes {
     | '/'
     | '/messages'
     | '/admin/staff'
+    | '/auth/change-password'
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/reset-password'
@@ -888,6 +900,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MessagesRoute: typeof MessagesRouteWithChildren
   AdminStaffRoute: typeof AdminStaffRouteWithChildren
+  AuthChangePasswordRoute: typeof AuthChangePasswordRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
@@ -1331,6 +1344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/change-password': {
+      id: '/auth/change-password'
+      path: '/auth/change-password'
+      fullPath: '/auth/change-password'
+      preLoaderRoute: typeof AuthChangePasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/staff': {
       id: '/admin/staff'
       path: '/admin/staff'
@@ -1500,6 +1520,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MessagesRoute: MessagesRouteWithChildren,
   AdminStaffRoute: AdminStaffRouteWithChildren,
+  AuthChangePasswordRoute: AuthChangePasswordRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
