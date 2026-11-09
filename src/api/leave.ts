@@ -26,6 +26,7 @@ import type {
 const TYPE_LABEL: Record<string, LeaveType> = {
 	annual: "Annual",
 	sick: "Sick",
+	exam: "Exam",
 	compassionate: "Compassionate",
 	unpaid: "Unpaid",
 	maternity: "Maternity",

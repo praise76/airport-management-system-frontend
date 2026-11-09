@@ -134,6 +134,7 @@ function StaffListPage() {
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Employee ID</TableHead>
+                <TableHead>Grade</TableHead>
                 <TableHead>Department</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -157,6 +158,7 @@ function StaffListPage() {
                     <Badge variant="secondary">{label(member.role)}</Badge>
                   </TableCell>
                   <TableCell>{member.employeeId || "-"}</TableCell>
+                  <TableCell>{member.gradeLevel ? `GL ${member.gradeLevel}` : "-"}</TableCell>
                   <TableCell>{member.department?.name || "-"}</TableCell>
                   <TableCell>
                     <Badge

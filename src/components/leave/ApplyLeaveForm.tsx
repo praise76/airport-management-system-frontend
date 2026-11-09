@@ -33,13 +33,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { calculateWorkingDays } from "@/api/leave";
 import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { useMyLeaveBalances } from "@/hooks/leave";
+import { useMyProfile } from "@/hooks/self-service";
+import { BALANCE_BASED_TYPES, LEAVE_TYPE_NOTES, annualLeaveDaysForGrade, gradeLabel } from "@/lib/leavePolicy";
 import { useAuthStore } from "@/stores/auth";
 import { CreateLeaveRequest } from "@/types/leave";
 
 const formSchema = z.object({
   // Custom messages replace zod's generic "Invalid input" (QA finding LV-06).
   leaveType: z.enum(
-    ["Annual", "Sick", "Compassionate", "Unpaid", "Maternity", "Paternity"] as const,
+    ["Annual", "Sick", "Exam", "Compassionate", "Unpaid", "Maternity", "Paternity"] as const,
     { message: "Choose a leave type" },
   ),
   dateRange: z
@@ -77,7 +79,9 @@ export function ApplyLeaveForm({
   // QA NEW-01: the server refuses leave when no entitlement is set up, which was the case for
   // every user. Say so up front instead of only after Submit.
   const { data: balances, isSuccess: balancesLoaded } = useMyLeaveBalances();
-  const noEntitlements = balancesLoaded && (balances?.length ?? 0) === 0;
+  const { data: profile } = useMyProfile();
+  const grade = profile?.gradeLevel ?? me?.gradeLevel;
+  const annualDays = annualLeaveDaysForGrade(grade);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -86,6 +90,12 @@ export function ApplyLeaveForm({
   });
 
   const dateRange = form.watch("dateRange");
+  const leaveType = form.watch("leaveType");
+  // Only balance-based leave (annual) needs a balance; sick and exam leave are open to everyone.
+  const hasBalanceFor = (t?: string) =>
+    !!balances?.some((b) => String(b.leaveType).toLowerCase() === String(t).toLowerCase());
+  const noEntitlements =
+    balancesLoaded && !!leaveType && BALANCE_BASED_TYPES.has(leaveType) && !hasBalanceFor(leaveType);
 
   useEffect(() => {
     if (dateRange?.from && dateRange?.to) {
@@ -133,8 +143,13 @@ export function ApplyLeaveForm({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {noEntitlements && (
           <div role="status" className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-            Your leave entitlements haven't been set up yet, so the system can't accept an application.
-            Ask HR to set up your leave balance, then apply again.
+            {`Your annual leave balance hasn't been set up yet${
+              annualDays
+                ? ` (at ${gradeLabel(grade)} you're entitled to ${annualDays} working days a year)`
+                : grade
+                  ? ""
+                  : ", and your grade level isn't on your profile"
+            }. Ask HR to set it up, then apply again. Sick and exam leave don't need a balance.`}
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -156,6 +171,7 @@ export function ApplyLeaveForm({
                   <SelectContent>
                     <SelectItem value="Annual">Annual Leave</SelectItem>
                     <SelectItem value="Sick">Sick Leave</SelectItem>
+                    <SelectItem value="Exam">Exam Leave</SelectItem>
                     <SelectItem value="Compassionate">
                       Compassionate Leave
                     </SelectItem>
@@ -164,6 +180,14 @@ export function ApplyLeaveForm({
                     <SelectItem value="Paternity">Paternity Leave</SelectItem>
                   </SelectContent>
                 </Select>
+                {field.value && LEAVE_TYPE_NOTES[field.value] && (
+                  <p className="text-xs text-muted-foreground">
+                    {LEAVE_TYPE_NOTES[field.value]}
+                    {field.value === "Annual" && annualDays
+                      ? ` ${gradeLabel(grade)}: ${annualDays} working days a year.`
+                      : ""}
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}

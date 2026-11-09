@@ -443,3 +443,51 @@ success.
 The API took 42 s to answer after being idle, and a login timed out at 30 s in the browser.
 Move to an always-on instance, or ping `/api/health` on a schedule. `/api/health` currently
 returns 404, so add one.
+
+---
+
+# Grade-based leave (FAAN policy, 9 Nov 2026)
+
+Replaces the flat figures in "NEW-01" above.
+
+**Rules**
+* Every staff member has a **grade level from 1 to 16** on their profile.
+* **Annual leave:** Grade 1-7 → **21 working days** a year; Grade 8-16 → **30 working days**.
+* **Sick leave** and **exam leave** are open to all staff and **don't come out of the annual
+  balance**. The approver may ask for a medical certificate or exam timetable. (Set caps or
+  certificate thresholds here if FAAN has any; none were given.)
+* Compassionate, maternity, paternity and unpaid leave stay as they are.
+
+**Backend changes**
+1. `users.grade_level smallint NULL CHECK (grade_level BETWEEN 1 AND 16)`. Accept and return
+   `gradeLevel` on `POST/PUT /admin/staff`, `GET /admin/staff`, `GET /self-service/profile` and
+   the login `user` object. The frontend branch `qa-fixes-2026-11-09` already sends and shows it.
+2. Staff import: add a **Grade Level** column to the template (1-16, validated in preview with
+   "Grade Level must be a whole number from 1 to 16").
+3. Add `exam` to the leave-type enum (apply, list, review, reports).
+4. Annual entitlement is derived, not typed in:
+   ```ts
+   export const annualDaysForGrade = (g?: number | null) =>
+     g == null ? null : g >= 1 && g <= 7 ? 21 : g >= 8 && g <= 16 ? 30 : null;
+   ```
+   Create or update the user's annual entitlement for the current leave year whenever a user
+   is created, imported, or their grade changes. If the grade changes mid-year, keep
+   `used_days` and set `entitled_days` to the new figure (or pro-rate, if HR prefers).
+5. One-off migration for existing staff:
+   ```sql
+   INSERT INTO leave_entitlements (id, organization_id, user_id, leave_type, year, entitled_days, used_days)
+   SELECT gen_random_uuid(), u.organization_id, u.id, 'annual', 2026,
+          CASE WHEN u.grade_level BETWEEN 1 AND 7 THEN 21 WHEN u.grade_level BETWEEN 8 AND 16 THEN 30 END, 0
+   FROM users u
+   WHERE u.is_active AND u.grade_level IS NOT NULL
+   ON CONFLICT (user_id, leave_type, year) DO UPDATE SET entitled_days = EXCLUDED.entitled_days;
+   ```
+   Staff without a grade get no annual entitlement until HR sets their grade. Report how many
+   active staff are missing a grade so HR can fill them in.
+6. `POST /self-service/leave/apply`:
+   * `annual`: refuse with 409 when `totalDays > remaining`, with a message that includes the
+     remaining days. If the grade or entitlement is missing, say "Your grade level isn't set; ask
+     HR to add it".
+   * `sick` and `exam`: **no entitlement check**. Record the days for reporting.
+7. Working days are Monday to Friday, excluding public holidays. Keep a public-holiday table for
+   Nigeria and use it in `/leave/calculate-days` and the balance deduction.

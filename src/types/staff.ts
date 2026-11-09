@@ -17,6 +17,8 @@ export interface StaffMember {
   firstName: string;
   lastName: string;
   employeeId?: string;
+  /** Grade level 1-16; sets annual leave (1-7: 21 days, 8-16: 30 days). */
+  gradeLevel?: number | null;
   photoUrl?: string;
   role: string;
   reportsToUserId?: string;
@@ -38,6 +40,7 @@ export interface CreateStaffInput {
   firstName: string;
   lastName: string;
   employeeId?: string;
+  gradeLevel?: number;
   password: string;
   role: string;
   reportsToUserId?: string;
@@ -54,6 +57,7 @@ export interface UpdateStaffInput {
   firstName?: string;
   lastName?: string;
   employeeId?: string;
+  gradeLevel?: number | null;
   role?: string;
   reportsToUserId?: string;
   isActive?: boolean;

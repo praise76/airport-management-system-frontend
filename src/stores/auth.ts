@@ -9,6 +9,8 @@ type User = {
 	role?: string; // e.g. "super_admin"
 	organizationId?: string;
 	departmentId?: string;
+	/** Grade level 1-16 (sets annual leave). */
+	gradeLevel?: number | null;
 	roles?: string[];
 	name?: string;
 	type?: string; // 'staff' | 'stakeholder'

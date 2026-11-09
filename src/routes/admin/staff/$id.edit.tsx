@@ -21,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { GRADE_LEVELS, annualLeaveDaysForGrade } from "@/lib/leavePolicy";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useDepartments, useDepartmentUnits } from "@/hooks/departments";
 import type { UpdateStaffInput } from "@/types/staff";
@@ -65,6 +66,7 @@ function EditStaffPage() {
         lastName: staff.lastName,
         phone: staff.phone,
         employeeId: staff.employeeId,
+        gradeLevel: staff.gradeLevel ?? undefined,
         role: staff.role,
         departmentId: (staff as { departmentId?: string }).departmentId ?? staff.department?.id,
         reportsToUserId: staff.reportsToUserId,
@@ -83,7 +85,7 @@ function EditStaffPage() {
     // for blank phone, employee ID and so on), so send only fields that hold a value. `false`
     // is a value: un-ticking a permission box must still be sent.
     const payload = Object.fromEntries(
-      Object.entries(data).filter(([, v]) => v !== null && v !== undefined && v !== ""),
+      Object.entries(data).filter(([, v]) => v !== null && v !== undefined && v !== "" && !Number.isNaN(v)),
     ) as UpdateStaffInput;
     updateMutation.mutate(
       { id, data: payload },
@@ -164,6 +166,27 @@ function EditStaffPage() {
                 <div className="space-y-2">
                   <Label htmlFor="employeeId">Employee ID</Label>
                   <Input id="employeeId" {...register("employeeId")} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gradeLevel">Grade Level</Label>
+                  <select
+                    id="gradeLevel"
+                    {...register("gradeLevel", { setValueAs: (v) => (v === "" || v == null ? undefined : Number(v)) })}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                  >
+                    <option value="">Not set</option>
+                    {GRADE_LEVELS.map((g) => (
+                      <option key={g} value={g}>
+                        Grade {g} ({annualLeaveDaysForGrade(g)} days annual leave)
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Sets annual leave: Grade 1-7 get 21 working days, Grade 8-16 get 30.
+                  </p>
                 </div>
               </div>
             </div>

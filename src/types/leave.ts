@@ -1,4 +1,4 @@
-export type LeaveType = "Annual" | "Sick" | "Compassionate" | "Unpaid" | "Maternity" | "Paternity";
+export type LeaveType = "Annual" | "Sick" | "Exam" | "Compassionate" | "Unpaid" | "Maternity" | "Paternity";
 
 /** pending → supervisor_approved → hod_approved → hr_approved, or rejected / cancelled. */
 export type LeaveStatus =

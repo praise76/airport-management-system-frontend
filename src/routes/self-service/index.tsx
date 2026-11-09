@@ -1,3 +1,4 @@
+import { annualLeaveDaysForGrade, gradeLabel } from "@/lib/leavePolicy";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   User,
@@ -292,6 +293,21 @@ function SelfServicePage() {
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Input value={profile?.role} readOnly className="bg-muted/30" />
+              </div>
+              <div className="space-y-2">
+                <Label>Grade Level</Label>
+                <Input value={gradeLabel(profile?.gradeLevel)} readOnly className="bg-muted/30" />
+              </div>
+              <div className="space-y-2">
+                <Label>Annual leave entitlement</Label>
+                <Input
+                  value={(() => {
+                    const d = annualLeaveDaysForGrade(profile?.gradeLevel);
+                    return d ? `${d} working days a year` : "Set once HR records your grade";
+                  })()}
+                  readOnly
+                  className="bg-muted/30"
+                />
               </div>
             </div>
             <Button className="mt-4" onClick={() => setIsUpdateModalOpen(true)}>
