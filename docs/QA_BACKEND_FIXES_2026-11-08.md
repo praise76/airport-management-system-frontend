@@ -337,3 +337,109 @@ to the chat.
    their members. This drives the duty board and lets notices go to "everyone on Night today".
 5. Generate roster entries from crew assignments (see "Roster patterns" above), skipping
    approved leave.
+
+---
+
+# Retest of 9 Nov 2026: backend work still needed
+
+Ranked by urgency. Each was reproduced against the live API on 9 Nov.
+
+## 1. NEW-01 (critical): nobody can apply for leave
+
+`POST /self-service/leave/apply` now returns
+`409 "No annual leave entitlement is configured for this staff member"` (and the same for sick
+leave) for every user. `GET /self-service/leave/balance` returns `[]`,
+`GET /self-service/leave/entitlements` returns **500**, and there's no admin route to set
+entitlements.
+
+**Fix, in this order:**
+1. One-off migration: create entitlement rows for every active user for the current leave year,
+   from the organisation's leave policy. Example for Postgres, adjust names and days:
+   ```sql
+   INSERT INTO leave_entitlements (id, organization_id, user_id, leave_type, year, entitled_days, used_days)
+   SELECT gen_random_uuid(), u.organization_id, u.id, t.leave_type, 2026, t.days, 0
+   FROM users u
+   CROSS JOIN (VALUES ('annual', 30), ('sick', 10), ('compassionate', 5),
+                      ('maternity', 112), ('paternity', 14), ('unpaid', 0)) AS t(leave_type, days)
+   WHERE u.is_active
+   ON CONFLICT (user_id, leave_type, year) DO NOTHING;
+   ```
+   Set the real figures from FAAN's conditions of service; maternity and paternity may depend on
+   gender or eligibility.
+2. Create the same rows whenever a user is created (admin form and Excel import).
+3. Add HR endpoints: `GET /admin/leave/entitlements?userId=` and
+   `PUT /admin/leave/entitlements/:userId/:leaveType {entitledDays}`, restricted to HR and admins.
+   Fix the 500 on `GET /self-service/leave/entitlements`.
+4. Leave `unpaid` uncapped, or skip the entitlement check for it.
+5. Until 1-3 are live, consider turning the 409 into a warning so staff aren't blocked.
+
+The frontend (branch `qa-fixes-2026-11-09`) now warns users when they have no balances.
+
+## 2. ATT-02 (critical): wrong-zone check-in still accepted
+
+With `terminalCode: "IT1"` (as the app always sends), Emeka, rostered at IT1 (zone
+`2cca8bb8…`), checked in at MMA2 (6.584775, 3.332757) and got 200. The rostered-zone check
+seems to run only when `terminalCode` is absent, and in that case it crashes (item 3).
+
+**Fix:** always compare against the roster entry's zone, whatever the request contains:
+```ts
+const entry = await rosterRepo.findEntryForDuty(user.id, localDutyDate(org));
+const rosteredZoneId = isUuid(entry?.dutyLocation) ? entry!.dutyLocation : null;
+const zone = rosteredZoneId
+  ? await zonesRepo.findActive(rosteredZoneId)            // may be null if the zone was deleted
+  : null;
+const candidates = zone ? [zone] : await zonesRepo.listActive(user.organizationId);
+const hit = candidates.find(z => isInsideZone(z, lat, lng, accuracy));
+if (!hit) return res.status(403).json({ success: false, code: 'OUTSIDE_ZONE',
+  error: zone ? `You're not at your rostered post (${zone.name})` : 'You are outside every check-in zone' });
+```
+`terminalCode` should only label the session. It shouldn't decide which zones are allowed.
+
+## 3. NEW-02 (high): check-in crashes when no terminal is sent
+
+For a rostered user, `POST /attendance/check-in` without `terminalCode` returns **500**, both
+inside the rostered zone and outside it. This is probably a null dereference on the terminal
+lookup. The code in item 2 removes the dependency. Also wrap the handler so unexpected errors are
+logged with the request id and never surface as a bare 500 to staff.
+
+**Tests:** rostered + inside rostered zone, with and without `terminalCode` → 200; rostered + in
+another zone → 403; unrostered + inside any zone → 200; outside every zone → 403.
+
+## 4. RST-03 / NEW-03 (high): patterns can be saved but not listed
+
+`POST /roster/patterns` now returns 201, but `GET /roster/patterns` still returns 500, so
+Patterns & crews and the Rotation Pattern tab can't show anything. Two patterns were saved in
+the retest (“QA RETEST 12-hour 2-2-2” with `day` shifts, and “QA RETEST 4-shift 2-2-2-2”).
+Since writes work and reads fail, look at the list query: an `include` of a relation that
+doesn't exist, an `orderBy` on a missing column, or a serializer choking on
+`shiftSequenceJson` values such as `"day"` (if `shift` is validated against an enum on the way
+out). Return the rows as stored, and add a test that creates a pattern and lists it.
+
+## 5. ATT-04 (high): Attendance Registry duplicates
+
+Still lists Emeka Eze, Segun Afolabi, the CEO and the System Administrator twice. Group by
+`user.id`, and join roster entries and attendance on `(user_id, local duty date)`. Don't join
+through group or position memberships, which fan out.
+
+## 6. DOC-01 (high): HODs can't see documents forwarded to their department
+
+The forwarded document OPS-B1239793/2026/11/0001 still doesn't appear in the Operations HOD's
+`GET /documents` list (it opens by direct link). Include
+`current_department_id IN (:userDept, ...childUnits)` for HOD, manager and registry clerk.
+
+## 7. NEW-04 (medium): requisition stuck in "submitted"
+
+REQ/2026/11/0004 was set to `submitted` although its submit failed. Data fix:
+```sql
+UPDATE requisitions r SET status = 'draft', updated_at = now()
+WHERE r.status = 'submitted'
+  AND NOT EXISTS (SELECT 1 FROM requisition_approvals a WHERE a.requisition_id = r.id);
+```
+Then make submit transactional (INV-01): resolve the approver first, change the status only on
+success.
+
+## 8. PERF-01: cold starts
+
+The API took 42 s to answer after being idle, and a login timed out at 30 s in the browser.
+Move to an always-on instance, or ping `/api/health` on a schedule. `/api/health` currently
+returns 404, so add one.
