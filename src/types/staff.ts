@@ -17,7 +17,7 @@ export interface StaffMember {
   firstName: string;
   lastName: string;
   employeeId?: string;
-  /** Grade level 1-16; sets annual leave (1-7: 21 days, 8-16: 30 days). */
+  /** Grade level 1-16; sets annual leave (1-8: 21 days, 9-16: 30 days). */
   gradeLevel?: number | null;
   photoUrl?: string;
   role: string;

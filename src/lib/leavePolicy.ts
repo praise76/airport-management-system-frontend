@@ -2,8 +2,8 @@
  * FAAN leave policy as used by the app.
  *
  * - Annual leave depends on grade level (on the staff profile):
- *     Grade 1-7  -> 21 working days a year
- *     Grade 8-16 -> 30 working days a year
+ *     Grade 1-8  -> 21 working days a year
+ *     Grade 9-16 -> 30 working days a year
  * - Sick leave and exam leave are open to every staff member. They don't come out of the
  *   annual balance; supporting evidence (medical certificate, exam timetable) is checked by the
  *   approver.
@@ -24,7 +24,7 @@ export function isValidGrade(grade: unknown): grade is number {
 export function annualLeaveDaysForGrade(grade: unknown): number | null {
 	const g = typeof grade === "string" ? Number(grade) : grade;
 	if (!isValidGrade(g)) return null;
-	return g <= 7 ? 21 : 30;
+	return g <= 8 ? 21 : 30;
 }
 
 /** Leave types that are deducted from a yearly balance. */

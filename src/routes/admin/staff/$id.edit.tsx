@@ -185,7 +185,7 @@ function EditStaffPage() {
                     ))}
                   </select>
                   <p className="text-xs text-muted-foreground">
-                    Sets annual leave: Grade 1-7 get 21 working days, Grade 8-16 get 30.
+                    Sets annual leave: Grade 1-8 get 21 working days, Grade 9-16 get 30.
                   </p>
                 </div>
               </div>
