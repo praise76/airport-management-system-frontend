@@ -386,6 +386,9 @@ export const useGetShiftPatterns = () => {
 			);
 			return data.data;
 		},
+		// QA NEW-03 / RST-03: the list was returning 500 and three default retries (~7 s)
+		// left the screens on "Loading…" or "No patterns". Fail fast on server errors.
+		retry: (count, err: any) => (err?.status ?? 0) < 500 && count < 2,
 	});
 };
 

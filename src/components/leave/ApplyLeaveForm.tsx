@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { calculateWorkingDays } from "@/api/leave";
 import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
+import { useMyLeaveBalances } from "@/hooks/leave";
 import { useAuthStore } from "@/stores/auth";
 import { CreateLeaveRequest } from "@/types/leave";
 
@@ -73,6 +74,10 @@ export function ApplyLeaveForm({
   const [totalDays, setTotalDays] = useState<number | null>(null);
 
   const me = useAuthStore((st) => st.user);
+  // QA NEW-01: the server refuses leave when no entitlement is set up, which was the case for
+  // every user. Say so up front instead of only after Submit.
+  const { data: balances, isSuccess: balancesLoaded } = useMyLeaveBalances();
+  const noEntitlements = balancesLoaded && (balances?.length ?? 0) === 0;
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -126,6 +131,12 @@ export function ApplyLeaveForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {noEntitlements && (
+          <div role="status" className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            Your leave entitlements haven't been set up yet, so the system can't accept an application.
+            Ask HR to set up your leave balance, then apply again.
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}

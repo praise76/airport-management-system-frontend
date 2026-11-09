@@ -84,7 +84,7 @@ function RosterPlannerPage() {
   const { data: shiftDefinitions } = useGetShiftDefinitions({
     unitDepartmentId: selectedRoster?.unitDepartmentId,
   });
-  const { data: shiftPatterns, isError: patternsFailed } = useGetShiftPatterns();
+  const { data: shiftPatterns, isError: patternsFailed, isLoading: patternsLoading } = useGetShiftPatterns();
 
   // Staff for the selected roster's unit (filtered again below, in case the API ignores the filter).
   const { data: usersData } = useUsers({
@@ -339,6 +339,7 @@ function RosterPlannerPage() {
               }
               cycleLength={shiftPatterns?.[0]?.cycleLengthDays || 8}
               loadFailed={patternsFailed}
+              loading={patternsLoading}
               shifts={shiftDefinitions || []}
             />
           )}

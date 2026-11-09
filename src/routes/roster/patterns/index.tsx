@@ -50,7 +50,7 @@ export const Route = createFileRoute("/roster/patterns/")({
 });
 
 function ShiftPatternsPage() {
-	const { data: patterns, isLoading } = useGetShiftPatterns();
+	const { data: patterns, isLoading, isError } = useGetShiftPatterns();
 
 	return (
 		<div className="space-y-6">
@@ -64,7 +64,12 @@ function ShiftPatternsPage() {
 				<CreatePatternDialog />
 			</div>
 
-			{isLoading ? (
+			{isError ? (
+				<div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+					Couldn't load the saved patterns: the server returned an error. Patterns you create are
+					still saved, and will appear here once the list loads.
+				</div>
+			) : isLoading ? (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					<p>Loading patterns...</p>
 				</div>

@@ -8,6 +8,7 @@ interface RotationCycleTableProps {
   shifts?: ShiftDefinition[];
   /** The patterns request failed (it returned 500 in QA, RST-03); say so instead of "none defined". */
   loadFailed?: boolean;
+  loading?: boolean;
 }
 
 export function RotationCycleTable({
@@ -16,6 +17,7 @@ export function RotationCycleTable({
   cycleLength = 8,
   shifts = [],
   loadFailed = false,
+  loading = false,
 }: RotationCycleTableProps) {
   const DAYS = Array.from({ length: cycleLength }, (_, i) => `Day ${i + 1}`);
 
@@ -29,6 +31,10 @@ export function RotationCycleTable({
     }
     return {};
   };
+
+  if (loading) {
+    return <div className={cn("rounded-2xl border bg-muted/30 p-12 text-center text-muted-foreground", className)}>Loading rotation patterns…</div>;
+  }
 
   if (loadFailed) {
     return (

@@ -36,7 +36,7 @@ const shiftLabel = (code?: string | null) =>
 /** Crews for one department: members, pattern, chat, and who is on which shift today. */
 export function CrewsPanel() {
 	const [departmentId, setDepartmentId] = useState<string>("");
-	const { data: patterns = [] } = useGetShiftPatterns();
+	const { data: patterns = [], isError: patternsFailed } = useGetShiftPatterns();
 	const crewsQ = useQuery({
 		queryKey: ["crews", departmentId],
 		queryFn: () => listCrews(departmentId),
@@ -67,6 +67,11 @@ export function CrewsPanel() {
 				</div>
 			</div>
 
+			{patternsFailed && (
+				<p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+					Saved patterns couldn't be loaded, so crews can't be created or shown on a shift yet.
+				</p>
+			)}
 			{!departmentId ? (
 				<p className="rounded-lg border bg-muted/20 p-6 text-sm text-muted-foreground">
 					Choose a department to see and set up its crews.

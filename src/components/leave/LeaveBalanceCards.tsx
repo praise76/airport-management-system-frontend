@@ -40,6 +40,14 @@ export function LeaveBalanceCards({
     );
   }
 
+  if (balances.length === 0) {
+    return (
+      <p className="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
+        No leave balances have been set up for you yet. HR needs to set them up before you can apply for leave.
+      </p>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {balances.map((bal) => {

@@ -227,6 +227,18 @@ function AttendancePage() {
 	// page itself said "Move closer to check in". Block it once we know the person is outside.
 	// The server must enforce this too; this only stops the obvious case on screen.
 	const knownOutside = !!locStatus && locStatus.inside === false;
+	// QA finding ATT-02: an officer rostered at IT1 could check in at MMA2. When today's roster
+	// names a zone (dutyLocation holds its id) and the person is inside a different zone, block
+	// the check-in and say where they should be. The server must also enforce this.
+	const rosteredZoneId: string | undefined =
+		todayShift?.dutyLocation && /^[0-9a-f-]{36}$/i.test(todayShift.dutyLocation)
+			? todayShift.dutyLocation
+			: undefined;
+	const wrongZone =
+		!!rosteredZoneId && !!locStatus?.inside && !!locStatus.zone?.id && locStatus.zone.id !== rosteredZoneId;
+	const wrongZoneMessage = wrongZone
+		? `You're at ${locStatus?.zone?.name ?? "another zone"}, but today you're rostered at ${zoneLabel(rosteredZoneId)}. Check in from your rostered post, or ask your supervisor to change today's roster.`
+		: null;
 
 	// If the server says one thing and the screen another, refetch rather than leave a button that won't work.
 	const serverCheckedIn = locStatus?.checkedIn;
@@ -238,7 +250,7 @@ function AttendancePage() {
 
 	// An error belongs to the state it happened in; once the status has changed it no longer applies.
 	const visibleError =
-		lastError !== null && errorWasCheckedIn === isCheckedIn ? lastError : null;
+		(lastError !== null && errorWasCheckedIn === isCheckedIn ? lastError : null) ?? wrongZoneMessage;
 
 	return (
 		<div className="space-y-6">
@@ -328,8 +340,8 @@ function AttendancePage() {
 
 								<Button
 									onClick={handleCheckIn}
-									disabled={busy || checkInMutation.isPending || knownOutside}
-									title={knownOutside ? "Move inside your check-in zone first" : undefined}
+									disabled={busy || checkInMutation.isPending || knownOutside || wrongZone}
+									title={knownOutside ? "Move inside your check-in zone first" : wrongZone ? "You're not at your rostered post" : undefined}
 									size="lg"
 									className="w-full sm:w-auto"
 								>
