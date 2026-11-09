@@ -1,8 +1,8 @@
+import { TeamRoster } from "@/features/roster/components/TeamRoster";
 import { annualLeaveDaysForGrade, gradeLabel } from "@/lib/leavePolicy";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   User,
-  Calendar,
   FileText,
   Palmtree,
   Edit2,
@@ -371,33 +371,11 @@ function SelfServicePage() {
         )}
 
         {activeTab === "roster" && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Calendar className="h-5 w-5" /> Upcoming Shifts
-            </h3>
-            {rosterQuery.isLoading && <p>Loading roster...</p>}
-            {rosterQuery.data?.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex justify-between items-center border-b pb-3"
-              >
-                <div>
-                  <div className="font-medium">{entry.dutyDate}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {entry.shift} Shift
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div>
-                    {entry.shiftStartTime} - {entry.shiftEndTime}
-                  </div>
-                  <div className="text-xs text-primary font-medium">
-                    {entry.dutyPosition}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TeamRoster
+            myUserId={profile?.id}
+            departmentId={profile?.departmentId}
+            myEntries={(rosterQuery.data ?? []) as any}
+          />
         )}
 
         {activeTab === "documents" && (
