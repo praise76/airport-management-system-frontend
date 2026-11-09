@@ -61,8 +61,8 @@ export function CrewsPanel() {
 					<DepartmentSelector
 						value={departmentId}
 						onChange={(v) => setDepartmentId(v ?? "")}
-						placeholder="Choose a department"
-						filterLevel={1}
+						placeholder="Choose a department or unit"
+						maxLevel={2}
 					/>
 				</div>
 			</div>

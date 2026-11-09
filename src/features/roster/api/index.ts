@@ -320,7 +320,11 @@ export const useGetShiftDefinitions = (filters?: {
 			const { data } = await api.get<{ data: ShiftDefinition[] }>(
 				`/roster/shifts?${params.toString()}`,
 			);
-			return data.data;
+			// The API ignores ?unitDepartmentId= and returns every unit's shifts (QA, 9 Nov), so a
+			// roster showed other units' shifts. Filter here as well.
+			return filters?.unitDepartmentId
+				? data.data.filter((d: any) => !d.unitDepartmentId || d.unitDepartmentId === filters.unitDepartmentId)
+				: data.data;
 		},
 	});
 };
