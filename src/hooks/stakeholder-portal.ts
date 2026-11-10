@@ -417,6 +417,14 @@ export function useGlobalPermits(params: GlobalPermitListParams = {}) {
 	});
 }
 
+export function useGlobalActivities(params: { heldByMyOffice?: boolean; status?: string; search?: string; page?: number; limit?: number } = {}) {
+	return useQuery({ queryKey: ["global-activities", params], queryFn: () => StakeholderPortalApi.listGlobalActivities(params) });
+}
+
+export function useGlobalInvoices(params: { heldByMyOffice?: boolean; reviewStatus?: string; search?: string; page?: number; limit?: number } = {}) {
+	return useQuery({ queryKey: ["global-invoices", params], queryFn: () => StakeholderPortalApi.listGlobalInvoices(params) });
+}
+
 export function useApproveGlobalPermit() {
 	const qc = useQueryClient();
 	return useMutation({

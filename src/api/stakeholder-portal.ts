@@ -387,6 +387,12 @@ export async function reviewStakeholderActivity(
 	return toActivity(res.data.data ?? res.data);
 }
 
+export async function listGlobalActivities(params: { heldByMyOffice?: boolean; status?: string; search?: string; page?: number; limit?: number } = {}) {
+	const res = await api.get("/stakeholder-orgs/activities", { params });
+	const body = res.data.data ?? res.data;
+	return { items: ((body.items ?? []) as ActivityRow[]).map((row) => ({ ...toActivity(row), organizationName: (row as any).organizationName, stakeholderType: (row as any).stakeholderType })), pagination: body.pagination };
+}
+
 // ============================================
 // STAKEHOLDER PERMITS
 // ============================================
@@ -711,6 +717,12 @@ export async function reviewStakeholderInvoice(
 		reviewComments,
 	});
 	return toInvoice(res.data.data ?? res.data);
+}
+
+export async function listGlobalInvoices(params: { heldByMyOffice?: boolean; reviewStatus?: string; search?: string; page?: number; limit?: number } = {}) {
+	const res = await api.get("/stakeholder-orgs/invoices", { params });
+	const body = res.data.data ?? res.data;
+	return { items: ((body.items ?? []) as InvoiceRow[]).map((row) => ({ ...toInvoice(row), organizationName: (row as any).organizationName, stakeholderType: (row as any).stakeholderType })), pagination: body.pagination };
 }
 
 // ============================================

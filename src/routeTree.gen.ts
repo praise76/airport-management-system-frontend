@@ -36,6 +36,8 @@ import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as StakeholdersVerificationRouteImport } from './routes/stakeholders/verification'
 import { Route as StakeholdersPermitsRouteImport } from './routes/stakeholders/permits'
+import { Route as StakeholdersInvoicesRouteImport } from './routes/stakeholders/invoices'
+import { Route as StakeholdersActivitiesRouteImport } from './routes/stakeholders/activities'
 import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
 import { Route as StakeholderResetPasswordRouteImport } from './routes/stakeholder/reset-password'
 import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
@@ -216,6 +218,16 @@ const StakeholdersVerificationRoute =
 const StakeholdersPermitsRoute = StakeholdersPermitsRouteImport.update({
   id: '/stakeholders/permits',
   path: '/stakeholders/permits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholdersInvoicesRoute = StakeholdersInvoicesRouteImport.update({
+  id: '/stakeholders/invoices',
+  path: '/stakeholders/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholdersActivitiesRoute = StakeholdersActivitiesRouteImport.update({
+  id: '/stakeholders/activities',
+  path: '/stakeholders/activities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholdersStakeholderIdRoute =
@@ -484,6 +496,8 @@ export interface FileRoutesByFullPath {
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
+  '/stakeholders/activities': typeof StakeholdersActivitiesRoute
+  '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/admin': typeof AdminIndexRoute
@@ -556,6 +570,8 @@ export interface FileRoutesByTo {
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
+  '/stakeholders/activities': typeof StakeholdersActivitiesRoute
+  '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/admin': typeof AdminIndexRoute
@@ -631,6 +647,8 @@ export interface FileRoutesById {
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
+  '/stakeholders/activities': typeof StakeholdersActivitiesRoute
+  '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/admin/': typeof AdminIndexRoute
@@ -707,6 +725,8 @@ export interface FileRouteTypes {
     | '/stakeholder/registration-success'
     | '/stakeholder/reset-password'
     | '/stakeholders/$stakeholderId'
+    | '/stakeholders/activities'
+    | '/stakeholders/invoices'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
     | '/admin'
@@ -779,6 +799,8 @@ export interface FileRouteTypes {
     | '/stakeholder/registration-success'
     | '/stakeholder/reset-password'
     | '/stakeholders/$stakeholderId'
+    | '/stakeholders/activities'
+    | '/stakeholders/invoices'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
     | '/admin'
@@ -853,6 +875,8 @@ export interface FileRouteTypes {
     | '/stakeholder/registration-success'
     | '/stakeholder/reset-password'
     | '/stakeholders/$stakeholderId'
+    | '/stakeholders/activities'
+    | '/stakeholders/invoices'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
     | '/admin/'
@@ -926,6 +950,8 @@ export interface RootRouteChildren {
   StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
   StakeholderResetPasswordRoute: typeof StakeholderResetPasswordRoute
   StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
+  StakeholdersActivitiesRoute: typeof StakeholdersActivitiesRoute
+  StakeholdersInvoicesRoute: typeof StakeholdersInvoicesRoute
   StakeholdersPermitsRoute: typeof StakeholdersPermitsRoute
   StakeholdersVerificationRoute: typeof StakeholdersVerificationRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1153,6 +1179,20 @@ declare module '@tanstack/react-router' {
       path: '/stakeholders/permits'
       fullPath: '/stakeholders/permits'
       preLoaderRoute: typeof StakeholdersPermitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/invoices': {
+      id: '/stakeholders/invoices'
+      path: '/stakeholders/invoices'
+      fullPath: '/stakeholders/invoices'
+      preLoaderRoute: typeof StakeholdersInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/activities': {
+      id: '/stakeholders/activities'
+      path: '/stakeholders/activities'
+      fullPath: '/stakeholders/activities'
+      preLoaderRoute: typeof StakeholdersActivitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholders/$stakeholderId': {
@@ -1546,6 +1586,8 @@ const rootRouteChildren: RootRouteChildren = {
   StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
   StakeholderResetPasswordRoute: StakeholderResetPasswordRoute,
   StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
+  StakeholdersActivitiesRoute: StakeholdersActivitiesRoute,
+  StakeholdersInvoicesRoute: StakeholdersInvoicesRoute,
   StakeholdersPermitsRoute: StakeholdersPermitsRoute,
   StakeholdersVerificationRoute: StakeholdersVerificationRoute,
   AdminIndexRoute: AdminIndexRoute,
