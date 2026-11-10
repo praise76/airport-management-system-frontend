@@ -387,10 +387,13 @@ export function RoutingButtons({
 	kind,
 	item,
 	name,
+	held,
 }: {
 	kind: RoutedKind;
 	item: Routed;
 	name: string;
+	/** True when the server has already said the user's office holds it ("With my office"). */
+	held?: boolean;
 }) {
 	const user = useAuthStore((st) => st.user);
 	const [dialog, setDialog] = useState<
@@ -399,7 +402,9 @@ export function RoutingButtons({
 	const forward = useForwardItem(kind);
 	const back = useReturnItem(kind);
 	const mayAct =
-		isOpen(kind, item.status) && !!item.currentOffice && holdsItem(user, item);
+		isOpen(kind, item.status) &&
+		!!item.currentOffice &&
+		(held ?? holdsItem(user, item));
 	const close = (o: boolean) => !o && setDialog(null);
 	return (
 		<>

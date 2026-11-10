@@ -14,13 +14,16 @@ import {
 	useGlobalPermits,
 	useRejectGlobalPermit,
 } from "@/hooks/stakeholder-portal";
-import { requireStaff, ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
+import { requireStaff, ROLE_GROUPS, canReviewStakeholders, hasAnyRole } from "@/lib/access";
+import { useAuthStore } from "@/stores/auth";
 import { label } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { GlobalPermit, PermitStatus } from "@/types/stakeholder-portal";
 
 export const Route = createFileRoute("/stakeholders/permits")({
-	beforeLoad: requireStaff(ROLE_GROUPS.stakeholderOfficers, canReviewStakeholders),
+	// Any staff member may open this page: a permit can be forwarded to any office. The server
+	// lets people who aren't stakeholder officers list only what their own office holds.
+	beforeLoad: requireStaff(),
 	component: PermitQueuePage,
 });
 
@@ -38,7 +41,10 @@ const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString("en-GB") : "—"
 
 /** One queue of permit applications from every company, for AVSEC/commercial officers. */
 function PermitQueuePage() {
-	const [status, setStatus] = useState<Tab>("pending");
+	const user = useAuthStore((st) => st.user);
+	const seesAll = hasAnyRole(user, ROLE_GROUPS.stakeholderOfficers) || canReviewStakeholders(user);
+	const [status, setStatus] = useState<Tab>(seesAll ? "pending" : "mine");
+	const tabs = seesAll ? STATUS_TABS : STATUS_TABS.filter((t) => t.value === "mine");
 	const [search, setSearch] = useState("");
 	const [debounced, setDebounced] = useState("");
 	const [page, setPage] = useState(1);
@@ -70,12 +76,14 @@ function PermitQueuePage() {
 			<div>
 				<h1 className="text-2xl font-semibold">Permit applications</h1>
 				<p className="text-sm text-muted-foreground">
-					Access and vehicle permits requested by airlines, concessionaires and contractors.
+					{seesAll
+						? "Access and vehicle permits requested by airlines, concessionaires and contractors."
+						: "Permit applications that have been forwarded to your office."}
 				</p>
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2">
-				{STATUS_TABS.map((t) => (
+				{tabs.map((t) => (
 					<button
 						key={t.value}
 						type="button"
@@ -155,9 +163,10 @@ function PermitQueuePage() {
 							</p>
 						</div>
 						<div className="flex flex-wrap items-center gap-2">
-							<RoutingButtons kind="permits" item={p} name={`${p.personName}'s permit`} />
+							<RoutingButtons kind="permits" held={status === "mine" || undefined} item={p} name={`${p.personName}'s permit`} />
 							{p.status === "pending" && (
 								<DecisionButtons
+									held={status === "mine" || undefined}
 									item={p}
 									busy={
 										(approve.isPending && approve.variables === p.id) ||

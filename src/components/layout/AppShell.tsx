@@ -104,11 +104,12 @@ const navGroups: NavGroup[] = [
 				allowIf: canReviewStakeholders,
 			},
 			{
+				// Every staff member: a permit can be forwarded to any office, and that office must
+				// be able to open it. People who aren't stakeholder officers see only what their own
+				// office holds.
 				label: "Permit applications",
 				to: "/stakeholders/permits",
 				icon: IdCard,
-				roles: [...ROLE_GROUPS.stakeholderOfficers],
-				allowIf: canReviewStakeholders,
 			},
 			{
 				label: "Activities with my office",

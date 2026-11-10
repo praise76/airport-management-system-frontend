@@ -98,7 +98,10 @@ export function DecisionButtons({
 	rejectTitle,
 	size = "sm",
 	item,
+	held,
 }: {
+	/** True when the server has already said the user's office holds the item. */
+	held?: boolean;
 	/** With office routing: only the office that holds the item (or a super admin) decides. */
 	item?: RoutingFields;
 	onApprove: () => void;
@@ -113,7 +116,8 @@ export function DecisionButtons({
 	const user = useAuthStore((st) => st.user);
 	// Only named reviewers can decide; the server refuses everyone else, so don't offer the buttons.
 	const routed = !!item && (!!item.currentOfficeId || !!item.currentOfficerId);
-	if (routed ? !holdsItem(user, item) : !canReviewStakeholders(user)) return null;
+	if (held === undefined && (routed ? !holdsItem(user, item) : !canReviewStakeholders(user))) return null;
+	if (held === false) return null;
 	return (
 		<>
 			<div className="flex gap-2">

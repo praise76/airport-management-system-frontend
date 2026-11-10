@@ -147,6 +147,18 @@ describe("RoutingButtons and DecisionButtons", () => {
 		expect(screen.getByRole("button", { name: "Timeline" })).toBeTruthy();
 	});
 
+	it("trusts the server's 'With my office' list when the user's own office isn't known", () => {
+		mocks.user = { id: "u-cii", role: "officer" };
+		render(
+			<>
+				<RoutingButtons kind="permits" held item={permit} name="Ada's permit" />
+				<DecisionButtons held item={permit} rejectTitle="Reject?" onApprove={() => {}} onReject={() => {}} />
+			</>,
+		);
+		for (const name of ["Forward", "Return", "Approve", "Reject"])
+			expect(screen.getByRole("button", { name })).toBeTruthy();
+	});
+
 	it("hides Forward and Return once the permit is decided", () => {
 		render(
 			<RoutingButtons
