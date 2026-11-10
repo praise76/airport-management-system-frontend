@@ -39,7 +39,17 @@ export async function getAttendanceSummary(date?: string): Promise<AttendanceSum
   const res = await api.get('/attendance/summary', {
     params: { date },
   })
-  return res.data
+  const summary = res.data?.data ?? res.data
+  const checkedIn = summary.checkedIn ?? summary.activeUsers ?? summary.checkedInToday ?? 0
+  const totalEmployees = summary.totalEmployees ?? summary.activeUsers ?? checkedIn
+  const onLeave = summary.onLeave ?? 0
+  return {
+    ...summary,
+    checkedIn,
+    totalEmployees,
+    onLeave,
+    absent: summary.absent ?? Math.max(totalEmployees - checkedIn - onLeave, 0),
+  }
 }
 
 export type CheckInRequest = {
