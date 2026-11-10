@@ -1,5 +1,9 @@
 import { create } from "zustand";
 
+const canUseLocalStorage =
+	typeof localStorage !== "undefined" &&
+	typeof localStorage.getItem === "function";
+
 type User = {
 	userId: string;
 	id?: string;
@@ -35,15 +39,15 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>((set, get) => ({
 	accessToken:
-		typeof localStorage !== "undefined"
+		canUseLocalStorage
 			? localStorage.getItem("accessToken")
 			: null,
 	refreshToken:
-		typeof localStorage !== "undefined"
+		canUseLocalStorage
 			? localStorage.getItem("refreshToken")
 			: null,
 	user:
-		typeof localStorage !== "undefined" && localStorage.getItem("user")
+		canUseLocalStorage && localStorage.getItem("user")
 			? JSON.parse(localStorage.getItem("user") as string)
 			: null,
 	get isAuthenticated() {
