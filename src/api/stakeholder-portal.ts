@@ -478,6 +478,53 @@ export async function createStakeholderPermit(
 	return toPermit(res.data.data ?? res.data);
 }
 
+export const MAX_PEOPLE_PER_APPLICATION = 25;
+
+export type PermitPerson = { personName: string; personDesignation?: string };
+
+/** Named people from the form's rows: trimmed, blank rows dropped. */
+export function cleanPeople(rows: PermitPerson[]): PermitPerson[] {
+	return rows
+		.map((r) => ({ personName: r.personName.trim(), personDesignation: r.personDesignation?.trim() || undefined }))
+		.filter((r) => r.personName.length > 0);
+}
+
+/** Names that appear more than once in one application (case-insensitive). */
+export function duplicateNames(people: PermitPerson[]): string[] {
+	const seen = new Set<string>();
+	const dup = new Set<string>();
+	for (const p of people) {
+		const key = p.personName.trim().toLowerCase();
+		if (!key) continue;
+		if (seen.has(key)) dup.add(p.personName.trim());
+		seen.add(key);
+	}
+	return [...dup];
+}
+
+/**
+ * One application for several people: a company applies for 5 or 10 staff at once, with the
+ * same permit type, dates and access level. Each person gets their own permit (and badge).
+ * The server has no batch route yet, so this posts one permit per person and reports which
+ * succeeded, so the form can keep only the people that still need submitting.
+ */
+export async function createStakeholderPermits(
+	stakeholderOrgId: string,
+	shared: Omit<CreatePermitInput, "personName" | "personDesignation" | "personPhoto">,
+	people: PermitPerson[],
+): Promise<{ created: StakeholderPermit[]; failed: { person: PermitPerson; reason: string }[] }> {
+	const created: StakeholderPermit[] = [];
+	const failed: { person: PermitPerson; reason: string }[] = [];
+	for (const person of cleanPeople(people)) {
+		try {
+			created.push(await createStakeholderPermit(stakeholderOrgId, { ...shared, ...person }));
+		} catch (err: any) {
+			failed.push({ person, reason: err?.message || "Couldn't submit" });
+		}
+	}
+	return { created, failed };
+}
+
 // The server decides permits through org-independent routes; the company page used to call
 // /stakeholder-orgs/:orgId/permits/:id/approve|reject, which do not exist (404).
 export async function approveStakeholderPermit(

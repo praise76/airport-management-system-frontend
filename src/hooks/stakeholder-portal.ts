@@ -328,6 +328,36 @@ export function useCreateStakeholderPermit(stakeholderOrgId: string) {
 	});
 }
 
+/** Apply for several people in one go. One message for the whole application. */
+export function useCreateStakeholderPermits(stakeholderOrgId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			shared,
+			people,
+		}: {
+			shared: Parameters<typeof StakeholderPortalApi.createStakeholderPermits>[1];
+			people: StakeholderPortalApi.PermitPerson[];
+		}) => StakeholderPortalApi.createStakeholderPermits(stakeholderOrgId, shared, people),
+		onSuccess: ({ created, failed }) => {
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs", stakeholderOrgId, "permits"] });
+			if (created.length > 0)
+				toast.success(
+					created.length === 1
+						? "Permit application submitted for 1 person"
+						: `Permit applications submitted for ${created.length} people`,
+				);
+			if (failed.length > 0)
+				toast.error(
+					`${failed.length === 1 ? "1 person wasn't" : `${failed.length} people weren't`} submitted: ${failed
+						.map((f) => `${f.person.personName} (${f.reason})`)
+						.join("; ")}. They are still in the form.`,
+				);
+		},
+		onError: (err: any) => toast.error(err.message || "Failed to apply for permits"),
+	});
+}
+
 export function useApproveStakeholderPermit(stakeholderOrgId: string) {
 	const qc = useQueryClient();
 	return useMutation({

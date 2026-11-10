@@ -70,6 +70,23 @@ Notice: `{ id, kind, itemId, itemLabel, stepType, office, createdAt, readAt }`, 
 - On every forward, return and final decision: one email and one in-app notice to the company,
   naming the item, the office it is now with and the time. No minute, no staff name.
 
+## One application for several people
+
+A company often applies for 5 or 10 staff at once. The form now takes a list of people (up to
+25) with one permit type, one validity period and one access level, and creates one permit per
+person, so each has their own number, badge, status and trail.
+
+Today the frontend posts one `POST /stakeholder-orgs/:orgId/permits` per person. Better, when
+you have time:
+
+- `POST /stakeholder-orgs/:orgId/permits/batch` with
+  `{ permitType, accessLevel, validFrom, validUntil, people: [{ personnelName, personnelDesignation }] }`,
+  created in one transaction, returning the created permits.
+- Give the permits a shared `applicationId` (and return it on each row), so staff can forward,
+  return, approve or reject the whole application in one action, and the company gets one
+  notice per move ("5 permits are now with Airport Chief of Security") instead of five.
+- Refuse the same person twice in one application (the form already does).
+
 ## One thing to decide in the backend
 
 The staff permit queue page is limited to stakeholder officers

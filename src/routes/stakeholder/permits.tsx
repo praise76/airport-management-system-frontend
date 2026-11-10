@@ -17,6 +17,7 @@ import {
 	Eye,
 	CreditCard,
 	BadgeCheck,
+	Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,8 +41,14 @@ import {
 } from "@/components/ui/select";
 import {
 	useStakeholderPermits,
-	useCreateStakeholderPermit,
+	useCreateStakeholderPermits,
 } from "@/hooks/stakeholder-portal";
+import {
+	MAX_PEOPLE_PER_APPLICATION,
+	type PermitPerson,
+	cleanPeople,
+	duplicateNames,
+} from "@/api/stakeholder-portal";
 import type { StakeholderPermit, PermitStatus, AccessLevel } from "@/types/stakeholder-portal";
 
 import { useAuthStore } from "@/stores/auth";
@@ -119,10 +126,15 @@ function PermitsPage() {
 		useState<StakeholderPermit | null>(null);
 
 	// Form state
+	const blankPerson = (): PermitPerson => ({ personName: "", personDesignation: "" });
+	// One application can cover several people; each gets their own permit.
+	const [people, setPeople] = useState<PermitPerson[]>([blankPerson()]);
+	const named = cleanPeople(people);
+	const duplicates = duplicateNames(named);
+	const setPerson = (i: number, patch: Partial<PermitPerson>) =>
+		setPeople((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
 	const [formData, setFormData] = useState({
 		permitType: "",
-		personName: "",
-		personDesignation: "",
 		validFrom: "",
 		validUntil: "",
 		accessLevel: "" as AccessLevel | "",
@@ -132,7 +144,7 @@ function PermitsPage() {
 	const { data: permitsData, isLoading } = useStakeholderPermits(orgId, {
 		status: statusFilter !== "all" ? statusFilter : undefined,
 	});
-	const createPermit = useCreateStakeholderPermit(orgId);
+	const createPermit = useCreateStakeholderPermits(orgId);
 
 	const permits = permitsData?.data ?? [];
 
@@ -160,36 +172,39 @@ function PermitsPage() {
 	const handleCreatePermit = async () => {
 		if (
 			!formData.permitType ||
-			!formData.personName ||
+			named.length === 0 ||
 			!formData.validFrom ||
 			!formData.validUntil ||
 			!formData.accessLevel
 		)
 			return;
+		if (duplicates.length > 0) {
+			toast.error(`${duplicates.join(", ")} ${duplicates.length === 1 ? "is" : "are"} listed more than once.`);
+			return;
+		}
 		// QA finding STK-02: a permit valid from 31 Dec until 15 Nov was accepted and approved.
 		if (formData.validUntil < formData.validFrom) {
 			toast.error("“Valid Until” must be on or after “Valid From”.");
 			return;
 		}
 
-		await createPermit.mutateAsync({
-			permitType: formData.permitType,
-			personName: formData.personName,
-			personDesignation: formData.personDesignation,
-			validFrom: formData.validFrom,
-			validUntil: formData.validUntil,
-			accessLevel: formData.accessLevel,
+		const { failed } = await createPermit.mutateAsync({
+			shared: {
+				permitType: formData.permitType,
+				validFrom: formData.validFrom,
+				validUntil: formData.validUntil,
+				accessLevel: formData.accessLevel,
+			},
+			people: named,
 		});
-
+		// Keep anyone the server refused, so they can be corrected and sent again.
+		if (failed.length > 0) {
+			setPeople(failed.map((f) => ({ ...f.person, personDesignation: f.person.personDesignation ?? "" })));
+			return;
+		}
 		setShowCreateDialog(false);
-		setFormData({
-			permitType: "",
-			personName: "",
-			personDesignation: "",
-			validFrom: "",
-			validUntil: "",
-			accessLevel: "",
-		});
+		setPeople([blankPerson()]);
+		setFormData({ permitType: "", validFrom: "", validUntil: "", accessLevel: "" });
 	};
 
 	return (
@@ -403,7 +418,7 @@ function PermitsPage() {
 
 			{/* Create Permit Dialog */}
 			<Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle className="text-xl font-semibold">
 							Apply for Access Permit
@@ -435,35 +450,74 @@ function PermitsPage() {
 							</Select>
 						</div>
 
-						<div className="space-y-2">
-							<Label className="text-slate-300">Person Name *</Label>
-							<Input
-								value={formData.personName}
-								onChange={(e) =>
-									setFormData((prev) => ({
-										...prev,
-										personName: e.target.value,
-									}))
-								}
-								placeholder="Full name of the person"
-								className="bg-slate-800 border-slate-700"
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<Label className="text-slate-300">Designation</Label>
-							<Input
-								value={formData.personDesignation}
-								onChange={(e) =>
-									setFormData((prev) => ({
-										...prev,
-										personDesignation: e.target.value,
-									}))
-								}
-								placeholder="Job title or role"
-								className="bg-slate-800 border-slate-700"
-							/>
-						</div>
+						<fieldset className="space-y-2">
+							<div className="flex items-center justify-between gap-2">
+								<legend className="text-sm font-medium text-slate-300">
+									People this application covers *
+								</legend>
+								<span className="text-xs text-slate-400">
+									{named.length} {named.length === 1 ? "person" : "people"}
+								</span>
+							</div>
+							<p className="text-xs text-slate-400">
+								Add everyone who needs this permit. Each person gets their own permit with the same type,
+								dates and access level.
+							</p>
+							<ul className="space-y-2">
+								{people.map((person, i) => (
+									// biome-ignore lint/suspicious/noArrayIndexKey: rows have no identity until submitted
+									<li key={i} className="flex items-start gap-2">
+										<span className="mt-2.5 w-5 shrink-0 text-right text-xs text-slate-500">{i + 1}.</span>
+										<Input
+											aria-label={`Person ${i + 1} full name`}
+											value={person.personName}
+											onChange={(e) => setPerson(i, { personName: e.target.value })}
+											placeholder="Full name"
+											className="bg-slate-800 border-slate-700"
+										/>
+										<Input
+											aria-label={`Person ${i + 1} designation`}
+											value={person.personDesignation ?? ""}
+											onChange={(e) => setPerson(i, { personDesignation: e.target.value })}
+											placeholder="Job title (optional)"
+											className="bg-slate-800 border-slate-700"
+										/>
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											aria-label={`Remove person ${i + 1}`}
+											disabled={people.length === 1}
+											onClick={() => setPeople((prev) => prev.filter((_, idx) => idx !== i))}
+											className="shrink-0 text-slate-400 hover:text-red-300"
+										>
+											<Trash2 className="h-4 w-4" />
+										</Button>
+									</li>
+								))}
+							</ul>
+							{duplicates.length > 0 && (
+								<p role="alert" className="text-xs text-red-300">
+									Listed more than once: {duplicates.join(", ")}
+								</p>
+							)}
+							<Button
+								type="button"
+								size="sm"
+								variant="outline"
+								disabled={people.length >= MAX_PEOPLE_PER_APPLICATION}
+								onClick={() => setPeople((prev) => [...prev, blankPerson()])}
+								className="border-emerald-500/50 text-emerald-300"
+							>
+								<Plus className="h-3 w-3 mr-1" />
+								Add another person
+							</Button>
+							{people.length >= MAX_PEOPLE_PER_APPLICATION && (
+								<p className="text-xs text-slate-400">
+									Up to {MAX_PEOPLE_PER_APPLICATION} people per application. Submit this one, then start another.
+								</p>
+							)}
+						</fieldset>
 
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
@@ -500,7 +554,7 @@ function PermitsPage() {
 						<div className="space-y-2">
 							<Label className="text-slate-300">Access level *</Label>
 							<p className="text-xs text-slate-500 mb-2">
-								Choose the highest level of access this person needs
+								Choose the highest level of access these people need
 							</p>
 							<div className="grid grid-cols-2 gap-2">
 								{accessLevels.map((level) => (
@@ -535,7 +589,8 @@ function PermitsPage() {
 							onClick={handleCreatePermit}
 							disabled={
 								!formData.permitType ||
-								!formData.personName ||
+								named.length === 0 ||
+								duplicates.length > 0 ||
 								!formData.validFrom ||
 								!formData.validUntil ||
 								!formData.accessLevel ||
@@ -548,7 +603,7 @@ function PermitsPage() {
 							) : (
 								<Plus className="h-4 w-4 mr-2" />
 							)}
-							Submit Application
+							{named.length > 1 ? `Submit for ${named.length} people` : "Submit Application"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

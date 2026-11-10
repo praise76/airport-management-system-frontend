@@ -180,3 +180,24 @@ describe("labels", () => {
 		expect(isOpen("invoices", "under_review")).toBe(true);
 	});
 });
+
+import { cleanPeople, duplicateNames } from "@/api/stakeholder-portal";
+
+describe("one application for several people", () => {
+	it("keeps named rows only, trimmed", () => {
+		expect(
+			cleanPeople([
+				{ personName: "  Ada Obi ", personDesignation: " Supervisor " },
+				{ personName: "   ", personDesignation: "x" },
+				{ personName: "Musa Bello", personDesignation: "" },
+			]),
+		).toEqual([
+			{ personName: "Ada Obi", personDesignation: "Supervisor" },
+			{ personName: "Musa Bello", personDesignation: undefined },
+		]);
+	});
+	it("spots the same name listed twice", () => {
+		expect(duplicateNames([{ personName: "Ada Obi" }, { personName: "ada obi" }, { personName: "Musa Bello" }])).toEqual(["ada obi"]);
+		expect(duplicateNames([{ personName: "Ada Obi" }, { personName: "Musa Bello" }])).toEqual([]);
+	});
+});
