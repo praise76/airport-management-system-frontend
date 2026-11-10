@@ -6,13 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
 	user: { id: "u-acos", role: "officer", departmentId: "off-acos" } as any,
 	forward: vi.fn(),
+	back: vi.fn(),
 	trail: null as any,
 }));
 
 vi.mock("@/hooks/stakeholder-portal", () => ({
 	useItemTrail: () => ({ data: mocks.trail, isLoading: false, isError: false }),
 	useForwardItem: () => ({ mutate: mocks.forward, isPending: false }),
-	useReturnItem: () => ({ mutate: vi.fn(), isPending: false }),
+	useReturnItem: () => ({ mutate: mocks.back, isPending: false }),
 	useAcknowledgeItem: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/departments", () => ({
@@ -26,7 +27,7 @@ vi.mock("@/stores/auth", () => ({
 
 import { CurrentlyWith, PermitTrail, TrailSection } from "./PermitTrail";
 import { DecisionButtons } from "./ReviewActions";
-import { RoutingButtons } from "./RoutingActions";
+import { RoutingButtons, nextOffices } from "./RoutingActions";
 
 afterEach(cleanup);
 
@@ -104,83 +105,118 @@ describe("PermitTrail", () => {
 });
 
 describe("RoutingButtons and DecisionButtons", () => {
-	beforeEach(() => {
-		mocks.user = { id: "u-acos", role: "officer", departmentId: "off-acos" };
-	});
-
-	it("offers Forward, Return, Approve and Reject to the office that holds the permit", () => {
+	// RGM minuted it to ACOS: ACOS holds it and can return it up to the RGM.
+	const chain = [
+		{ stepNumber: 1, stepType: "submitted" as const, toOffice: "RGM", toOfficeId: "off-rgm", at: "2026-11-12T09:00:00Z" },
+		{ stepNumber: 2, stepType: "forwarded" as const, fromOfficeId: "off-rgm", toOffice: "Airport Chief of Security", toOfficeId: "off-acos", at: "2026-11-12T10:00:00Z" },
+	];
+	const render2 = (extra = {}) =>
 		render(
 			<>
-				<RoutingButtons kind="permits" item={permit} name="Ada's permit" />
-				<DecisionButtons
-					item={permit}
-					rejectTitle="Reject?"
-					onApprove={() => {}}
-					onReject={() => {}}
-				/>
+				<RoutingButtons kind="permits" item={permit} name="Ada's permit" {...extra} />
+				<DecisionButtons item={permit} rejectTitle="Reject?" onApprove={() => {}} onReject={() => {}} {...extra} />
 			</>,
 		);
-		for (const name of ["Forward", "Return", "Approve", "Reject", "Timeline"])
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mocks.user = { id: "u-acos", role: "officer", departmentId: "off-acos" };
+		mocks.trail = chain;
+	});
+
+	it("offers Minute, Return up the chain, Approve and Reject to the office that holds the permit", () => {
+		render2();
+		for (const name of ["Minute to…", "Return to RGM", "Approve", "Reject", "Timeline"])
 			expect(screen.getByRole("button", { name })).toBeTruthy();
 	});
 
 	it("hides them from another office while ACOS holds the permit", () => {
-		mocks.user = {
-			id: "u-rgm",
-			role: "officer",
-			departmentId: "off-rgm",
-			canManageStakeholders: true,
-		};
-		render(
-			<>
-				<RoutingButtons kind="permits" item={permit} name="Ada's permit" />
-				<DecisionButtons
-					item={permit}
-					rejectTitle="Reject?"
-					onApprove={() => {}}
-					onReject={() => {}}
-				/>
-			</>,
-		);
-		for (const name of ["Forward", "Return", "Approve", "Reject"])
+		mocks.user = { id: "u-rgm", role: "officer", departmentId: "off-rgm", canManageStakeholders: true };
+		render2();
+		for (const name of ["Minute to…", "Return to RGM", "Approve", "Reject"])
 			expect(screen.queryByRole("button", { name })).toBeNull();
 		expect(screen.getByRole("button", { name: "Timeline" })).toBeTruthy();
 	});
 
 	it("trusts the server's 'With my office' list when the user's own office isn't known", () => {
 		mocks.user = { id: "u-cii", role: "officer" };
-		render(
-			<>
-				<RoutingButtons kind="permits" held item={permit} name="Ada's permit" />
-				<DecisionButtons held item={permit} rejectTitle="Reject?" onApprove={() => {}} onReject={() => {}} />
-			</>,
-		);
-		for (const name of ["Forward", "Return", "Approve", "Reject"])
+		render2({ held: true });
+		for (const name of ["Minute to…", "Return to RGM", "Approve", "Reject"])
 			expect(screen.getByRole("button", { name })).toBeTruthy();
 	});
 
-	it("hides Forward and Return once the permit is decided", () => {
-		render(
-			<RoutingButtons
-				kind="permits"
-				item={{ ...permit, status: "approved" }}
-				name="Ada's permit"
-			/>,
-		);
-		expect(screen.queryByRole("button", { name: "Forward" })).toBeNull();
+	it("has no Return at the top of the chain", () => {
+		mocks.trail = chain.slice(0, 1);
+		render2();
+		expect(screen.queryByRole("button", { name: /Return to/ })).toBeNull();
+		expect(screen.getByRole("button", { name: "Minute to…" })).toBeTruthy();
 	});
 
-	it("won't forward without an office and a minute", () => {
-		render(<RoutingButtons kind="permits" item={permit} name="Ada's permit" />);
-		fireEvent.click(screen.getByRole("button", { name: "Forward" }));
-		const submit = screen
-			.getAllByRole("button", { name: "Forward" })
-			.pop() as HTMLButtonElement;
+	it("hides Minute and Return once the permit is decided", () => {
+		render(<RoutingButtons kind="permits" item={{ ...permit, status: "approved" }} name="Ada's permit" />);
+		expect(screen.queryByRole("button", { name: "Minute to…" })).toBeNull();
+	});
+
+	it("won't minute without an office and a minute", () => {
+		render2();
+		fireEvent.click(screen.getByRole("button", { name: "Minute to…" }));
+		const submit = screen.getByRole("button", { name: "Minute" }) as HTMLButtonElement;
 		expect(submit.disabled).toBe(true);
-		fireEvent.change(screen.getByLabelText("Minute"), {
-			target: { value: "For vetting, please." },
-		});
-		expect(submit.disabled).toBe(true); // still no office chosen
+		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "For vetting, please." } });
+		expect(submit.disabled).toBe(true); // still nobody chosen
 		expect(mocks.forward).not.toHaveBeenCalled();
+	});
+
+	it("returns up the chain with the server's return when that is where it goes", () => {
+		render2();
+		fireEvent.click(screen.getByRole("button", { name: "Return to RGM" }));
+		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "Vetted. No objection." } });
+		fireEvent.click(screen.getByRole("button", { name: "Return" }));
+		expect(mocks.back).toHaveBeenCalledWith({ id: "p1", minute: "Vetted. No objection." }, expect.anything());
+		expect(mocks.forward).not.toHaveBeenCalled();
+	});
+
+	it("minutes it to the office above when the server's return would bounce it back down", () => {
+		// RGM -> ACOS -> CII, CII returned to ACOS. The server's return would send it to CII again.
+		mocks.trail = [
+			...chain,
+			{ stepNumber: 3, stepType: "forwarded" as const, fromOfficeId: "off-acos", toOffice: "CII", toOfficeId: "off-cii", at: "2026-11-12T11:00:00Z" },
+			{ stepNumber: 4, stepType: "returned" as const, fromOfficeId: "off-cii", toOffice: "Airport Chief of Security", toOfficeId: "off-acos", at: "2026-11-12T12:00:00Z" },
+		];
+		render2();
+		fireEvent.click(screen.getByRole("button", { name: "Return to RGM" }));
+		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "Find attached treated report." } });
+		fireEvent.click(screen.getByRole("button", { name: "Return" }));
+		expect(mocks.back).not.toHaveBeenCalled();
+		expect(mocks.forward).toHaveBeenCalledWith(
+			{ id: "p1", input: { toOfficeId: "off-rgm", toOfficeType: "position", minute: "Find attached treated report." } },
+			expect.anything(),
+		);
+	});
+});
+
+describe("nextOffices", () => {
+	const all = [
+		{ value: "department:env", id: "env", type: "department" as const, name: "Environmental Services", label: "Environmental Services", parentId: null, level: 1 },
+		{ value: "unit:fm", id: "fm", type: "unit" as const, name: "Facility Maintenance", label: "— Facility Maintenance", parentId: "env", level: 2 },
+		{ value: "department:acc", id: "acc", type: "department" as const, name: "Accounts", label: "Accounts", parentId: null, level: 1 },
+		{ value: "position:rgm", id: "rgm", type: "position" as const, name: "RGM", label: "RGM (position)" },
+	];
+	it("offers the RGM the departments' HODs", () => {
+		expect(nextOffices(all, { id: "rgm", type: "position" }).options.map((o) => o.hint)).toEqual([
+			"HOD, Environmental Services",
+			"HOD, Accounts",
+		]);
+	});
+	it("offers an HOD the department's units and its own staff", () => {
+		expect(nextOffices(all, { id: "env", type: "department" }).options.map((o) => o.hint)).toEqual([
+			"Head of unit, Facility Maintenance",
+			"A member of staff in Environmental Services",
+		]);
+	});
+	it("offers a head of unit the unit's own staff", () => {
+		expect(nextOffices(all, { id: "fm", type: "unit" }).options.map((o) => o.hint)).toEqual([
+			"A member of staff in Facility Maintenance",
+		]);
 	});
 });

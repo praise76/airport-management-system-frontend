@@ -217,3 +217,37 @@ describe("request letters", () => {
 		expect(requestLetterOf({ data: undefined as any })).toBeNull();
 	});
 });
+
+import { chainOf, returnTarget, serverReturnTarget } from "./routing";
+
+describe("returning up the chain", () => {
+	const step = (n: number, stepType: any, from: string | undefined, to: string) => ({
+		stepNumber: n,
+		stepType,
+		fromOfficeId: from,
+		toOfficeId: to,
+		toOffice: to.toUpperCase(),
+		at: `2026-11-10T10:0${n}:00Z`,
+	});
+	const down = [step(1, "submitted", undefined, "rgm"), step(2, "forwarded", "rgm", "env"), step(3, "forwarded", "env", "fm")];
+
+	it("follows the chain down: RGM, HOD, HOU", () => {
+		expect(chainOf(down).map((o) => o.id)).toEqual(["rgm", "env", "fm"]);
+		expect(returnTarget(down)?.id).toBe("env");
+	});
+	it("after the HOU returns to the HOD, the HOD returns to the RGM, not back to the HOU", () => {
+		const t = [...down, step(4, "returned", "fm", "env")];
+		expect(chainOf(t).map((o) => o.id)).toEqual(["rgm", "env"]);
+		expect(returnTarget(t)?.id).toBe("rgm");
+		expect(serverReturnTarget(t)).toBe("fm"); // what the server does today
+	});
+	it("after it is back with the RGM there is nowhere to return to, and it can go to Accounts", () => {
+		const t = [...down, step(4, "returned", "fm", "env"), step(5, "forwarded", "env", "rgm")];
+		expect(chainOf(t).map((o) => o.id)).toEqual(["rgm"]);
+		expect(returnTarget(t)).toBeNull();
+		expect(chainOf([...t, step(6, "forwarded", "rgm", "acc")]).map((o) => o.id)).toEqual(["rgm", "acc"]);
+	});
+	it("ignores acknowledgements", () => {
+		expect(chainOf([...down, step(4, "acknowledged", undefined, "fm")]).map((o) => o.id)).toEqual(["rgm", "env", "fm"]);
+	});
+});

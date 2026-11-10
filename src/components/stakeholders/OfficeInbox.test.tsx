@@ -9,7 +9,14 @@ vi.mock("@/hooks/stakeholder-portal", () => ({
 	useHeldActivities: () => ({ data: mocks.activities, isLoading: false, isError: false }),
 	useHeldInvoices: () => ({ data: mocks.invoices, isLoading: false, isError: false }),
 	useDecideHeldItem: () => ({ mutate: mocks.decide, isPending: false }),
-	useItemTrail: () => ({ data: null, isLoading: false, isError: false }),
+	useItemTrail: () => ({
+		data: [
+			{ stepNumber: 1, stepType: "submitted", toOffice: "RGM", toOfficeId: "off-rgm", at: "2026-11-10T22:17:00Z" },
+			{ stepNumber: 2, stepType: "forwarded", fromOfficeId: "off-rgm", toOffice: "Passenger Screening", toOfficeId: "off-scr", at: "2026-11-10T22:22:00Z" },
+		],
+		isLoading: false,
+		isError: false,
+	}),
 	useForwardItem: () => ({ mutate: vi.fn(), isPending: false }),
 	useReturnItem: () => ({ mutate: vi.fn(), isPending: false }),
 	useAcknowledgeItem: () => ({ mutate: vi.fn(), isPending: false }),
@@ -56,7 +63,7 @@ describe("office inbox", () => {
 		render(<HeldRequests />);
 		expect(screen.getByText("Request to move out junk")).toBeTruthy();
 		expect(screen.getByText("Skyline Cafe")).toBeTruthy();
-		for (const name of ["View letter", "Timeline", "Return", "Forward", "Reject", "Approve"])
+		for (const name of ["View letter", "Timeline", "Return to RGM", "Minute to…", "Reject", "Approve"])
 			expect(screen.getByRole("button", { name })).toBeTruthy();
 	});
 
@@ -96,6 +103,6 @@ describe("office inbox", () => {
 		];
 		render(<HeldInvoices />);
 		expect(screen.getByText("INV-014")).toBeTruthy();
-		expect(screen.getByRole("button", { name: "Forward" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Minute to…" })).toBeTruthy();
 	});
 });

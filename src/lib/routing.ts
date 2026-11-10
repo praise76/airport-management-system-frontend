@@ -31,6 +31,7 @@ export function readRouting(row: Record<string, any>): RoutingFields {
 	return {
 		currentOffice: officeName(o) ?? row.currentOfficeName ?? undefined,
 		currentOfficeId: officeId(o) ?? row.currentOfficeId ?? undefined,
+		currentOfficeType: row.currentOfficeType ?? undefined,
 		currentOfficeSince: row.currentOfficeSince ?? undefined,
 		currentOfficerId: row.currentOfficerId ?? undefined,
 	};
@@ -45,6 +46,7 @@ export function toTrailStep(
 		stepNumber: row.stepNumber ?? index + 1,
 		stepType: row.stepType ?? row.type,
 		fromOffice: officeName(row.fromOffice) ?? row.fromOfficeName ?? undefined,
+		fromOfficeId: officeId(row.fromOffice) ?? row.fromOfficeId ?? undefined,
 		toOffice:
 			officeName(row.toOffice) ?? row.toOfficeName ?? row.office ?? undefined,
 		toOfficeId: officeId(row.toOffice) ?? row.toOfficeId ?? undefined,
@@ -202,4 +204,36 @@ export function noticeText(n: {
 		default:
 			return `${n.itemLabel} is now with ${n.office ?? "another office"}.`;
 	}
+}
+
+/**
+ * The chain an item has been minuted down, top first: RGM, then the HOD's department, then
+ * the unit. Moving to an office already in the chain is a step back up to it, however the
+ * step was recorded, so the chain shortens.
+ *
+ *   RGM -> Environment -> Facility Maintenance   => [RGM, Environment, Facility Maintenance]
+ *   ... Facility Maintenance returns             => [RGM, Environment]
+ *   ... Environment returns                      => [RGM]
+ */
+export function chainOf(steps: PermitTrailStep[]): { id: string; name: string }[] {
+	const chain: { id: string; name: string }[] = [];
+	for (const s of steps) {
+		if (!s.toOfficeId || s.stepType === "acknowledged" || s.stepType === "approved" || s.stepType === "rejected") continue;
+		const at = chain.findIndex((o) => o.id === s.toOfficeId);
+		if (at >= 0) chain.length = at + 1;
+		else chain.push({ id: s.toOfficeId, name: s.toOffice ?? "" });
+	}
+	return chain;
+}
+
+/** The office directly above the current holder in the chain: where "Return" should go. */
+export function returnTarget(steps: PermitTrailStep[]): { id: string; name: string } | null {
+	const chain = chainOf(steps);
+	return chain.length >= 2 ? chain[chain.length - 2] : null;
+}
+
+/** Where the server's own "return" sends an item today: the office the last move came from. */
+export function serverReturnTarget(steps: PermitTrailStep[]): string | undefined {
+	const moves = steps.filter((s) => s.stepType === "forwarded" || s.stepType === "returned");
+	return moves[moves.length - 1]?.fromOfficeId;
 }

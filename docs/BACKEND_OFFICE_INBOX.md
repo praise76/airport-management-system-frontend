@@ -89,6 +89,47 @@ For staff who are not stakeholder officers, when the item is held by their offic
 - `GET /stakeholder-orgs/documents/:documentId/file` when that document is the letter attached
   to an activity their office holds (`data.documentId`) (the View letter button)
 
+## 3a. The chain of offices (product owner, 10 Nov 2026)
+
+The route is a chain that goes down and comes back up:
+
+> A cleaning contractor's payment voucher is submitted at the RGM's office. The RGM minutes it
+> to the HOD Environment. The HOD minutes it to the head of unit, Facility Maintenance. The head
+> of unit treats it and minutes back to the HOD. The HOD treats it and tells the RGM to find the
+> treated job completion attached. The RGM then minutes it to Accounts.
+
+Visitor permits go directly to ACOS (already the case). Everything else starts at the RGM.
+
+The frontend now works this way: "Minute to…" offers the RGM the departments (their HODs), an
+HOD the department's units or its own staff, and a head of unit the unit's own staff; "Return
+to <office>" names the office above in the chain. Three backend changes make it complete:
+
+1. **Return must go up the chain, not to the last sender.** Today `POST .../return` sends the
+   item to the office the last move came from. Tested live on voucher PV-QA-385480: RGM ->
+   Environmental Services -> Facility Maintenance; Facility Maintenance returns (goes to
+   Environmental Services, correct); Environmental Services returns and it goes **back to
+   Facility Maintenance** instead of the RGM. Keep the chain as a stack: a forward to a new
+   office pushes it, a return pops the current office and delivers to the one beneath. Refuse a
+   return at the top of the chain. Until then the frontend works around it: when the server's
+   target is not the office above, it sends a forward to that office, so the step is recorded
+   as "forwarded" rather than "returned".
+2. **Minuting to a named person inside the holding office.** An HOD minutes to a member of
+   staff in their own department, and a head of unit to someone in the unit. Today a forward to
+   the office that already holds the item is refused (409 "That office already holds this
+   submission") even when `toOfficerId` is set. Allow it when `toOfficerId` is given and differs
+   from the current officer: record an `assigned` (or `forwarded`) step, set `currentOfficerId`,
+   keep the office. The concessionaire sees no new step and gets no notice, since the office
+   has not changed. That person then returns it to the head of the office (clear
+   `currentOfficerId`), who returns it up the chain.
+3. **Attachments on a minute.** "Find attached treated job completion": a step needs optional
+   files. Accept `attachments` (uploaded file ids) on forward and return, return them to staff
+   in the trail, never to the concessionaire. The frontend will add an attach control when the
+   field exists.
+
+Also: a department should resolve to its HOD and a unit to its head. Today anyone in the office
+may act. If only the head should, enforce it on forward/return/review and expose the head on the
+office (`headUserId` is null for most departments on the live site).
+
 ## 4. Smaller fixes found in the same retest
 
 - **Names in the staff trail.** Steps return `actorUserId` and `toOfficerId` only. Add

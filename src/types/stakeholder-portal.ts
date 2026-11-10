@@ -224,6 +224,7 @@ export interface RoutingFields {
 	/** Name of the office that holds it, e.g. "Airport Chief of Security". */
 	currentOffice?: string;
 	currentOfficeId?: string;
+	currentOfficeType?: OfficeType;
 	/** When it reached that office. */
 	currentOfficeSince?: string;
 	/** Staff only: the named officer it was sent to, if any. */
@@ -238,6 +239,7 @@ export interface PermitTrailStep {
 	stepNumber: number;
 	stepType: TrailStepType;
 	fromOffice?: string;
+	fromOfficeId?: string;
 	/** The office the item is with after this step. */
 	toOffice?: string;
 	toOfficeId?: string;

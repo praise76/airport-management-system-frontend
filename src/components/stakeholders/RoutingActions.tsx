@@ -1,5 +1,5 @@
 import { CornerUpLeft, Forward, History, Inbox, Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -27,17 +27,31 @@ import {
 	useReturnItem,
 } from "@/hooks/stakeholder-portal";
 import { useUsers } from "@/hooks/users";
-import { fallbackTrail, holdsItem, isOpen } from "@/lib/routing";
+import {
+	fallbackTrail,
+	holdsItem,
+	isOpen,
+	returnTarget,
+	serverReturnTarget,
+} from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
 import type { DepartmentTreeNode } from "@/types/department";
 import type {
+	ForwardInput,
 	OfficeType,
 	RoutedKind,
 	RoutingFields,
 } from "@/types/stakeholder-portal";
 import { CurrentlyWith, PermitTrail } from "./PermitTrail";
 
-/** Staff actions that move a permit, activity or invoice between offices. */
+/**
+ * Staff actions that move a permit, request or invoice down and back up the chain of offices:
+ *
+ *   RGM minutes to the HOD of a department,
+ *   the HOD minutes to the head of a unit (or a member of staff),
+ *   each treats it and returns it up the chain,
+ *   and the RGM minutes it on (to Accounts, say).
+ */
 
 type Routed = {
 	id: string;
@@ -48,17 +62,19 @@ type Routed = {
 	reviewedAt?: string;
 } & RoutingFields;
 
-type OfficeOption = {
+export type OfficeOption = {
 	value: string;
 	id: string;
 	type: OfficeType;
+	/** Plain name, e.g. "Environmental Services". */
+	name: string;
+	/** Indented name for the full list. */
 	label: string;
+	parentId?: string | null;
+	level?: number;
 };
-const LEVEL: Record<number, OfficeType> = {
-	1: "department",
-	2: "unit",
-	3: "unit",
-};
+
+const LEVEL: Record<number, OfficeType> = { 1: "department", 2: "unit", 3: "unit" };
 
 function flatten(
 	nodes: DepartmentTreeNode[],
@@ -71,56 +87,98 @@ function flatten(
 			value: `${type}:${n.id}`,
 			id: n.id,
 			type,
+			name: n.name,
 			label: `${"— ".repeat(depth)}${n.name}`,
+			parentId: n.parentDepartmentId,
+			level: n.departmentLevel,
 		});
 		if (n.children?.length) flatten(n.children, depth + 1, out);
 	}
 	return out;
 }
 
-const MIN_MINUTE = 5;
-
-/** Pick the next office (and optionally an officer in it) and write the minute. */
-export function ForwardDialog({
-	open,
-	onOpenChange,
-	title,
-	currentOfficeId,
-	busy,
-	onForward,
-}: {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	title: string;
-	currentOfficeId?: string;
-	busy?: boolean;
-	onForward: (input: {
-		toOfficeId: string;
-		toOfficeType: OfficeType;
-		toOfficerId?: string;
-		minute: string;
-	}) => void;
-}) {
-	const [office, setOffice] = useState("");
-	const [officer, setOfficer] = useState("");
-	const [minute, setMinute] = useState("");
+/** Every office an item can be minuted to: departments, units and positions. */
+function useOffices() {
 	const tree = useDepartmentTree();
 	const positions = usePositions();
-
-	const offices = useMemo<OfficeOption[]>(
+	const all = useMemo<OfficeOption[]>(
 		() => [
 			...flatten(tree.data ?? []),
 			...(positions.data ?? []).map((p) => ({
 				value: `position:${p.id}`,
 				id: p.id,
 				type: "position" as const,
+				name: p.title,
 				label: `${p.title} (position)`,
 			})),
 		],
 		[tree.data, positions.data],
 	);
-	const chosen = offices.find((o) => o.value === office);
-	const sameOffice = !!chosen && chosen.id === currentOfficeId;
+	return { all, loading: tree.isLoading };
+}
+
+/**
+ * The next offices down the chain from the one that holds the item.
+ * - Held by a position (the RGM) or unknown: the departments, i.e. their HODs.
+ * - Held by a department (its HOD): that department's units, or its own staff.
+ * - Held by a unit (its head): the unit's own staff.
+ */
+export function nextOffices(
+	all: OfficeOption[],
+	holder: { id?: string; type?: OfficeType },
+): { options: (OfficeOption & { hint: string; ownStaff?: boolean })[]; heading: string } {
+	const me = all.find((o) => o.id === holder.id);
+	const type = holder.type ?? me?.type;
+	if (me && (type === "department" || type === "unit")) {
+		const units = all.filter((o) => o.parentId === me.id);
+		return {
+			heading: type === "department" ? "Minute to a unit or a member of staff" : "Minute to a member of staff",
+			options: [
+				...units.map((o) => ({ ...o, hint: `Head of unit, ${o.name}` })),
+				{ ...me, hint: `A member of staff in ${me.name}`, ownStaff: true },
+			],
+		};
+	}
+	return {
+		heading: "Minute to a department",
+		options: all
+			.filter((o) => o.type === "department" && (o.level ?? 1) === 1)
+			.map((o) => ({ ...o, hint: `HOD, ${o.name}` })),
+	};
+}
+
+const MIN_MINUTE = 5;
+
+/** Pick who it goes to next and write the minute. */
+export function ForwardDialog({
+	open,
+	onOpenChange,
+	title,
+	holder,
+	busy,
+	onForward,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	title: string;
+	/** The office that holds the item now. */
+	holder: { id?: string; type?: OfficeType };
+	busy?: boolean;
+	onForward: (input: ForwardInput) => void;
+}) {
+	const ids = { office: useId(), officer: useId(), minute: useId() };
+	const [office, setOffice] = useState("");
+	const [officer, setOfficer] = useState("");
+	const [minute, setMinute] = useState("");
+	const [showAll, setShowAll] = useState(false);
+	const { all, loading } = useOffices();
+	const next = useMemo(() => nextOffices(all, holder), [all, holder]);
+
+	const options = showAll
+		? all.map((o) => ({ ...o, hint: o.label, ownStaff: false }))
+		: next.options;
+	const chosen = options.find((o) => o.value === office);
+	const ownStaff = !!chosen && chosen.id === holder.id;
 	const staff = useUsers(
 		chosen && chosen.type !== "position"
 			? { departmentId: chosen.id, limit: 100 }
@@ -128,12 +186,15 @@ export function ForwardDialog({
 	);
 	const officers =
 		chosen && chosen.type !== "position" ? (staff.data?.data ?? []) : [];
+	// Minuting within your own office only makes sense to a named person.
+	const needsOfficer = ownStaff && !officer;
 	const tooShort = minute.trim().length < MIN_MINUTE;
 
 	const reset = () => {
 		setOffice("");
 		setOfficer("");
 		setMinute("");
+		setShowAll(false);
 	};
 
 	return (
@@ -149,12 +210,14 @@ export function ForwardDialog({
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>
 						The company is told which office now has it. They don't see your
-						minute or your name.
+						minute or anyone's name.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4">
 					<div className="space-y-1.5">
-						<Label htmlFor="fwd-office">Forward to office</Label>
+						<Label htmlFor={ids.office}>
+							{showAll ? "Minute to any office" : next.heading}
+						</Label>
 						<Select
 							value={office}
 							onValueChange={(v) => {
@@ -162,39 +225,47 @@ export function ForwardDialog({
 								setOfficer("");
 							}}
 						>
-							<SelectTrigger id="fwd-office" className="w-full">
+							<SelectTrigger id={ids.office} className="w-full">
 								<SelectValue
-									placeholder={
-										tree.isLoading ? "Loading offices…" : "Choose an office"
-									}
+									placeholder={loading ? "Loading offices…" : "Choose who it goes to"}
 								/>
 							</SelectTrigger>
 							<SelectContent className="max-h-72">
-								{offices.map((o) => (
+								{options.map((o) => (
 									<SelectItem key={o.value} value={o.value}>
-										{o.label}
+										{o.hint}
 									</SelectItem>
 								))}
 							</SelectContent>
 						</Select>
-						{sameOffice && (
-							<p role="alert" className="text-xs text-destructive">
-								This office already holds it. Choose a different office.
-							</p>
-						)}
+						<button
+							type="button"
+							className="text-xs text-primary hover:underline"
+							onClick={() => {
+								setShowAll((v) => !v);
+								setOffice("");
+								setOfficer("");
+							}}
+						>
+							{showAll ? "Show only the next offices" : "Send to a different office"}
+						</button>
 					</div>
 					{chosen && chosen.type !== "position" && (
 						<div className="space-y-1.5">
-							<Label htmlFor="fwd-officer">Named officer (optional)</Label>
+							<Label htmlFor={ids.officer}>
+								{ownStaff ? "Member of staff" : "Named officer (optional)"}
+							</Label>
 							<Select
 								value={officer || "none"}
 								onValueChange={(v) => setOfficer(v === "none" ? "" : v)}
 							>
-								<SelectTrigger id="fwd-officer" className="w-full">
-									<SelectValue placeholder="Anyone in this office" />
+								<SelectTrigger id={ids.officer} className="w-full">
+									<SelectValue />
 								</SelectTrigger>
 								<SelectContent className="max-h-72">
-									<SelectItem value="none">Anyone in this office</SelectItem>
+									<SelectItem value="none">
+										{ownStaff ? "Choose a person" : `The head of ${chosen.name}`}
+									</SelectItem>
 									{officers.map((u) => (
 										<SelectItem key={u.id} value={u.id}>
 											{[u.firstName, u.lastName].filter(Boolean).join(" ")}
@@ -202,20 +273,23 @@ export function ForwardDialog({
 									))}
 								</SelectContent>
 							</Select>
+							{staff.isError && (
+								<p className="text-xs text-muted-foreground">
+									The staff list for this office isn't available to your account.
+								</p>
+							)}
 						</div>
 					)}
 					<div className="space-y-1.5">
-						<Label htmlFor="fwd-minute">Minute</Label>
+						<Label htmlFor={ids.minute}>Minute</Label>
 						<Textarea
-							id="fwd-minute"
+							id={ids.minute}
 							value={minute}
 							onChange={(e) => setMinute(e.target.value)}
 							rows={4}
-							placeholder="What should the next office do?"
+							placeholder="What should they do?"
 						/>
-						<p className="text-xs text-muted-foreground">
-							Required. Staff only.
-						</p>
+						<p className="text-xs text-muted-foreground">Required. Staff only.</p>
 					</div>
 				</div>
 				<DialogFooter>
@@ -223,7 +297,7 @@ export function ForwardDialog({
 						Cancel
 					</Button>
 					<Button
-						disabled={busy || !chosen || sameOffice || tooShort}
+						disabled={busy || !chosen || needsOfficer || tooShort}
 						onClick={() =>
 							chosen &&
 							onForward({
@@ -239,7 +313,7 @@ export function ForwardDialog({
 						) : (
 							<Forward className="h-4 w-4" />
 						)}
-						Forward
+						Minute
 					</Button>
 				</DialogFooter>
 			</DialogContent>
@@ -247,20 +321,23 @@ export function ForwardDialog({
 	);
 }
 
-/** A required internal minute, used for Return. */
-function MinuteDialog({
+/** A required internal minute, used when treating an item and returning it up the chain. */
+function ReturnDialog({
 	open,
 	onOpenChange,
 	title,
+	to,
 	busy,
 	onConfirm,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	title: string;
+	to: string;
 	busy?: boolean;
 	onConfirm: (minute: string) => void;
 }) {
+	const id = useId();
 	const [minute, setMinute] = useState("");
 	return (
 		<Dialog
@@ -274,18 +351,17 @@ function MinuteDialog({
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>
-						It goes back to the office it came from. The company sees the
-						office, not your minute.
+						It goes back up to {to}. The company sees the office, not your minute.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-1.5">
-					<Label htmlFor="ret-minute">Minute</Label>
+					<Label htmlFor={id}>Minute</Label>
 					<Textarea
-						id="ret-minute"
+						id={id}
 						value={minute}
 						onChange={(e) => setMinute(e.target.value)}
 						rows={4}
-						placeholder="Why is it going back?"
+						placeholder="What you did, or what you found"
 					/>
 					<p className="text-xs text-muted-foreground">Required. Staff only.</p>
 				</div>
@@ -332,9 +408,7 @@ function TimelineDialog({
 		trail.data && trail.data.length > 0 ? trail.data : fallbackTrail(item);
 	const last = steps[steps.length - 1]?.stepType;
 	const canAcknowledge =
-		mayAct &&
-		!!trail.data?.length &&
-		(last === "forwarded" || last === "returned");
+		mayAct && !!trail.data?.length && (last === "forwarded" || last === "returned");
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-h-[85vh] overflow-y-auto">
@@ -379,9 +453,9 @@ function TimelineDialog({
 }
 
 /**
- * Timeline, Return and Forward for one row. Forward and Return appear only while the item is
+ * Timeline, Return and Minute for one row. Return and Minute appear only while the item is
  * open, the server says which office holds it, and that office is the user's (or the user is a
- * super admin).
+ * super admin). Return names the office above in the chain and is hidden at the top of it.
  */
 export function RoutingButtons({
 	kind,
@@ -396,16 +470,41 @@ export function RoutingButtons({
 	held?: boolean;
 }) {
 	const user = useAuthStore((st) => st.user);
-	const [dialog, setDialog] = useState<
-		"timeline" | "forward" | "return" | null
-	>(null);
+	const [dialog, setDialog] = useState<"timeline" | "forward" | "return" | null>(
+		null,
+	);
 	const forward = useForwardItem(kind);
 	const back = useReturnItem(kind);
 	const mayAct =
 		isOpen(kind, item.status) &&
 		!!item.currentOffice &&
 		(held ?? holdsItem(user, item));
+	// The chain is read from the trail, so only fetch it for someone who can act.
+	const trail = useItemTrail(kind, item.id, mayAct);
+	const { all } = useOffices();
+	const up = mayAct && trail.data ? returnTarget(trail.data) : null;
 	const close = (o: boolean) => !o && setDialog(null);
+
+	const sendBack = (minute: string) => {
+		if (!up || !trail.data) return;
+		const done = { onSuccess: () => setDialog(null) };
+		// The server's own "return" goes to the office the last move came from. After a unit
+		// has returned an item to its HOD, that is the unit again, not the RGM. When the two
+		// differ, minute it to the office above instead, so it still goes up the chain.
+		if (serverReturnTarget(trail.data) === up.id) {
+			back.mutate({ id: item.id, minute }, done);
+			return;
+		}
+		const office = all.find((o) => o.id === up.id);
+		forward.mutate(
+			{
+				id: item.id,
+				input: { toOfficeId: up.id, toOfficeType: office?.type ?? "position", minute },
+			},
+			done,
+		);
+	};
+
 	return (
 		<>
 			<div className="flex flex-wrap gap-2">
@@ -414,19 +513,13 @@ export function RoutingButtons({
 				</Button>
 				{mayAct && (
 					<>
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={() => setDialog("return")}
-						>
-							<CornerUpLeft className="h-4 w-4" /> Return
-						</Button>
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={() => setDialog("forward")}
-						>
-							<Forward className="h-4 w-4" /> Forward
+						{up && (
+							<Button size="sm" variant="outline" onClick={() => setDialog("return")}>
+								<CornerUpLeft className="h-4 w-4" /> Return to {up.name}
+							</Button>
+						)}
+						<Button size="sm" variant="outline" onClick={() => setDialog("forward")}>
+							<Forward className="h-4 w-4" /> Minute to…
 						</Button>
 					</>
 				)}
@@ -442,28 +535,23 @@ export function RoutingButtons({
 			<ForwardDialog
 				open={dialog === "forward"}
 				onOpenChange={close}
-				title={`Forward ${name}`}
-				currentOfficeId={item.currentOfficeId}
+				title={`Minute ${name}`}
+				holder={{ id: item.currentOfficeId, type: item.currentOfficeType }}
 				busy={forward.isPending}
 				onForward={(input) =>
-					forward.mutate(
-						{ id: item.id, input },
-						{ onSuccess: () => setDialog(null) },
-					)
+					forward.mutate({ id: item.id, input }, { onSuccess: () => setDialog(null) })
 				}
 			/>
-			<MinuteDialog
-				open={dialog === "return"}
-				onOpenChange={close}
-				title={`Return ${name}`}
-				busy={back.isPending}
-				onConfirm={(minute) =>
-					back.mutate(
-						{ id: item.id, minute },
-						{ onSuccess: () => setDialog(null) },
-					)
-				}
-			/>
+			{up && (
+				<ReturnDialog
+					open={dialog === "return"}
+					onOpenChange={close}
+					title={`Return ${name}`}
+					to={up.name}
+					busy={back.isPending || forward.isPending}
+					onConfirm={sendBack}
+				/>
+			)}
 		</>
 	);
 }
