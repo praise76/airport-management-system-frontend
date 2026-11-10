@@ -1,4 +1,5 @@
 import { isStakeholderUser } from "@/lib/access";
+import { uploadStakeholderDocument } from "./stakeholder-documents";
 import { readRouting, redactForConcessionaire, toTrail } from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
 import { api } from "./client";
@@ -710,6 +711,62 @@ export async function reviewStakeholderInvoice(
 		reviewComments,
 	});
 	return toInvoice(res.data.data ?? res.data);
+}
+
+// ============================================
+// REQUEST LETTERS (upload a document and label it)
+// ============================================
+
+/** Labels offered as suggestions; the company can type any label it likes. */
+export const REQUEST_LABEL_SUGGESTIONS = [
+	"Application for permit",
+	"Request to move out junk",
+	"Request to move in goods or equipment",
+	"Request for renovation or fit-out",
+	"Request for extension of working hours",
+	"Request for additional space",
+	"Request for a meeting",
+	"Complaint",
+] as const;
+
+export type RequestLetter = { documentId: string; fileName: string; mimeType?: string };
+
+/** The uploaded letter attached to an activity, if it was sent with "Upload a request". */
+export function requestLetterOf(activity: Pick<StakeholderActivity, "data">): RequestLetter | null {
+	const d = activity.data ?? {};
+	return typeof d.documentId === "string" && d.documentId
+		? { documentId: d.documentId, fileName: d.fileName || "Attached document", mimeType: d.mimeType }
+		: null;
+}
+
+/**
+ * A company uploads a letter, labels it ("Application for permit", "Request to move out junk",
+ * anything) and sends it. The file is stored with the company's documents; the request itself is
+ * an activity, so it is tracked from office to office like every other submission.
+ */
+export async function submitRequestLetter(
+	stakeholderOrgId: string,
+	input: { label: string; file: File; note?: string },
+): Promise<StakeholderActivity> {
+	const label = input.label.trim();
+	const doc = await uploadStakeholderDocument(stakeholderOrgId, {
+		documentType: "other",
+		title: label,
+		file: input.file,
+	});
+	const draft = await createStakeholderActivity(stakeholderOrgId, {
+		activityType: "other",
+		activityTitle: label,
+		priority: "normal",
+		data: {
+			description: input.note?.trim() || undefined,
+			requestLetter: true,
+			documentId: doc.id,
+			fileName: doc.originalName ?? input.file.name,
+			mimeType: doc.mimeType ?? input.file.type,
+		},
+	});
+	return submitStakeholderActivity(stakeholderOrgId, draft.id);
 }
 
 // ============================================

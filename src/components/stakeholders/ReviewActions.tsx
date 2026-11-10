@@ -20,7 +20,9 @@ import { canReviewStakeholders } from "@/lib/access";
 import { formatNaira } from "@/lib/labels";
 import { holdsItem } from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
+import { type RequestLetter, requestLetterOf } from "@/api/stakeholder-portal";
 import { CurrentlyWith } from "./PermitTrail";
+import { RequestLetterButton } from "./RequestLetter";
 import { RoutingButtons } from "./RoutingActions";
 import type { RoutingFields, StakeholderActivity, StakeholderInvoice } from "@/types/stakeholder-portal";
 
@@ -183,6 +185,9 @@ export function ActivitiesReviewTab({
 							{REVIEWABLE.has(activity.status) && <CurrentlyWith item={activity} surface="staff" className="mt-1" />}
 						</div>
 						<div className="flex flex-wrap items-center gap-2">
+						{requestLetterOf(activity) && (
+							<RequestLetterButton letter={requestLetterOf(activity) as RequestLetter} surface="staff" />
+						)}
 						<RoutingButtons kind="activities" item={activity} name={activity.activityReference || activity.activityTitle} />
 						{REVIEWABLE.has(activity.status) && (
 							<DecisionButtons

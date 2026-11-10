@@ -266,6 +266,21 @@ export function useSubmitStakeholderActivity(stakeholderOrgId: string) {
 	});
 }
 
+/** Upload a labelled letter and send it as a tracked request. */
+export function useSubmitRequestLetter(stakeholderOrgId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (input: { label: string; file: File; note?: string }) =>
+			StakeholderPortalApi.submitRequestLetter(stakeholderOrgId, input),
+		onSuccess: (activity) => {
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs", stakeholderOrgId, "activities"] });
+			qc.invalidateQueries({ queryKey: ["stakeholder-documents"] });
+			toast.success(`Sent: ${activity.activityTitle}${activity.activityReference ? ` (${activity.activityReference})` : ""}`);
+		},
+		onError: (err: any) => toast.error(err.message || "Couldn't send your request. Please try again."),
+	});
+}
+
 export function useReviewStakeholderActivity(stakeholderOrgId: string) {
 	const qc = useQueryClient();
 	return useMutation({

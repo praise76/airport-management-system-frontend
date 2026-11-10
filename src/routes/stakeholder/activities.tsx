@@ -1,9 +1,12 @@
+import { type RequestLetter, requestLetterOf } from "@/api/stakeholder-portal";
+import { RequestLetterButton, UploadRequestDialog } from "@/components/stakeholders/RequestLetter";
 import { CurrentlyWith, TrailSection } from "@/components/stakeholders/PermitTrail";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatNaira } from "@/lib/labels";
 import { useState, useMemo } from "react";
 import {
 	Plus,
+	Upload,
 	Search,
 	Filter,
 	Clock,
@@ -139,6 +142,7 @@ function ActivitiesPage() {
 	const [typeFilter, setTypeFilter] = useState<string>("all");
 	const [showCreateDialog, setShowCreateDialog] = useState(false);
 	const [showDetailDialog, setShowDetailDialog] = useState(false);
+	const [showUploadRequest, setShowUploadRequest] = useState(false);
 	const [selectedActivity, setSelectedActivity] =
 		useState<StakeholderActivity | null>(null);
 
@@ -233,13 +237,23 @@ function ActivitiesPage() {
 							Submit and track your activity requests
 						</p>
 					</div>
-					<Button
-						onClick={() => setShowCreateDialog(true)}
-						className="bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0"
-					>
-						<Plus className="h-4 w-4 mr-2" />
-						New Activity
-					</Button>
+					<div className="flex flex-wrap gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setShowUploadRequest(true)}
+							className="border-blue-400/60 bg-transparent text-blue-200 hover:bg-blue-500/10 hover:text-white"
+						>
+							<Upload className="h-4 w-4 mr-2" />
+							Upload a request
+						</Button>
+						<Button
+							onClick={() => setShowCreateDialog(true)}
+							className="bg-linear-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0"
+						>
+							<Plus className="h-4 w-4 mr-2" />
+							New Activity
+						</Button>
+					</div>
 				</div>
 
 
@@ -430,6 +444,8 @@ function ActivitiesPage() {
 				</div>
 			</div>
 
+			<UploadRequestDialog stakeholderOrgId={orgId} open={showUploadRequest} onOpenChange={setShowUploadRequest} />
+
 			{/* Create Activity Dialog */}
 			<Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
 				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-lg">
@@ -600,6 +616,13 @@ function ActivitiesPage() {
 									<p className="text-white">
 										{selectedActivity.data.description}
 									</p>
+								</div>
+							)}
+
+							{requestLetterOf(selectedActivity) && (
+								<div className="bg-slate-800/50 rounded-lg p-4 space-y-2">
+									<p className="text-slate-400 text-sm">Document you uploaded</p>
+									<RequestLetterButton letter={requestLetterOf(selectedActivity) as RequestLetter} surface="portal" />
 								</div>
 							)}
 

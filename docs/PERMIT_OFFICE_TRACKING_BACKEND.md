@@ -87,6 +87,27 @@ you have time:
   notice per move ("5 permits are now with Airport Chief of Security") instead of five.
 - Refuse the same person twice in one application (the form already does).
 
+## Upload a request (a labelled document)
+
+A company can upload a letter or form, label it ("Application for permit", "Request to move
+out junk", or any text) and send it. This works with today's API:
+
+1. `POST /stakeholder-orgs/:orgId/documents` with `documentType: "other"` and the label as `title`.
+2. `POST /stakeholder-orgs/:orgId/activities` with `activityType: "other"`, the label as
+   `activityTitle`, and `data: { requestLetter: true, documentId, fileName, mimeType, description }`.
+3. `POST /stakeholder-orgs/activities/:id/submit`.
+
+The request is an activity, so it gets the office routing above. Staff open the letter from the
+activity row. Worth improving:
+
+- The letter also lands in the company-documents verification queue as an "other" document
+  awaiting review. Add a `request_letter` document type (or a flag) that the verification queue
+  and the compliance checklist ignore.
+- Check that uploading a second "other" document does not supersede the first; each request
+  letter must stay retrievable.
+- One route that does all three steps in a transaction, so a failed step can't leave an
+  uploaded file without a request.
+
 ## One thing to decide in the backend
 
 The staff permit queue page is limited to stakeholder officers

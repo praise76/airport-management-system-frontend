@@ -201,3 +201,19 @@ describe("one application for several people", () => {
 		expect(duplicateNames([{ personName: "Ada Obi" }, { personName: "Musa Bello" }])).toEqual([]);
 	});
 });
+
+import { requestLetterOf } from "@/api/stakeholder-portal";
+
+describe("request letters", () => {
+	it("finds the uploaded letter on a request", () => {
+		expect(requestLetterOf({ data: { documentId: "d1", fileName: "junk.pdf", mimeType: "application/pdf" } })).toEqual({
+			documentId: "d1",
+			fileName: "junk.pdf",
+			mimeType: "application/pdf",
+		});
+	});
+	it("returns nothing for an ordinary activity", () => {
+		expect(requestLetterOf({ data: { description: "Leaking tap" } })).toBeNull();
+		expect(requestLetterOf({ data: undefined as any })).toBeNull();
+	});
+});
