@@ -1,5 +1,5 @@
 import { label } from "@/lib/labels";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { format, eachDayOfInterval, parseISO } from "date-fns";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -71,8 +71,16 @@ export function RosterGrid({ roster, users, onCellClick }: RosterGridProps) {
           </tr>
         </thead>
         <tbody>
-          {users?.map((user) => (
-            <tr key={user.id} className="group hover:bg-muted/5">
+          {users?.map((user, i) => (
+            <Fragment key={user.id}>
+            {users.some((u: any) => u.crewName) && (i === 0 || users[i - 1].crewName !== user.crewName) && (
+              <tr>
+                <td colSpan={(dates?.length ?? 0) + 1} className="sticky left-0 border-b bg-muted/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {user.crewName ?? "Not in a crew"}
+                </td>
+              </tr>
+            )}
+            <tr className="group hover:bg-muted/5">
               <td className="p-3 border-b border-r sticky left-0 z-10 bg-card group-hover:bg-muted/5">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
@@ -87,7 +95,7 @@ export function RosterGrid({ roster, users, onCellClick }: RosterGridProps) {
                       {user.firstName} {user.lastName}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {user.position?.name || (user.role ? label(user.role) : "Staff")}
+                      {user.crewName || user.position?.name || (user.role ? label(user.role) : "Staff")}
                     </div>
                   </div>
                 </div>
@@ -128,6 +136,7 @@ export function RosterGrid({ roster, users, onCellClick }: RosterGridProps) {
                 );
               })}
             </tr>
+            </Fragment>
           ))}
         </tbody>
       </table>

@@ -5,6 +5,7 @@ import { api } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { useZoneLabel } from "@/hooks/geofence";
 import { cn } from "@/lib/utils";
+import { byCrew, useCrewMap } from "../useCrewMap";
 
 /**
  * Self-service "Roster" tab: the person's own shifts plus their team's PUBLISHED roster.
@@ -55,6 +56,7 @@ const nameOf = (e: Entry) => [e.staff?.firstName, e.staff?.lastName].filter(Bool
 
 export function TeamRoster({ myUserId, departmentId, myEntries }: { myUserId?: string; departmentId?: string | null; myEntries: Entry[] }) {
 	const zoneLabel = useZoneLabel();
+	const crewOf = useCrewMap(departmentId);
 	const [anchor, setAnchor] = useState(() => weekStart(new Date()));
 	const days = useMemo(() => Array.from({ length: 7 }, (_, i) => ymd(addDays(anchor, i))), [anchor]);
 	const today = ymd(new Date());
@@ -84,18 +86,18 @@ export function TeamRoster({ myUserId, departmentId, myEntries }: { myUserId?: s
 	const people = useMemo(() => {
 		const map = new Map<string, { id: string; name: string; group: string; byDay: Record<string, Entry> }>();
 		for (const e of entries) {
-			const p = map.get(e.staffId) ?? { id: e.staffId, name: nameOf(e), group: e.dutyPosition || "Team", byDay: {} };
+			const p = map.get(e.staffId) ?? { id: e.staffId, name: nameOf(e), group: crewOf.get(e.staffId) || e.dutyPosition || "Team", byDay: {} };
 			p.byDay[String(e.dutyDate).slice(0, 10)] = e;
 			map.set(e.staffId, p);
 		}
-		return [...map.values()].sort((a, b) => a.group.localeCompare(b.group) || (a.id === myUserId ? -1 : b.id === myUserId ? 1 : a.name.localeCompare(b.name)));
-	}, [entries, myUserId]);
+		return [...map.values()].sort((a, b) => byCrew(a.group, b.group) || (a.id === myUserId ? -1 : b.id === myUserId ? 1 : a.name.localeCompare(b.name)));
+	}, [entries, myUserId, crewOf]);
 
 	const onDutyToday = useMemo(() => {
 		const g: Record<string, string[]> = {};
-		for (const e of entries) if (String(e.dutyDate).startsWith(today)) (g[e.shift] ??= []).push(nameOf(e));
+		for (const e of entries) if (String(e.dutyDate).startsWith(today)) { const c = crewOf.get(e.staffId); const label = c ?? nameOf(e); const arr = (g[e.shift] ??= []); if (!arr.includes(label)) arr.push(label); }
 		return g;
-	}, [entries, today]);
+	}, [entries, today, crewOf]);
 
 	const upcoming = [...myEntries].filter((e) => String(e.dutyDate).slice(0, 10) >= today).sort((a, b) => String(a.dutyDate).localeCompare(String(b.dutyDate)));
 

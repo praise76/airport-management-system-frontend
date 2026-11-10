@@ -47,6 +47,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { format, parseISO } from "date-fns";
 import { RosterEntry } from "@/features/roster/types";
 import { toast } from "sonner";
+import { byCrew, useCrewMap } from "@/features/roster/useCrewMap";
 
 export const Route = createFileRoute("/admin/roster/planner")({
   beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
@@ -99,6 +100,21 @@ function RosterPlannerPage() {
 
   const user = useAuthStore((s) => s.user);
   const canCreateRoster = hasAnyRole(user, ROLE_GROUPS.rosterPlanners);
+
+  // Label entries and people with their crew (QA, 10 Nov: cells said "3 Staff", rows said "Staff").
+  const crewOf = useCrewMap(selectedRoster?.unitDepartmentId);
+  const labelledRoster = useMemo(() => {
+    if (!selectedRoster) return selectedRoster;
+    return {
+      ...selectedRoster,
+      entries: (selectedRoster.entries ?? []).map((e: any) => ({
+        ...e,
+        // The API sends the person as `staff`; the grids read `user`.
+        user: e.user ?? e.staff,
+        shiftGroup: e.shiftGroup ?? crewOf.get(e.staffId),
+      })),
+    };
+  }, [selectedRoster, crewOf]);
 
   const rosterStaff = useMemo(() => {
     const fromEntries = (selectedRoster?.entries ?? [])
@@ -315,13 +331,15 @@ function RosterPlannerPage() {
             <p>Loading details...</p>
           ) : viewMode === "staff" ? (
             <RosterGrid
-              roster={selectedRoster}
-              users={rosterStaff.staff}
+              roster={labelledRoster as any}
+              users={[...rosterStaff.staff]
+                .map((p: any) => ({ ...p, crewName: crewOf.get(p.id) }))
+                .sort((a: any, b: any) => byCrew(a.crewName, b.crewName) || `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`))}
               onCellClick={handleCellClick}
             />
           ) : viewMode === "shift" ? (
             <ShiftGrid
-              roster={selectedRoster}
+              roster={labelledRoster as any}
               shifts={shiftDefinitions || []}
               onCellClick={handleShiftCellClick}
             />

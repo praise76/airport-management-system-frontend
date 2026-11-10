@@ -335,11 +335,11 @@ export function ShiftGrid({ roster, shifts, onCellClick }: ShiftGridProps) {
                             {!isEmpty ? (
                               <div className="flex flex-col gap-1.5 pt-1.5 items-center">
                                 {/* Group Name Badge if available */}
-                                {entries[0]?.shiftGroup && (
-                                  <div className="text-[10px] uppercase tracking-tighter font-bold bg-primary text-primary-foreground rounded px-1.5 py-0.5 shadow-sm max-w-[90%] truncate">
-                                    {entries[0].shiftGroup}
+                                {[...new Set(entries.map((e) => e.shiftGroup).filter(Boolean))].map((g) => (
+                                  <div key={g} className="text-[10px] uppercase tracking-tighter font-bold bg-primary text-primary-foreground rounded px-1.5 py-0.5 shadow-sm max-w-[90%] truncate">
+                                    {g} · {entries.filter((e) => e.shiftGroup === g).length}
                                   </div>
-                                )}
+                                ))}
 
                                 {/* Staff Avatars / List */}
                                 <div className="flex flex-wrap justify-center gap-0.5">
