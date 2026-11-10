@@ -592,3 +592,99 @@ export function useStakeholderDashboard(stakeholderOrgId: string) {
 		enabled: !!stakeholderOrgId,
 	});
 }
+
+// ============================================
+// OFFICE ROUTING (permits, activities, invoices)
+// ============================================
+
+import type { ForwardInput, RoutedKind } from "@/types/stakeholder-portal";
+
+/** Lists to refresh after an item moves: the staff queue and every company's lists. */
+function useRefreshRouted() {
+	const qc = useQueryClient();
+	return (kind: RoutedKind, id: string) => {
+		qc.invalidateQueries({ queryKey: ["routed-trail", kind, id] });
+		qc.invalidateQueries({ queryKey: ["global-permits"] });
+		qc.invalidateQueries({ queryKey: ["stakeholder-orgs"] });
+	};
+}
+
+const routingUnavailable = (err: any) =>
+	err?.status === 404
+		? "Office routing isn't available on the server yet."
+		: err?.message || "That didn't work. Please try again.";
+
+/** The trail for one item; `data` is null when the server has no trail route yet. */
+export function useItemTrail(kind: RoutedKind, id: string | undefined, enabled = true) {
+	return useQuery({
+		queryKey: ["routed-trail", kind, id],
+		queryFn: () => StakeholderPortalApi.getItemTrail(kind, id as string),
+		enabled: !!id && enabled,
+		// A concessionaire sees a move the next time the page loads.
+		staleTime: 0,
+	});
+}
+export const usePermitTrail = (permitId: string | undefined, enabled = true) =>
+	useItemTrail("permits", permitId, enabled);
+
+export function useForwardItem(kind: RoutedKind) {
+	const refresh = useRefreshRouted();
+	return useMutation({
+		mutationFn: ({ id, input }: { id: string; input: ForwardInput }) =>
+			StakeholderPortalApi.forwardItem(kind, id, input),
+		onSuccess: (_d, { id }) => {
+			refresh(kind, id);
+			toast.success("Forwarded. The company has been notified.");
+		},
+		onError: (err: any) => toast.error(routingUnavailable(err)),
+	});
+}
+
+export function useReturnItem(kind: RoutedKind) {
+	const refresh = useRefreshRouted();
+	return useMutation({
+		mutationFn: ({ id, minute }: { id: string; minute: string }) =>
+			StakeholderPortalApi.returnItem(kind, id, minute),
+		onSuccess: (_d, { id }) => {
+			refresh(kind, id);
+			toast.success("Returned to the previous office.");
+		},
+		onError: (err: any) => toast.error(routingUnavailable(err)),
+	});
+}
+
+export function useAcknowledgeItem(kind: RoutedKind) {
+	const refresh = useRefreshRouted();
+	return useMutation({
+		mutationFn: (id: string) => StakeholderPortalApi.acknowledgeItem(kind, id),
+		onSuccess: (_d, id) => {
+			refresh(kind, id);
+			toast.success("Receipt recorded.");
+		},
+		onError: (err: any) => toast.error(routingUnavailable(err)),
+	});
+}
+
+export const useForwardPermit = () => useForwardItem("permits");
+export const useReturnPermit = () => useReturnItem("permits");
+export const useAcknowledgePermit = () => useAcknowledgeItem("permits");
+
+/** Notices for the concessionaire portal's bell. */
+export function usePortalNotifications(stakeholderOrgId: string) {
+	return useQuery({
+		queryKey: ["stakeholder-orgs", stakeholderOrgId, "notifications"],
+		queryFn: () => StakeholderPortalApi.listPortalNotifications(stakeholderOrgId),
+		enabled: !!stakeholderOrgId,
+		refetchInterval: 60_000,
+	});
+}
+
+export function useMarkPortalNotificationsRead(stakeholderOrgId: string) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: (ids?: string[]) =>
+			StakeholderPortalApi.markPortalNotificationsRead(stakeholderOrgId, ids),
+		onSuccess: () =>
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs", stakeholderOrgId, "notifications"] }),
+	});
+}

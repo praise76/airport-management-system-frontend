@@ -1,9 +1,9 @@
+import { PortalNotifications } from "@/components/stakeholders/PortalNotifications";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
 	Activity,
 	ArrowRight,
 	BarChart3,
-	Bell,
 	Building2,
 	Calendar,
 	CheckCircle2,
@@ -264,13 +264,7 @@ function StakeholderDashboardPage() {
 						</div>
 					</div>
 					<div className="flex items-center gap-3">
-						<Button
-							variant="ghost"
-							size="icon"
-							className="text-slate-400 hover:text-white"
-						>
-							<Bell className="h-5 w-5" />
-						</Button>
+						<PortalNotifications stakeholderOrgId={org.id} />
 						<Link to="/stakeholder/profile">
 							<Button
 								variant="ghost"

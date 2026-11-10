@@ -3,7 +3,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Printer, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
+import { CurrentlyWith } from "@/components/stakeholders/PermitTrail";
 import { DecisionButtons } from "@/components/stakeholders/ReviewActions";
+import { RoutingButtons } from "@/components/stakeholders/RoutingActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -22,7 +24,9 @@ export const Route = createFileRoute("/stakeholders/permits")({
 	component: PermitQueuePage,
 });
 
-const STATUS_TABS: { value: PermitStatus | "all"; text: string }[] = [
+type Tab = PermitStatus | "all" | "mine";
+const STATUS_TABS: { value: Tab; text: string }[] = [
+	{ value: "mine", text: "With my office" },
 	{ value: "pending", text: "Waiting for decision" },
 	{ value: "approved", text: "Approved" },
 	{ value: "rejected", text: "Rejected" },
@@ -34,7 +38,7 @@ const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString("en-GB") : "—"
 
 /** One queue of permit applications from every company, for AVSEC/commercial officers. */
 function PermitQueuePage() {
-	const [status, setStatus] = useState<PermitStatus | "all">("pending");
+	const [status, setStatus] = useState<Tab>("pending");
 	const [search, setSearch] = useState("");
 	const [debounced, setDebounced] = useState("");
 	const [page, setPage] = useState(1);
@@ -50,7 +54,8 @@ function PermitQueuePage() {
 	}, [search]);
 
 	const { data, isLoading, isError } = useGlobalPermits({
-		status: status === "all" ? undefined : status,
+		status: status === "all" ? undefined : status === "mine" ? "pending" : status,
+		heldByMyOffice: status === "mine" ? true : undefined,
 		search: debounced || undefined,
 		page,
 		limit: 20,
@@ -109,7 +114,11 @@ function PermitQueuePage() {
 				)}
 				{!isLoading && !isError && permits.length === 0 && (
 					<p className="p-8 text-center text-muted-foreground">
-						{status === "pending" ? "Nothing waiting for a decision." : "No permits match."}
+						{status === "mine"
+							? "Nothing is with your office."
+							: status === "pending"
+								? "Nothing waiting for a decision."
+								: "No permits match."}
 					</p>
 				)}
 				{permits.map((p) => (
@@ -124,6 +133,7 @@ function PermitQueuePage() {
 								{p.permitNumber && ` · ${p.permitNumber}`}
 								{p.personDesignation && ` · ${p.personDesignation}`}
 							</p>
+							{p.status === "pending" && <CurrentlyWith item={p} surface="staff" />}
 							{p.status === "rejected" && p.rejectionReason && (
 								<p className="text-sm text-destructive">Rejected: {p.rejectionReason}</p>
 							)}
@@ -144,9 +154,11 @@ function PermitQueuePage() {
 								{" · "}Applied {fmt(p.createdAt)}
 							</p>
 						</div>
-						<div className="flex items-center gap-2">
+						<div className="flex flex-wrap items-center gap-2">
+							<RoutingButtons kind="permits" item={p} name={`${p.personName}'s permit`} />
 							{p.status === "pending" && (
 								<DecisionButtons
+									item={p}
 									busy={
 										(approve.isPending && approve.variables === p.id) ||
 										(reject.isPending && reject.variables?.permitId === p.id)

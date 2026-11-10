@@ -12,8 +12,15 @@ vi.mock("@/hooks/stakeholder-portal", () => ({
 		variables: undefined,
 	}),
 	useReviewStakeholderInvoice: vi.fn(),
+	useItemTrail: () => ({ data: null, isLoading: false, isError: false }),
+	useForwardItem: () => ({ mutate: vi.fn(), isPending: false }),
+	useReturnItem: () => ({ mutate: vi.fn(), isPending: false }),
+	useAcknowledgeItem: () => ({ mutate: vi.fn(), isPending: false }),
 	useStakeholderInvoices: vi.fn(),
 }));
+vi.mock("@/hooks/departments", () => ({ useDepartmentTree: () => ({ data: [] }) }));
+vi.mock("@/hooks/positions", () => ({ usePositions: () => ({ data: [] }) }));
+vi.mock("@/hooks/users", () => ({ useUsers: () => ({ data: { data: [] } }) }));
 vi.mock("@/stores/auth", () => ({
 	useAuthStore: (selector: any) =>
 		selector({ user: { role: "org_admin", canManageStakeholders: true } }),

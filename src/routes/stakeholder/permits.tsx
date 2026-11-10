@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { CurrentlyWith, TrailSection } from "@/components/stakeholders/PermitTrail";
 import {
 	Dialog,
 	DialogContent,
@@ -385,6 +386,7 @@ function PermitsPage() {
 											<MapPin className="h-3 w-3" />
 											{accessLevels.find((l) => l.value === permit.accessLevel)?.label ?? "Access level not set"}
 										</p>
+										{permit.status === "pending" && <CurrentlyWith item={permit} surface="portal" />}
 										{permit.status === "rejected" && permit.rejectionReason && (
 											<p className="text-sm rounded-md border border-red-500/30 bg-red-500/10 text-red-100 p-2">
 												<span className="font-medium">Rejected: </span>
@@ -554,7 +556,7 @@ function PermitsPage() {
 
 			{/* Permit Detail Dialog */}
 			<Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
+				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle className="text-xl font-semibold flex items-center gap-3">
 							<Shield className="h-5 w-5 text-emerald-400" />
@@ -632,6 +634,14 @@ function PermitsPage() {
 									<MapPin className="h-3 w-3 mr-1" />
 									{accessLevels.find((l) => l.value === selectedPermit.accessLevel)?.label ?? "Not set"}
 								</Badge>
+							</div>
+
+							<div className="bg-slate-800/50 rounded-lg p-4 space-y-3">
+								<p className="text-slate-400 text-sm">Where your application is</p>
+								{selectedPermit.status === "pending" && (
+									<CurrentlyWith item={selectedPermit} surface="portal" />
+								)}
+								<TrailSection kind="permits" item={selectedPermit} surface="portal" />
 							</div>
 
 							{selectedPermit.status === "approved" && selectedPermit.approvedAt && (

@@ -23,6 +23,8 @@ import {
 	XCircle,
 } from "lucide-react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
+import { CurrentlyWith } from "@/components/stakeholders/PermitTrail";
+import { RoutingButtons } from "@/components/stakeholders/RoutingActions";
 import { CompanyDocumentsReview } from "@/components/stakeholders/documents/CompanyDocumentsReview";
 import { VerificationDocumentsNotice } from "@/components/stakeholders/documents/VerificationDocumentsNotice";
 import { Button } from "@/components/ui/button";
@@ -685,14 +687,17 @@ function PermitsTab({
 											Access: {permit.accessAreas.map((a) => label(a)).join(", ")}
 										</p>
 									)}
+									{permit.status === "pending" && <CurrentlyWith item={permit} surface="staff" className="mt-1" />}
 									{permit.status === "rejected" && permit.rejectionReason && (
 										<p className="text-sm text-destructive mt-1">Rejected: {permit.rejectionReason}</p>
 									)}
 								</div>
 								<div className="flex flex-wrap items-center gap-2">
 									<StatusPill status={permit.status} />
+									<RoutingButtons kind="permits" item={permit} name={`${permit.personName}'s permit`} />
 									{permit.status === "pending" && (
 										<DecisionButtons
+											item={permit}
 											busy={
 												(approve.isPending && approve.variables === permit.id) ||
 												(reject.isPending && reject.variables?.permitId === permit.id)

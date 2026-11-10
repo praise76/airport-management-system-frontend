@@ -1,3 +1,4 @@
+import { CurrentlyWith, TrailSection } from "@/components/stakeholders/PermitTrail";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatNaira } from "@/lib/labels";
 import { useState, useMemo } from "react";
@@ -384,6 +385,9 @@ function ActivitiesPage() {
 														{activity.priority}
 													</Badge>
 												</div>
+												{["submitted", "under_review"].includes(activity.status) && (
+													<CurrentlyWith item={activity} surface="portal" className="mt-2" />
+												)}
 											</div>
 										</div>
 									</div>
@@ -548,7 +552,7 @@ function ActivitiesPage() {
 
 			{/* Activity Detail Dialog */}
 			<Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
+				<DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle className="text-xl font-semibold flex items-center gap-3">
 							<FileText className="h-5 w-5 text-blue-400" />
@@ -596,6 +600,16 @@ function ActivitiesPage() {
 									<p className="text-white">
 										{selectedActivity.data.description}
 									</p>
+								</div>
+							)}
+
+							{selectedActivity.status !== "draft" && (
+								<div className="bg-slate-800/50 rounded-lg p-4 space-y-3">
+									<p className="text-slate-400 text-sm">Where your request is</p>
+									{["submitted", "under_review"].includes(selectedActivity.status) && (
+										<CurrentlyWith item={selectedActivity} surface="portal" />
+									)}
+									<TrailSection kind="activities" item={selectedActivity} surface="portal" />
 								</div>
 							)}
 

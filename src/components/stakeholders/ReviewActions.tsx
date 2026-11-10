@@ -18,8 +18,11 @@ import {
 } from "@/hooks/stakeholder-portal";
 import { canReviewStakeholders } from "@/lib/access";
 import { formatNaira } from "@/lib/labels";
+import { holdsItem } from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
-import type { StakeholderActivity, StakeholderInvoice } from "@/types/stakeholder-portal";
+import { CurrentlyWith } from "./PermitTrail";
+import { RoutingButtons } from "./RoutingActions";
+import type { RoutingFields, StakeholderActivity, StakeholderInvoice } from "@/types/stakeholder-portal";
 
 /** Asks for a reason before a "no" decision. The reason is sent to the company. */
 export function ReasonDialog({
@@ -92,7 +95,10 @@ export function DecisionButtons({
 	rejectLabel = "Reject",
 	rejectTitle,
 	size = "sm",
+	item,
 }: {
+	/** With office routing: only the office that holds the item (or a super admin) decides. */
+	item?: RoutingFields;
 	onApprove: () => void;
 	onReject: (reason: string) => void;
 	busy?: boolean;
@@ -104,7 +110,8 @@ export function DecisionButtons({
 	const [rejecting, setRejecting] = useState(false);
 	const user = useAuthStore((st) => st.user);
 	// Only named reviewers can decide; the server refuses everyone else, so don't offer the buttons.
-	if (!canReviewStakeholders(user)) return null;
+	const routed = !!item && (!!item.currentOfficeId || !!item.currentOfficerId);
+	if (routed ? !holdsItem(user, item) : !canReviewStakeholders(user)) return null;
 	return (
 		<>
 			<div className="flex gap-2">
@@ -173,9 +180,13 @@ export function ActivitiesReviewTab({
 								Submitted {new Date(activity.submittedAt ?? activity.createdAt).toLocaleString()}
 								{activity.reviewComments && ` · Review note: ${activity.reviewComments}`}
 							</p>
+							{REVIEWABLE.has(activity.status) && <CurrentlyWith item={activity} surface="staff" className="mt-1" />}
 						</div>
+						<div className="flex flex-wrap items-center gap-2">
+						<RoutingButtons kind="activities" item={activity} name={activity.activityReference || activity.activityTitle} />
 						{REVIEWABLE.has(activity.status) && (
 							<DecisionButtons
+								item={activity}
 								busy={review.isPending && review.variables?.activityId === activity.id}
 								rejectTitle={`Reject activity ${activity.activityReference || activity.activityTitle}?`}
 								onApprove={() =>
@@ -190,6 +201,7 @@ export function ActivitiesReviewTab({
 								}
 							/>
 						)}
+						</div>
 					</div>
 				))}
 			</div>
@@ -226,11 +238,14 @@ export function InvoicesReviewTab({ stakeholderOrgId }: { stakeholderOrgId: stri
 							{new Date(inv.dueDate).toLocaleDateString("en-GB")}
 							{inv.reviewComments && ` · Review note: ${inv.reviewComments}`}
 						</p>
+						{REVIEWABLE.has(inv.status) && <CurrentlyWith item={inv} surface="staff" className="mt-1" />}
 					</div>
-					<div className="flex items-center gap-4">
+					<div className="flex flex-wrap items-center gap-3">
 						<span className="font-semibold">{formatNaira(inv.total)}</span>
+						<RoutingButtons kind="invoices" item={inv} name={`invoice ${inv.invoiceNumber}`} />
 						{REVIEWABLE.has(inv.status) && (
 							<DecisionButtons
+								item={inv}
 								busy={review.isPending && review.variables?.invoiceId === inv.id}
 								rejectTitle={`Reject invoice ${inv.invoiceNumber}?`}
 								onApprove={() => review.mutate({ invoiceId: inv.id, reviewStatus: "approved" })}

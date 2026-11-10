@@ -204,7 +204,73 @@ export interface StakeholderUser {
 // STAKEHOLDER ACTIVITIES
 // ============================================
 
-export interface StakeholderActivity {
+// ============================================
+// OFFICE ROUTING (permits, activities, invoices)
+// ============================================
+
+/** The three kinds of submission that move from office to office. */
+export type RoutedKind = "permits" | "activities" | "invoices";
+
+export type TrailStepType =
+	| "submitted"
+	| "forwarded"
+	| "returned"
+	| "acknowledged"
+	| "approved"
+	| "rejected";
+
+/** Where a submission is now. Present once the backend supports office routing. */
+export interface RoutingFields {
+	/** Name of the office that holds it, e.g. "Airport Chief of Security". */
+	currentOffice?: string;
+	currentOfficeId?: string;
+	/** When it reached that office. */
+	currentOfficeSince?: string;
+	/** Staff only: the named officer it was sent to, if any. */
+	currentOfficerId?: string;
+}
+
+/**
+ * One step of the trail. Concessionaires get office names and dates only, so `minute`,
+ * `actorName` and `toOfficerName` are absent from their response (and never rendered for them).
+ */
+export interface PermitTrailStep {
+	stepNumber: number;
+	stepType: TrailStepType;
+	fromOffice?: string;
+	/** The office the item is with after this step. */
+	toOffice?: string;
+	toOfficeId?: string;
+	at: string;
+	minute?: string;
+	actorName?: string;
+	toOfficerName?: string;
+}
+
+export type OfficeType = "department" | "unit" | "position";
+
+export interface ForwardInput {
+	toOfficeId: string;
+	toOfficeType: OfficeType;
+	/** Optional named officer in that office. */
+	toOfficerId?: string;
+	minute: string;
+}
+
+/** A notice to a company about one of its submissions. */
+export interface PortalNotification {
+	id: string;
+	kind: RoutedKind;
+	itemId: string;
+	/** e.g. the permit number. */
+	itemLabel: string;
+	stepType: TrailStepType;
+	office?: string;
+	createdAt: string;
+	readAt?: string | null;
+}
+
+export interface StakeholderActivity extends RoutingFields {
 	id: string;
 	stakeholderOrganizationId: string;
 	stakeholderUserId?: string;
@@ -237,7 +303,7 @@ export interface StakeholderActivity {
 // ACCESS PERMITS
 // ============================================
 
-export interface StakeholderPermit {
+export interface StakeholderPermit extends RoutingFields {
 	id: string;
 	stakeholderOrganizationId: string;
 	stakeholderUserId?: string;
@@ -282,6 +348,8 @@ export type PermitType =
 	| "crew";
 
 export interface GlobalPermitListParams {
+	/** Staff: only items currently held by the caller's office. */
+	heldByMyOffice?: boolean;
 	status?: PermitStatus;
 	permitType?: PermitType;
 	search?: string;
@@ -335,7 +403,7 @@ export interface StakeholderFlight {
 // INVOICES
 // ============================================
 
-export interface StakeholderInvoice {
+export interface StakeholderInvoice extends RoutingFields {
 	id: string;
 	stakeholderOrganizationId: string;
 	stakeholderUserId?: string;

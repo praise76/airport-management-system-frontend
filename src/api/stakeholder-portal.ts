@@ -1,3 +1,6 @@
+import { isStakeholderUser } from "@/lib/access";
+import { readRouting, redactForConcessionaire, toTrail } from "@/lib/routing";
+import { useAuthStore } from "@/stores/auth";
 import { api } from "./client";
 import type {
 	StakeholderOrganization,
@@ -21,6 +24,10 @@ import type {
 	GlobalPermitListParams,
 	GlobalPermitListResponse,
 	GlobalPermit,
+	ForwardInput,
+	PermitTrailStep,
+	PortalNotification,
+	RoutedKind,
 	AccessLevel,
 	FlightStatus,
 	FlightType,
@@ -203,6 +210,7 @@ function toActivity(row: ActivityRow): StakeholderActivity {
 		reviewComments: row.reviewComments ?? undefined,
 		reviewedAt: row.reviewedAt ?? undefined,
 		completedAt: row.completedAt ?? undefined,
+		...readRouting(row),
 		feeAmount: toNumber(row.feeAmount),
 		paymentStatus: row.paymentStatus ?? "pending",
 		createdAt: row.createdAt,
@@ -308,6 +316,7 @@ function toInvoice(row: InvoiceRow): StakeholderInvoice {
 		attachments: [],
 		createdAt: row.createdAt,
 		updatedAt: row.updatedAt,
+		...readRouting(row),
 	};
 }
 
@@ -427,6 +436,7 @@ function toPermit<T extends StakeholderPermit = StakeholderPermit>(row: PermitRo
 		rejectionReason: row.rejectionReason,
 		isActive: row.status === "approved" && row.validUntil >= today,
 		createdAt: row.createdAt,
+		...readRouting(row),
 		...(row.organizationName
 			? { organizationName: row.organizationName, stakeholderType: row.stakeholderType }
 			: {}),
@@ -653,6 +663,74 @@ export async function reviewStakeholderInvoice(
 		reviewComments,
 	});
 	return toInvoice(res.data.data ?? res.data);
+}
+
+// ============================================
+// OFFICE ROUTING (permits, activities, invoices)
+// ============================================
+// One set of calls for all three kinds: /stakeholder-orgs/{permits|activities|invoices}/:id/...
+// The backend routes are specified in docs/PERMIT_OFFICE_TRACKING_BACKEND.md.
+
+const routed = (kind: RoutedKind, id: string, action: string) =>
+	`/stakeholder-orgs/${kind}/${id}/${action}`;
+
+/**
+ * The ordered trail. Returns null when the server has no trail route yet (404), so screens can
+ * fall back to "Submitted" plus the decision. For a concessionaire the minute and staff names
+ * are stripped here as well as on the server.
+ */
+export async function getItemTrail(kind: RoutedKind, id: string): Promise<PermitTrailStep[] | null> {
+	try {
+		const res = await api.get(routed(kind, id, "trail"));
+		const steps = toTrail(res.data.data ?? res.data);
+		return isStakeholderUser(useAuthStore.getState().user) ? redactForConcessionaire(steps) : steps;
+	} catch (err: any) {
+		if (err?.status === 404) return null;
+		throw err;
+	}
+}
+
+export async function forwardItem(kind: RoutedKind, id: string, input: ForwardInput): Promise<void> {
+	await api.post(routed(kind, id, "forward"), { ...input, minute: input.minute.trim() });
+}
+
+export async function returnItem(kind: RoutedKind, id: string, minute: string): Promise<void> {
+	await api.post(routed(kind, id, "return"), { minute: minute.trim() });
+}
+
+export async function acknowledgeItem(kind: RoutedKind, id: string): Promise<void> {
+	await api.post(routed(kind, id, "acknowledge"));
+}
+
+export const getPermitTrail = (permitId: string) => getItemTrail("permits", permitId);
+export const forwardPermit = (permitId: string, input: ForwardInput) => forwardItem("permits", permitId, input);
+export const returnPermit = (permitId: string, minute: string) => returnItem("permits", permitId, minute);
+export const acknowledgePermit = (permitId: string) => acknowledgeItem("permits", permitId);
+
+/** Notices for the signed-in company. Empty (not an error) until the server has the route. */
+export async function listPortalNotifications(stakeholderOrgId: string): Promise<PortalNotification[]> {
+	try {
+		const res = await api.get(`/stakeholder-orgs/${stakeholderOrgId}/notifications`, { params: { limit: 30 } });
+		const body = res.data.data ?? res.data;
+		const rows: Record<string, any>[] = body.items ?? body ?? [];
+		return rows.map((r) => ({
+			id: r.id,
+			kind: r.kind ?? r.itemKind ?? "permits",
+			itemId: r.itemId,
+			itemLabel: r.itemLabel ?? r.reference ?? "Your submission",
+			stepType: r.stepType,
+			office: (typeof r.office === "string" ? r.office : r.office?.name) ?? r.officeName ?? undefined,
+			createdAt: r.createdAt,
+			readAt: r.readAt ?? null,
+		}));
+	} catch (err: any) {
+		if (err?.status === 404) return [];
+		throw err;
+	}
+}
+
+export async function markPortalNotificationsRead(stakeholderOrgId: string, ids?: string[]): Promise<void> {
+	await api.post(`/stakeholder-orgs/${stakeholderOrgId}/notifications/read`, ids ? { ids } : {});
 }
 
 // ============================================
