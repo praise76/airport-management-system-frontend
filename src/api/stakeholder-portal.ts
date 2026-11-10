@@ -818,6 +818,27 @@ export async function acknowledgeItem(kind: RoutedKind, id: string): Promise<voi
 	await api.post(routed(kind, id, "acknowledge"));
 }
 
+/** An activity or invoice held by the caller's office, with the company it belongs to. */
+export type HeldItem<T> = T & { organizationName?: string };
+
+async function listHeld<Row, T>(kind: "activities" | "invoices", map: (row: Row) => T): Promise<HeldItem<T>[] | null> {
+	try {
+		const res = await api.get(`/stakeholder-orgs/${kind}`, { params: { heldByMyOffice: true, limit: 100 } });
+		const body = res.data.data ?? res.data;
+		const rows: (Row & { organizationName?: string })[] = body.items ?? body ?? [];
+		return rows.map((r) => ({ ...map(r), organizationName: r.organizationName }));
+	} catch (err: any) {
+		// The server has no such list yet (404), or its route is shadowed (500): show nothing.
+		if (err?.status === 404 || err?.status === 500) return null;
+		throw err;
+	}
+}
+
+/** Requests (activities) currently held by the signed-in staff member's office. */
+export const listHeldActivities = () => listHeld<ActivityRow, StakeholderActivity>("activities", toActivity);
+/** Invoices currently held by the signed-in staff member's office. */
+export const listHeldInvoices = () => listHeld<InvoiceRow, StakeholderInvoice>("invoices", toInvoice);
+
 export const getPermitTrail = (permitId: string) => getItemTrail("permits", permitId);
 export const forwardPermit = (permitId: string, input: ForwardInput) => forwardItem("permits", permitId, input);
 export const returnPermit = (permitId: string, minute: string) => returnItem("permits", permitId, minute);

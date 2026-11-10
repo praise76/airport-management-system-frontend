@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Printer, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
+import { HeldInvoices, HeldRequests } from "@/components/stakeholders/OfficeInbox";
 import { CurrentlyWith } from "@/components/stakeholders/PermitTrail";
 import { DecisionButtons } from "@/components/stakeholders/ReviewActions";
 import { RoutingButtons } from "@/components/stakeholders/RoutingActions";
@@ -78,7 +79,7 @@ function PermitQueuePage() {
 				<p className="text-sm text-muted-foreground">
 					{seesAll
 						? "Access and vehicle permits requested by airlines, concessionaires and contractors."
-						: "Permit applications that have been forwarded to your office."}
+						: "Permit applications, requests and invoices that are with your office."}
 				</p>
 			</div>
 
@@ -113,6 +114,11 @@ function PermitQueuePage() {
 				</div>
 			</div>
 
+			{status === "mine" && (
+				<h2 className="text-lg font-semibold">
+					Permits <span className="text-sm font-normal text-muted-foreground">({permits.length})</span>
+				</h2>
+			)}
 			<div className="border rounded-xl bg-card divide-y">
 				{isLoading && <p className="p-8 text-center text-muted-foreground">Loading permits…</p>}
 				{isError && (
@@ -123,7 +129,7 @@ function PermitQueuePage() {
 				{!isLoading && !isError && permits.length === 0 && (
 					<p className="p-8 text-center text-muted-foreground">
 						{status === "mine"
-							? "Nothing is with your office."
+							? "No permits are with your office."
 							: status === "pending"
 								? "Nothing waiting for a decision."
 								: "No permits match."}
@@ -211,6 +217,13 @@ function PermitQueuePage() {
 						Next
 					</Button>
 				</div>
+			)}
+
+			{status === "mine" && (
+				<>
+					<HeldRequests />
+					<HeldInvoices />
+				</>
 			)}
 
 			{badgeFor && (

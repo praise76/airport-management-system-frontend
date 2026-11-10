@@ -741,3 +741,37 @@ export function useMarkPortalNotificationsRead(stakeholderOrgId: string) {
 			qc.invalidateQueries({ queryKey: ["stakeholder-orgs", stakeholderOrgId, "notifications"] }),
 	});
 }
+
+/** Requests and invoices held by my office. `data` is null until the server has the lists. */
+export function useHeldActivities(enabled = true) {
+	return useQuery({
+		queryKey: ["stakeholder-orgs", "held", "activities"],
+		queryFn: StakeholderPortalApi.listHeldActivities,
+		enabled,
+		retry: false,
+	});
+}
+export function useHeldInvoices(enabled = true) {
+	return useQuery({
+		queryKey: ["stakeholder-orgs", "held", "invoices"],
+		queryFn: StakeholderPortalApi.listHeldInvoices,
+		enabled,
+		retry: false,
+	});
+}
+
+/** Approve or reject a held request or invoice, then refresh the inbox. */
+export function useDecideHeldItem(kind: "activities" | "invoices") {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async ({ id, decision, comments }: { id: string; decision: "approved" | "rejected"; comments?: string }): Promise<void> => {
+			if (kind === "activities") await StakeholderPortalApi.reviewStakeholderActivity("", id, decision, comments);
+			else await StakeholderPortalApi.reviewStakeholderInvoice("", id, decision, comments);
+		},
+		onSuccess: (_d, { decision }) => {
+			qc.invalidateQueries({ queryKey: ["stakeholder-orgs"] });
+			toast.success(decision === "approved" ? "Approved. The company has been notified." : "Rejected. The company has been notified.");
+		},
+		onError: (err: any) => toast.error(err.message || "That didn't work. Please try again."),
+	});
+}
