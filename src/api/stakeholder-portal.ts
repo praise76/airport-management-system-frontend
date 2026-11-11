@@ -30,6 +30,8 @@ import type {
 	PermitTrailStep,
 	RoutingRouteKey,
 	RoutingSettings,
+	NamedReaders,
+	AccessLogEntry,
 	TrailAttachment,
 	PortalNotification,
 	RoutedKind,
@@ -856,6 +858,21 @@ export async function saveRoutingSetting(
 	office: { officeId: string; officeType: OfficeType },
 ): Promise<void> {
 	await api.put(`/stakeholder-orgs/routing-settings/${routeKey}`, office);
+}
+
+export async function getNamedReaders(): Promise<NamedReaders> {
+	const res = await api.get("/stakeholder-orgs/routing-settings/named-readers");
+	return (res.data.data ?? res.data) as NamedReaders;
+}
+
+/** Replaces the whole list of positions that may read every item of one kind. */
+export async function saveNamedReaders(kind: RoutedKind, positionIds: string[]): Promise<void> {
+	await api.put(`/stakeholder-orgs/routing-settings/named-readers/${kind}`, { positionIds });
+}
+
+export async function getAccessLog(params: { kind?: RoutedKind; itemId?: string; limit?: number } = {}): Promise<AccessLogEntry[]> {
+	const res = await api.get("/stakeholder-orgs/access-log", { params });
+	return (res.data.data ?? res.data) as AccessLogEntry[];
 }
 
 export async function acknowledgeItem(kind: RoutedKind, id: string): Promise<void> {

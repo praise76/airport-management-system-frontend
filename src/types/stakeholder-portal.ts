@@ -255,6 +255,25 @@ export interface RoutingSettingRow {
 }
 export type RoutingSettings = Record<RoutingRouteKey, RoutingSettingRow>;
 
+/**
+ * Need-to-know: positions that may read the minutes and files of EVERY item of a kind, whatever
+ * its chain. Empty by default. `activities` are the companies' requests.
+ */
+export type NamedReaders = Record<RoutedKind, { positionId: string; title: string }[]>;
+
+/** One read that was allowed only by an exception (super admin, auditor, named reader). */
+export interface AccessLogEntry {
+	id: string;
+	kind: RoutedKind;
+	itemId: string;
+	what: "trail" | "attachment" | "letter";
+	targetId: string | null;
+	via: "super_admin" | "auditor" | "named_reader";
+	createdAt: string;
+	userId: string | null;
+	userName: string | null;
+}
+
 export interface PermitTrailStep {
 	stepNumber: number;
 	stepType: TrailStepType;

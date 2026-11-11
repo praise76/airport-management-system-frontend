@@ -725,6 +725,26 @@ export function useRoutingSettings() {
 	});
 }
 
+export function useNamedReaders() {
+	return useQuery({
+		queryKey: ["named-readers"],
+		queryFn: StakeholderPortalApi.getNamedReaders,
+	});
+}
+
+export function useSaveNamedReaders() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ kind, positionIds }: { kind: RoutedKind; positionIds: string[] }) =>
+			StakeholderPortalApi.saveNamedReaders(kind, positionIds),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["named-readers"] });
+			toast.success("Named readers saved.");
+		},
+		onError: (err: any) => toast.error(err?.message || "Could not save the named readers."),
+	});
+}
+
 export function useSaveRoutingSetting() {
 	const qc = useQueryClient();
 	return useMutation({

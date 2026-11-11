@@ -19,6 +19,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { NamedReadersSection } from "@/components/stakeholders/NamedReaders";
 import {
 	useRoutingSettings,
 	useSaveRoutingSetting,
@@ -154,6 +155,7 @@ function RoutingSettingsPage() {
 			{ROUTES.map((r) => (
 				<StartingOfficeCard key={r.key} routeKey={r.key} title={r.title} description={r.description} />
 			))}
+			<NamedReadersSection />
 		</div>
 	);
 }
