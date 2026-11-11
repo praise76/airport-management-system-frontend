@@ -32,6 +32,7 @@ import {
 	Shield,
 	ShieldAlert,
 	ShieldCheck,
+	Route as RouteIcon,
 	ShoppingCart,
 	User,
 	UserCog,
@@ -102,6 +103,12 @@ const navGroups: NavGroup[] = [
 				icon: ShieldCheck,
 				roles: [...ROLE_GROUPS.stakeholderOfficers],
 				allowIf: canReviewStakeholders,
+			},
+			{
+				label: "Routing settings",
+				to: "/admin/routing",
+				icon: RouteIcon,
+				roles: ["SUPER_ADMIN"],
 			},
 			{
 				// Every staff member: a permit can be forwarded to any office, and that office must

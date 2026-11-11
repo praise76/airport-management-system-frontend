@@ -9,6 +9,7 @@ import {
 	X,
 } from "lucide-react";
 import { useItemTrail } from "@/hooks/stakeholder-portal";
+import { AttachmentLink } from "./AttachmentPicker";
 import { currentlyWith, fallbackTrail, STEP_LABEL } from "@/lib/routing";
 import { cn } from "@/lib/utils";
 import type {
@@ -98,9 +99,14 @@ export function CurrentlyWith({
 export function PermitTrail({
 	steps,
 	surface,
+	kind,
+	itemId,
 }: {
 	steps: PermitTrailStep[];
 	surface: Surface;
+	/** With these, attached files open on click (staff only). */
+	kind?: RoutedKind;
+	itemId?: string;
 }) {
 	const portal = surface === "portal";
 	if (steps.length === 0)
@@ -184,6 +190,15 @@ export function PermitTrail({
 									{step.minute}
 								</p>
 							)}
+							{!portal && !!step.attachments?.length && (
+								<ul className="mt-1.5 flex flex-wrap gap-1.5" aria-label="Attached files">
+									{step.attachments.map((file) => (
+										<li key={file.id}>
+											<AttachmentLink kind={kind} itemId={itemId} attachment={file} />
+										</li>
+									))}
+								</ul>
+							)}
 						</div>
 					</li>
 				);
@@ -235,5 +250,5 @@ export function TrailSection({
 			</p>
 		);
 	const steps = data && data.length > 0 ? data : fallbackTrail(item);
-	return <PermitTrail steps={steps} surface={surface} />;
+	return <PermitTrail steps={steps} surface={surface} kind={kind} itemId={item.id} />;
 }

@@ -13,6 +13,8 @@ import type {
 	StakeholderAuthLoginInput,
 	StakeholderRegistrationInput,
 	AccreditationLevel,
+	OfficeType,
+	RoutingRouteKey,
 } from "@/types/stakeholder-portal";
 
 // ============================================
@@ -696,13 +698,40 @@ export function useForwardItem(kind: RoutedKind) {
 export function useReturnItem(kind: RoutedKind) {
 	const refresh = useRefreshRouted();
 	return useMutation({
-		mutationFn: ({ id, minute }: { id: string; minute: string }) =>
-			StakeholderPortalApi.returnItem(kind, id, minute),
+		mutationFn: ({ id, minute, attachments }: { id: string; minute: string; attachments?: string[] }) =>
+			StakeholderPortalApi.returnItem(kind, id, minute, attachments),
 		onSuccess: (_d, { id }) => {
 			refresh(kind, id);
 			toast.success("Returned to the previous office.");
 		},
 		onError: (err: any) => toast.error(routingUnavailable(err)),
+	});
+}
+
+/** Upload one file to travel with the next minute. The caller keeps the returned ids. */
+export function useUploadAttachment(kind: RoutedKind, id: string) {
+	return useMutation({
+		mutationFn: (file: File) => StakeholderPortalApi.uploadItemAttachment(kind, id, file),
+	});
+}
+
+export function useRoutingSettings() {
+	return useQuery({
+		queryKey: ["routing-settings"],
+		queryFn: StakeholderPortalApi.getRoutingSettings,
+	});
+}
+
+export function useSaveRoutingSetting() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ routeKey, officeId, officeType }: { routeKey: RoutingRouteKey; officeId: string; officeType: OfficeType }) =>
+			StakeholderPortalApi.saveRoutingSetting(routeKey, { officeId, officeType }),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["routing-settings"] });
+			toast.success("Starting office saved.");
+		},
+		onError: (err: any) => toast.error(err?.message || "Could not save the starting office."),
 	});
 }
 

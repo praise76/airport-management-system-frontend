@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
 	user: { id: "u-acos", role: "officer", departmentId: "off-acos" } as any,
 	forward: vi.fn(),
 	back: vi.fn(),
+	upload: vi.fn(),
 	trail: null as any,
 }));
 
@@ -15,6 +16,7 @@ vi.mock("@/hooks/stakeholder-portal", () => ({
 	useForwardItem: () => ({ mutate: mocks.forward, isPending: false }),
 	useReturnItem: () => ({ mutate: mocks.back, isPending: false }),
 	useAcknowledgeItem: () => ({ mutate: vi.fn(), isPending: false }),
+	useUploadAttachment: () => ({ mutateAsync: mocks.upload, isPending: false }),
 }));
 vi.mock("@/hooks/departments", () => ({
 	useDepartmentTree: () => ({ data: [], isLoading: false }),
@@ -172,12 +174,12 @@ describe("RoutingButtons and DecisionButtons", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Return to RGM" }));
 		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "Vetted. No objection." } });
 		fireEvent.click(screen.getByRole("button", { name: "Return" }));
-		expect(mocks.back).toHaveBeenCalledWith({ id: "p1", minute: "Vetted. No objection." }, expect.anything());
+		expect(mocks.back).toHaveBeenCalledWith({ id: "p1", minute: "Vetted. No objection.", attachments: undefined }, expect.anything());
 		expect(mocks.forward).not.toHaveBeenCalled();
 	});
 
-	it("minutes it to the office above when the server's return would bounce it back down", () => {
-		// RGM -> ACOS -> CII, CII returned to ACOS. The server's return would send it to CII again.
+	it("still just returns after a lower office returned it: the server now sends it up the chain", () => {
+		// RGM -> ACOS -> CII, CII returned to ACOS. A return goes up to the RGM; no forward work-around.
 		mocks.trail = [
 			...chain,
 			{ stepNumber: 3, stepType: "forwarded" as const, fromOfficeId: "off-acos", toOffice: "CII", toOfficeId: "off-cii", at: "2026-11-12T11:00:00Z" },
@@ -187,11 +189,63 @@ describe("RoutingButtons and DecisionButtons", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Return to RGM" }));
 		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "Find attached treated report." } });
 		fireEvent.click(screen.getByRole("button", { name: "Return" }));
-		expect(mocks.back).not.toHaveBeenCalled();
-		expect(mocks.forward).toHaveBeenCalledWith(
-			{ id: "p1", input: { toOfficeId: "off-rgm", toOfficeType: "position", minute: "Find attached treated report." } },
+		expect(mocks.forward).not.toHaveBeenCalled();
+		expect(mocks.back).toHaveBeenCalledWith(
+			{ id: "p1", minute: "Find attached treated report.", attachments: undefined },
 			expect.anything(),
 		);
+	});
+
+	it("attaches a file to a minute and sends its id with the return", async () => {
+		mocks.upload.mockResolvedValue({ id: "att-1", name: "treated-job-completion.pdf", mimeType: "application/pdf", size: 2048 });
+		render2();
+		fireEvent.click(screen.getByRole("button", { name: "Return to RGM" }));
+		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "Find attached treated job completion." } });
+		const file = new File(["%PDF-1.4"], "treated-job-completion.pdf", { type: "application/pdf" });
+		fireEvent.change(screen.getByTestId("attachment-input"), { target: { files: [file] } });
+		expect(await screen.findByText("treated-job-completion.pdf")).toBeTruthy();
+		expect(mocks.upload).toHaveBeenCalledWith(file);
+		fireEvent.click(screen.getByRole("button", { name: "Return" }));
+		expect(mocks.back).toHaveBeenCalledWith(
+			{ id: "p1", minute: "Find attached treated job completion.", attachments: ["att-1"] },
+			expect.anything(),
+		);
+	});
+
+	it("does not upload a file that is not a PDF or image, and a removed file is not sent", async () => {
+		mocks.upload.mockResolvedValue({ id: "att-2", name: "a.png", mimeType: "image/png", size: 10 });
+		render2();
+		fireEvent.click(screen.getByRole("button", { name: "Return to RGM" }));
+		fireEvent.change(screen.getByLabelText("Minute"), { target: { value: "Attached the photo." } });
+		const input = screen.getByTestId("attachment-input");
+		fireEvent.change(input, { target: { files: [new File(["x"], "notes.docx", { type: "application/msword" })] } });
+		expect(mocks.upload).not.toHaveBeenCalled();
+		fireEvent.change(input, { target: { files: [new File(["x"], "a.png", { type: "image/png" })] } });
+		fireEvent.click(await screen.findByRole("button", { name: "Remove a.png" }));
+		fireEvent.click(screen.getByRole("button", { name: "Return" }));
+		expect(mocks.back).toHaveBeenCalledWith({ id: "p1", minute: "Attached the photo.", attachments: undefined }, expect.anything());
+	});
+});
+
+describe("attached files on the timeline", () => {
+	const withFile = [
+		{ stepNumber: 1, stepType: "submitted" as const, toOffice: "RGM's office", at: "2026-11-12T09:00:00Z" },
+		{
+			stepNumber: 2,
+			stepType: "returned" as const,
+			toOffice: "RGM's office",
+			at: "2026-11-12T10:00:00Z",
+			minute: "Treated job completion attached",
+			attachments: [{ id: "att-1", name: "treated-job-completion.pdf", mimeType: "application/pdf", size: 2048 }],
+		},
+	];
+	it("shows the files to staff, with their size", () => {
+		render(<PermitTrail steps={withFile} surface="staff" kind="activities" itemId="a1" />);
+		expect(screen.getByRole("button", { name: /treated-job-completion\.pdf \(2 KB\)/ })).toBeTruthy();
+	});
+	it("never shows them to the company", () => {
+		render(<PermitTrail steps={withFile} surface="portal" kind="activities" itemId="a1" />);
+		expect(screen.queryByText(/treated-job-completion/)).toBeNull();
 	});
 });
 

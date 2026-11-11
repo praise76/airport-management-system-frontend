@@ -219,7 +219,7 @@ describe("request letters", () => {
 	});
 });
 
-import { chainOf, returnTarget, serverReturnTarget } from "./routing";
+import { chainOf, returnTarget } from "./routing";
 
 describe("returning up the chain", () => {
 	const step = (n: number, stepType: any, from: string | undefined, to: string) => ({
@@ -240,7 +240,6 @@ describe("returning up the chain", () => {
 		const t = [...down, step(4, "returned", "fm", "env")];
 		expect(chainOf(t).map((o) => o.id)).toEqual(["rgm", "env"]);
 		expect(returnTarget(t)?.id).toBe("rgm");
-		expect(serverReturnTarget(t)).toBe("fm"); // what the server does today
 	});
 	it("after it is back with the RGM there is nowhere to return to, and it can go to Accounts", () => {
 		const t = [...down, step(4, "returned", "fm", "env"), step(5, "forwarded", "env", "rgm")];
@@ -293,5 +292,29 @@ describe("named officers inside an office", () => {
 	it("ignores a receipt after the assignment", () => {
 		const ack = toTrail([...rows, step(4, "acknowledged", { toOffice: { id: "env", name: "Environment" } })]);
 		expect(assignedWithinOffice(ack, "u1")).toBe(true);
+	});
+});
+
+describe("attachments on a minute", () => {
+	const row = {
+		stepNumber: 2,
+		stepType: "returned",
+		toOffice: { id: "rgm", name: "RGM" },
+		createdAt: "2026-11-12T10:00:00Z",
+		minute: "Treated job completion attached",
+		attachments: [{ id: "att-1", name: "treated.pdf", mimeType: "application/pdf", size: 2048 }, { nope: true }],
+	};
+	it("reads the files a staff trail lists, skipping malformed entries", () => {
+		const [step] = toTrail([row]);
+		expect(step.attachments).toEqual([{ id: "att-1", name: "treated.pdf", mimeType: "application/pdf", size: 2048 }]);
+	});
+	it("has none when the server lists none", () => {
+		expect(toTrail([{ ...row, attachments: [] }])[0].attachments).toBeUndefined();
+		expect(toTrail([{ ...row, attachments: undefined }])[0].attachments).toBeUndefined();
+	});
+	it("never lets them reach the company, even if a server slip sends them", () => {
+		const redacted = redactForConcessionaire(toTrail([row]));
+		expect(JSON.stringify(redacted)).not.toContain("treated.pdf");
+		expect(redacted[0]).not.toHaveProperty("attachments");
 	});
 });

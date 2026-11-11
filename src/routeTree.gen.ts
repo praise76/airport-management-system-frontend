@@ -67,6 +67,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthChangePasswordRouteImport } from './routes/auth/change-password'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
+import { Route as AdminRoutingRouteImport } from './routes/admin/routing'
 import { Route as RosterTemplatesIndexRouteImport } from './routes/roster/templates/index'
 import { Route as RosterPatternsIndexRouteImport } from './routes/roster/patterns/index'
 import { Route as InventoryStockIndexRouteImport } from './routes/inventory/stock/index'
@@ -379,6 +380,11 @@ const AdminStaffRoute = AdminStaffRouteImport.update({
   path: '/admin/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoutingRoute = AdminRoutingRouteImport.update({
+  id: '/admin/routing',
+  path: '/admin/routing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RosterTemplatesIndexRoute = RosterTemplatesIndexRouteImport.update({
   id: '/roster/templates/',
   path: '/roster/templates/',
@@ -467,6 +473,7 @@ const AdminStaffIdEditRoute = AdminStaffIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/admin/routing': typeof AdminRoutingRoute
   '/admin/staff': typeof AdminStaffRouteWithChildren
   '/auth/change-password': typeof AuthChangePasswordRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -542,6 +549,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/routing': typeof AdminRoutingRoute
   '/auth/change-password': typeof AuthChangePasswordRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
@@ -618,6 +626,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/messages': typeof MessagesRouteWithChildren
+  '/admin/routing': typeof AdminRoutingRoute
   '/admin/staff': typeof AdminStaffRouteWithChildren
   '/auth/change-password': typeof AuthChangePasswordRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -696,6 +705,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/messages'
+    | '/admin/routing'
     | '/admin/staff'
     | '/auth/change-password'
     | '/auth/forgot-password'
@@ -771,6 +781,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin/routing'
     | '/auth/change-password'
     | '/auth/forgot-password'
     | '/auth/login'
@@ -846,6 +857,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/messages'
+    | '/admin/routing'
     | '/admin/staff'
     | '/auth/change-password'
     | '/auth/forgot-password'
@@ -923,6 +935,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MessagesRoute: typeof MessagesRouteWithChildren
+  AdminRoutingRoute: typeof AdminRoutingRoute
   AdminStaffRoute: typeof AdminStaffRouteWithChildren
   AuthChangePasswordRoute: typeof AuthChangePasswordRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -1398,6 +1411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/routing': {
+      id: '/admin/routing'
+      path: '/admin/routing'
+      fullPath: '/admin/routing'
+      preLoaderRoute: typeof AdminRoutingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/roster/templates/': {
       id: '/roster/templates/'
       path: '/roster/templates'
@@ -1559,6 +1579,7 @@ const OrganizationsOrgIdRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MessagesRoute: MessagesRouteWithChildren,
+  AdminRoutingRoute: AdminRoutingRoute,
   AdminStaffRoute: AdminStaffRouteWithChildren,
   AuthChangePasswordRoute: AuthChangePasswordRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,

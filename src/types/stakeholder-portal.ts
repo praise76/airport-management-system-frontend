@@ -236,6 +236,25 @@ export interface RoutingFields {
  * One step of the trail. Concessionaires get office names and dates only, so `minute`,
  * `actorName` and `toOfficerName` are absent from their response (and never rendered for them).
  */
+/** A file carried by a minute. Staff only: the company never receives these. */
+export interface TrailAttachment {
+	id: string;
+	name: string;
+	mimeType: string;
+	size: number;
+}
+
+/** Which office new submissions start at, per route. */
+export type RoutingRouteKey = "standard" | "visitor_permit";
+export interface RoutingSettingRow {
+	/** "setting": chosen here. "default": found by position code (RGM / ACOS). "unset": nothing found. */
+	source: "setting" | "default" | "unset";
+	office: { id: string; name: string; type: OfficeType } | null;
+	/** Set when the configured office no longer exists. */
+	error?: string;
+}
+export type RoutingSettings = Record<RoutingRouteKey, RoutingSettingRow>;
+
 export interface PermitTrailStep {
 	stepNumber: number;
 	stepType: TrailStepType;
@@ -250,6 +269,8 @@ export interface PermitTrailStep {
 	minute?: string;
 	actorName?: string;
 	toOfficerName?: string;
+	/** Staff only: files that came with this minute. */
+	attachments?: TrailAttachment[];
 }
 
 export type OfficeType = "department" | "unit" | "position";
@@ -260,6 +281,8 @@ export interface ForwardInput {
 	/** Optional named officer in that office. */
 	toOfficerId?: string;
 	minute: string;
+	/** Ids of files uploaded for this item, to travel with the minute. */
+	attachments?: string[];
 }
 
 /** A notice to a company about one of its submissions. */

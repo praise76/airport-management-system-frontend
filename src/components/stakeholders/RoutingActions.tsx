@@ -1,5 +1,5 @@
 import { CornerUpLeft, Forward, History, Inbox, Loader2 } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -33,7 +33,6 @@ import {
 	isOpen,
 	assignedWithinOffice,
 	returnTarget,
-	serverReturnTarget,
 } from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
 import type { DepartmentTreeNode } from "@/types/department";
@@ -42,7 +41,9 @@ import type {
 	OfficeType,
 	RoutedKind,
 	RoutingFields,
+	TrailAttachment,
 } from "@/types/stakeholder-portal";
+import { AttachmentPicker } from "./AttachmentPicker";
 import { CurrentlyWith, PermitTrail } from "./PermitTrail";
 
 /**
@@ -99,7 +100,7 @@ function flatten(
 }
 
 /** Every office an item can be minuted to: departments, units and positions. */
-function useOffices() {
+export function useOffices() {
 	const tree = useDepartmentTree();
 	const positions = usePositions();
 	const all = useMemo<OfficeOption[]>(
@@ -158,6 +159,8 @@ export function ForwardDialog({
 	holder,
 	busy,
 	onForward,
+	kind,
+	itemId,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -166,12 +169,20 @@ export function ForwardDialog({
 	holder: { id?: string; type?: OfficeType };
 	busy?: boolean;
 	onForward: (input: ForwardInput) => void;
+	/** With these, the minute can carry attached files. */
+	kind?: RoutedKind;
+	itemId?: string;
 }) {
 	const ids = { office: useId(), officer: useId(), minute: useId() };
 	const [office, setOffice] = useState("");
 	const [officer, setOfficer] = useState("");
 	const [minute, setMinute] = useState("");
+	const [files, setFiles] = useState<TrailAttachment[]>([]);
 	const [showAll, setShowAll] = useState(false);
+	// Files already uploaded for a dialog that was closed without sending are dropped.
+	useEffect(() => {
+		if (!open) setFiles([]);
+	}, [open]);
 	const { all, loading } = useOffices();
 	const next = useMemo(() => nextOffices(all, holder), [all, holder]);
 
@@ -194,6 +205,7 @@ export function ForwardDialog({
 		setOffice("");
 		setOfficer("");
 		setMinute("");
+		setFiles([]);
 		setShowAll(false);
 	};
 
@@ -291,6 +303,9 @@ export function ForwardDialog({
 						/>
 						<p className="text-xs text-muted-foreground">Required. Staff only.</p>
 					</div>
+					{kind && itemId && (
+						<AttachmentPicker kind={kind} itemId={itemId} value={files} onChange={setFiles} />
+					)}
 				</div>
 				<DialogFooter>
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -305,6 +320,7 @@ export function ForwardDialog({
 								toOfficeType: chosen.type,
 								toOfficerId: officer || undefined,
 								minute: minute.trim(),
+								attachments: files.length ? files.map((f) => f.id) : undefined,
 							})
 						}
 					>
@@ -329,16 +345,25 @@ function ReturnDialog({
 	to,
 	busy,
 	onConfirm,
+	kind,
+	itemId,
 }: {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	title: string;
 	to: string;
 	busy?: boolean;
-	onConfirm: (minute: string) => void;
+	onConfirm: (minute: string, attachments: string[]) => void;
+	/** With these, the minute can carry attached files (e.g. the treated job completion). */
+	kind?: RoutedKind;
+	itemId?: string;
 }) {
 	const id = useId();
 	const [minute, setMinute] = useState("");
+	const [files, setFiles] = useState<TrailAttachment[]>([]);
+	useEffect(() => {
+		if (!open) setFiles([]);
+	}, [open]);
 	return (
 		<Dialog
 			open={open}
@@ -365,13 +390,16 @@ function ReturnDialog({
 					/>
 					<p className="text-xs text-muted-foreground">Required. Staff only.</p>
 				</div>
+				{kind && itemId && (
+					<AttachmentPicker kind={kind} itemId={itemId} value={files} onChange={setFiles} />
+				)}
 				<DialogFooter>
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						Cancel
 					</Button>
 					<Button
 						disabled={busy || minute.trim().length < MIN_MINUTE}
-						onClick={() => onConfirm(minute.trim())}
+						onClick={() => onConfirm(minute.trim(), files.map((f) => f.id))}
 					>
 						{busy ? (
 							<Loader2 className="h-4 w-4 animate-spin" />
@@ -426,7 +454,7 @@ function TimelineDialog({
 						Couldn't load the timeline. Close this and open it again.
 					</p>
 				) : (
-					<PermitTrail steps={steps} surface="staff" />
+					<PermitTrail steps={steps} surface="staff" kind={kind} itemId={item.id} />
 				)}
 				<DialogFooter>
 					{canAcknowledge && (
@@ -481,7 +509,6 @@ export function RoutingButtons({
 		(held ?? holdsItem(user, item));
 	// The chain is read from the trail, so only fetch it for someone who can act.
 	const trail = useItemTrail(kind, item.id, mayAct);
-	const { all } = useOffices();
 	const up = mayAct && trail.data ? returnTarget(trail.data) : null;
 	// A person the head of the office minuted it to hands it back to that head.
 	const handBack =
@@ -491,28 +518,12 @@ export function RoutingButtons({
 		: up;
 	const close = (o: boolean) => !o && setDialog(null);
 
-	const sendBack = (minute: string) => {
-		if (!trail.data) return;
-		const done = { onSuccess: () => setDialog(null) };
-		if (handBack) {
-			back.mutate({ id: item.id, minute }, done);
-			return;
-		}
-		if (!up) return;
-		// The server's own "return" goes to the office the last move came from. After a unit
-		// has returned an item to its HOD, that is the unit again, not the RGM. When the two
-		// differ, minute it to the office above instead, so it still goes up the chain.
-		if (serverReturnTarget(trail.data) === up.id) {
-			back.mutate({ id: item.id, minute }, done);
-			return;
-		}
-		const office = all.find((o) => o.id === up.id);
-		forward.mutate(
-			{
-				id: item.id,
-				input: { toOfficeId: up.id, toOfficeType: office?.type ?? "position", minute },
-			},
-			done,
+	// The server sends a return up the chain (to the office above, or to the head of the office
+	// when a named person hands it back), so a return is always just a return.
+	const sendBack = (minute: string, attachments: string[]) => {
+		back.mutate(
+			{ id: item.id, minute, attachments: attachments.length ? attachments : undefined },
+			{ onSuccess: () => setDialog(null) },
 		);
 	};
 
@@ -548,6 +559,8 @@ export function RoutingButtons({
 				onOpenChange={close}
 				title={`Minute ${name}`}
 				holder={{ id: item.currentOfficeId, type: item.currentOfficeType }}
+				kind={kind}
+				itemId={item.id}
 				busy={forward.isPending}
 				onForward={(input) =>
 					forward.mutate({ id: item.id, input }, { onSuccess: () => setDialog(null) })
@@ -559,7 +572,9 @@ export function RoutingButtons({
 					onOpenChange={close}
 					title={`Return ${name}`}
 					to={target.name}
-					busy={back.isPending || forward.isPending}
+					kind={kind}
+					itemId={item.id}
+					busy={back.isPending}
 					onConfirm={sendBack}
 				/>
 			)}

@@ -26,7 +26,11 @@ import type {
 	GlobalPermitListResponse,
 	GlobalPermit,
 	ForwardInput,
+	OfficeType,
 	PermitTrailStep,
+	RoutingRouteKey,
+	RoutingSettings,
+	TrailAttachment,
 	PortalNotification,
 	RoutedKind,
 	AccessLevel,
@@ -810,8 +814,45 @@ export async function forwardItem(kind: RoutedKind, id: string, input: ForwardIn
 	await api.post(routed(kind, id, "forward"), { ...input, minute: input.minute.trim() });
 }
 
-export async function returnItem(kind: RoutedKind, id: string, minute: string): Promise<void> {
-	await api.post(routed(kind, id, "return"), { minute: minute.trim() });
+export async function returnItem(kind: RoutedKind, id: string, minute: string, attachments?: string[]): Promise<void> {
+	await api.post(routed(kind, id, "return"), {
+		minute: minute.trim(),
+		...(attachments?.length ? { attachments } : {}),
+	});
+}
+
+/** Upload a file for the next minute on this item. Pass the returned id when forwarding or returning. */
+export async function uploadItemAttachment(kind: RoutedKind, id: string, file: File): Promise<TrailAttachment> {
+	const form = new FormData();
+	form.append("file", file);
+	// No Content-Type header: the browser must add the multipart boundary itself.
+	const res = await api.post(routed(kind, id, "attachments"), form);
+	return (res.data.data ?? res.data) as TrailAttachment;
+}
+
+/** The file needs the auth header, so it is fetched as a blob rather than linked to. */
+export async function fetchItemAttachment(kind: RoutedKind, id: string, attachmentId: string): Promise<Blob> {
+	try {
+		const res = await api.get(`${routed(kind, id, "attachments")}/${attachmentId}/file`, { responseType: "blob" });
+		return res.data;
+	} catch (err: unknown) {
+		const status = (err as { status?: number } | null)?.status;
+		if (status === 410) throw new Error("The stored file is no longer available.");
+		if (status === 404) throw new Error("This attachment no longer exists.");
+		throw err;
+	}
+}
+
+export async function getRoutingSettings(): Promise<RoutingSettings> {
+	const res = await api.get("/stakeholder-orgs/routing-settings");
+	return (res.data.data ?? res.data) as RoutingSettings;
+}
+
+export async function saveRoutingSetting(
+	routeKey: RoutingRouteKey,
+	office: { officeId: string; officeType: OfficeType },
+): Promise<void> {
+	await api.put(`/stakeholder-orgs/routing-settings/${routeKey}`, office);
 }
 
 export async function acknowledgeItem(kind: RoutedKind, id: string): Promise<void> {

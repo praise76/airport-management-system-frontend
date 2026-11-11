@@ -38,6 +38,19 @@ export function readRouting(row: Record<string, any>): RoutingFields {
 	};
 }
 
+/** Files on a minute, as the server lists them (staff responses only). */
+function toAttachments(value: unknown): PermitTrailStep["attachments"] {
+	if (!Array.isArray(value) || value.length === 0) return undefined;
+	return value
+		.filter((a) => a && typeof a.id === "string")
+		.map((a) => ({
+			id: a.id as string,
+			name: String(a.name ?? "Attachment"),
+			mimeType: String(a.mimeType ?? ""),
+			size: Number(a.size ?? 0),
+		}));
+}
+
 /** One server step to the screen's shape. Unknown step types are dropped by `toTrail`. */
 export function toTrailStep(
 	row: Record<string, any>,
@@ -56,6 +69,7 @@ export function toTrailStep(
 		minute: row.minute ?? undefined,
 		actorName: row.actorName ?? officeName(row.actor) ?? undefined,
 		toOfficerName: row.toOfficerName ?? officeName(row.toOfficer) ?? undefined,
+		attachments: toAttachments(row.attachments),
 	};
 }
 
@@ -243,10 +257,4 @@ export function assignedWithinOffice(steps: PermitTrailStep[], currentOfficerId?
 	if (!currentOfficerId) return false;
 	const last = [...steps].reverse().find((s) => ["submitted", "forwarded", "returned", "assigned"].includes(s.stepType));
 	return last?.stepType === "assigned" && last.toOfficerId === currentOfficerId;
-}
-
-/** Where the server's own "return" sends an item today: the office the last move came from. */
-export function serverReturnTarget(steps: PermitTrailStep[]): string | undefined {
-	const moves = steps.filter((s) => s.stepType === "forwarded" || s.stepType === "returned");
-	return moves[moves.length - 1]?.fromOfficeId;
 }
