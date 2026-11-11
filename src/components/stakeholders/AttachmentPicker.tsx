@@ -78,8 +78,11 @@ export function AttachmentPicker({
 					type="file"
 					accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
 					multiple
-					className="sr-only"
-					aria-label="Attach files"
+					// Not rendered at all, so keyboard and screen-reader users meet one control (the
+					// button below), which opens the file chooser.
+					className="hidden"
+					tabIndex={-1}
+					aria-hidden
 					data-testid="attachment-input"
 					onChange={(e) => void pick(e.target.files)}
 				/>

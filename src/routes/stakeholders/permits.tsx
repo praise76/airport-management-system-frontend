@@ -15,7 +15,7 @@ import {
 	useGlobalPermits,
 	useRejectGlobalPermit,
 } from "@/hooks/stakeholder-portal";
-import { requireStaff, ROLE_GROUPS, canReviewStakeholders, hasAnyRole } from "@/lib/access";
+import { requireStaff, canReviewStakeholders } from "@/lib/access";
 import { useAuthStore } from "@/stores/auth";
 import { label } from "@/lib/labels";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,10 @@ const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString("en-GB") : "—"
 /** One queue of permit applications from every company, for AVSEC/commercial officers. */
 function PermitQueuePage() {
 	const user = useAuthStore((st) => st.user);
-	const seesAll = hasAnyRole(user, ROLE_GROUPS.stakeholderOfficers) || canReviewStakeholders(user);
+	// The server lists every company's permits only for super admins and staff flagged
+	// `canManageStakeholders`; a role such as RGM or ACOS is not enough. Everyone else sees what
+	// their own office holds, so they never land on a tab the server refuses.
+	const seesAll = canReviewStakeholders(user);
 	const [status, setStatus] = useState<Tab>(seesAll ? "pending" : "mine");
 	const tabs = seesAll ? STATUS_TABS : STATUS_TABS.filter((t) => t.value === "mine");
 	const [search, setSearch] = useState("");
