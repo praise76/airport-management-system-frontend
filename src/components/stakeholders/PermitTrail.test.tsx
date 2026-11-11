@@ -9,10 +9,16 @@ const mocks = vi.hoisted(() => ({
 	back: vi.fn(),
 	upload: vi.fn(),
 	trail: null as any,
+	trailError: null as any,
 }));
 
 vi.mock("@/hooks/stakeholder-portal", () => ({
-	useItemTrail: () => ({ data: mocks.trail, isLoading: false, isError: false }),
+	useItemTrail: () => ({
+		data: mocks.trailError ? undefined : mocks.trail,
+		isLoading: false,
+		isError: !!mocks.trailError,
+		error: mocks.trailError,
+	}),
 	useForwardItem: () => ({ mutate: mocks.forward, isPending: false }),
 	useReturnItem: () => ({ mutate: mocks.back, isPending: false }),
 	useAcknowledgeItem: () => ({ mutate: vi.fn(), isPending: false }),
@@ -30,6 +36,7 @@ vi.mock("@/stores/auth", () => ({
 import { CurrentlyWith, PermitTrail, TrailSection } from "./PermitTrail";
 import { DecisionButtons } from "./ReviewActions";
 import { RoutingButtons, nextOffices } from "./RoutingActions";
+import { RESTRICTED_MESSAGE, RestrictedError } from "@/lib/routing";
 
 afterEach(cleanup);
 
@@ -64,6 +71,7 @@ describe("PermitTrail", () => {
 		vi.clearAllMocks();
 		mocks.user = { id: "u-acos", role: "officer", departmentId: "off-acos" };
 		mocks.trail = null;
+		mocks.trailError = null;
 	});
 
 	it("shows a concessionaire the offices in order, without minutes or staff names", () => {
@@ -246,6 +254,38 @@ describe("attached files on the timeline", () => {
 	it("never shows them to the company", () => {
 		render(<PermitTrail steps={withFile} surface="portal" kind="activities" itemId="a1" />);
 		expect(screen.queryByText(/treated-job-completion/)).toBeNull();
+	});
+});
+
+describe("need-to-know", () => {
+	beforeEach(() => {
+		mocks.trail = null;
+		mocks.trailError = null;
+		mocks.user = { id: "u-scr", role: "officer", departmentId: "off-scr" };
+	});
+	afterEach(() => {
+		mocks.trailError = null;
+	});
+
+	it("tells staff outside the chain why they can't read the minutes, and where the item is", () => {
+		mocks.trailError = new RestrictedError();
+		render(<TrailSection kind="invoices" item={{ ...permit, currentOffice: "Finance & Accounts" }} surface="staff" />);
+		expect(screen.getByText(RESTRICTED_MESSAGE)).toBeTruthy();
+		expect(screen.getByText(/It is with Finance & Accounts/)).toBeTruthy();
+		expect(screen.queryByText(/Couldn't load/)).toBeNull();
+	});
+
+	it("shows the same note in the staff Timeline dialog", () => {
+		mocks.trailError = new RestrictedError();
+		render(<RoutingButtons kind="permits" item={{ ...permit, currentOffice: "CII" }} name="Ada's permit" />);
+		fireEvent.click(screen.getByRole("button", { name: "Timeline" }));
+		expect(screen.getByText(RESTRICTED_MESSAGE)).toBeTruthy();
+	});
+
+	it("still reports other failures as failures", () => {
+		mocks.trailError = new Error("Network Error");
+		render(<TrailSection kind="permits" item={permit} surface="staff" />);
+		expect(screen.getByText(/Couldn't load the timeline/)).toBeTruthy();
 	});
 });
 

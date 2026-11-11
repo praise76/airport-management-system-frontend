@@ -6,11 +6,10 @@ import {
 	MapPin,
 	Send,
 	UserCheck,
-	X,
-} from "lucide-react";
+	X, Lock } from "lucide-react";
 import { useItemTrail } from "@/hooks/stakeholder-portal";
 import { AttachmentLink } from "./AttachmentPicker";
-import { currentlyWith, fallbackTrail, STEP_LABEL } from "@/lib/routing";
+import { currentlyWith, fallbackTrail, STEP_LABEL, RESTRICTED_MESSAGE, isRestricted } from "@/lib/routing";
 import { cn } from "@/lib/utils";
 import type {
 	PermitTrailStep,
@@ -92,6 +91,26 @@ export function CurrentlyWith({
 			<MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
 			{text}
 		</p>
+	);
+}
+
+/**
+ * Shown to staff whose office the item has not been through. They may still see where it is
+ * (the list row says so), but not the minutes, names or files.
+ */
+export function RestrictedNote({ item }: { item: RoutingFields }) {
+	return (
+		<div className="flex gap-2 rounded-md border bg-muted/40 p-3 text-sm">
+			<Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+			<div>
+				<p className="font-medium">{RESTRICTED_MESSAGE}</p>
+				<p className="text-muted-foreground">
+					{item.currentOffice
+						? `It is with ${item.currentOffice}. Ask that office if you need it.`
+						: "Ask the office that holds it if you need it."}
+				</p>
+			</div>
+		</div>
 	);
 }
 
@@ -227,7 +246,7 @@ export function TrailSection({
 	} & RoutingFields;
 	surface: Surface;
 }) {
-	const { data, isLoading, isError } = useItemTrail(kind, item.id);
+	const { data, isLoading, isError, error } = useItemTrail(kind, item.id);
 	const portal = surface === "portal";
 	if (isLoading)
 		return (
@@ -240,6 +259,7 @@ export function TrailSection({
 				Loading timeline…
 			</p>
 		);
+	if (isError && !portal && isRestricted(error)) return <RestrictedNote item={item} />;
 	if (isError)
 		return (
 			<p

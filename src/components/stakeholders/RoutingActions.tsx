@@ -33,6 +33,8 @@ import {
 	isOpen,
 	assignedWithinOffice,
 	returnTarget,
+	WHO_CAN_SEE,
+	isRestricted,
 } from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
 import type { DepartmentTreeNode } from "@/types/department";
@@ -44,7 +46,7 @@ import type {
 	TrailAttachment,
 } from "@/types/stakeholder-portal";
 import { AttachmentPicker } from "./AttachmentPicker";
-import { CurrentlyWith, PermitTrail } from "./PermitTrail";
+import { CurrentlyWith, PermitTrail, RestrictedNote } from "./PermitTrail";
 
 /**
  * Staff actions that move a permit, request or invoice down and back up the chain of offices:
@@ -443,12 +445,14 @@ function TimelineDialog({
 				<DialogHeader>
 					<DialogTitle>{title}</DialogTitle>
 					<DialogDescription>
-						Every office it has passed through, with the minute at each step.
+						Every office it has passed through, with the minute at each step. {WHO_CAN_SEE}
 					</DialogDescription>
 				</DialogHeader>
 				<CurrentlyWith item={item} surface="staff" />
 				{trail.isLoading ? (
 					<p className="text-sm text-muted-foreground">Loading timeline…</p>
+				) : trail.isError && isRestricted(trail.error) ? (
+					<RestrictedNote item={item} />
 				) : trail.isError ? (
 					<p role="alert" className="text-sm text-destructive">
 						Couldn't load the timeline. Close this and open it again.

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { isRestricted } from "@/lib/routing";
 import * as StakeholderPortalApi from "@/api/stakeholder-portal";
 import type {
 	StakeholderOrgListParams,
@@ -677,6 +678,8 @@ export function useItemTrail(kind: RoutedKind, id: string | undefined, enabled =
 		enabled: !!id && enabled,
 		// A concessionaire sees a move the next time the page loads.
 		staleTime: 0,
+		// A refusal won't change on a retry.
+		retry: (count: number, err: unknown) => !isRestricted(err) && count < 2,
 	});
 }
 export const usePermitTrail = (permitId: string | undefined, enabled = true) =>

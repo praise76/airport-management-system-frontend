@@ -318,3 +318,13 @@ describe("attachments on a minute", () => {
 		expect(redacted[0]).not.toHaveProperty("attachments");
 	});
 });
+
+import { RestrictedError, isRestricted } from "./routing";
+
+describe("isRestricted", () => {
+	it("recognises a need-to-know refusal and nothing else", () => {
+		expect(isRestricted(new RestrictedError())).toBe(true);
+		expect(isRestricted(new Error("Forbidden"))).toBe(false);
+		expect(isRestricted(null)).toBe(false);
+	});
+});

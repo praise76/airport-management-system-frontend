@@ -1,6 +1,6 @@
 import { isStakeholderUser } from "@/lib/access";
 import { uploadStakeholderDocument } from "./stakeholder-documents";
-import { readRouting, redactForConcessionaire, toTrail } from "@/lib/routing";
+import { RestrictedError, readRouting, redactForConcessionaire, toTrail } from "@/lib/routing";
 import { useAuthStore } from "@/stores/auth";
 import { api } from "./client";
 import type {
@@ -806,6 +806,8 @@ export async function getItemTrail(kind: RoutedKind, id: string): Promise<Permit
 		return isStakeholderUser(useAuthStore.getState().user) ? redactForConcessionaire(steps) : steps;
 	} catch (err: any) {
 		if (err?.status === 404) return null;
+		// Need-to-know: the item has not been through the caller's office.
+		if (err?.status === 403 && !isStakeholderUser(useAuthStore.getState().user)) throw new RestrictedError();
 		throw err;
 	}
 }
@@ -838,6 +840,7 @@ export async function fetchItemAttachment(kind: RoutedKind, id: string, attachme
 	} catch (err: unknown) {
 		const status = (err as { status?: number } | null)?.status;
 		if (status === 410) throw new Error("The stored file is no longer available.");
+		if (status === 403) throw new RestrictedError();
 		if (status === 404) throw new Error("This attachment no longer exists.");
 		throw err;
 	}

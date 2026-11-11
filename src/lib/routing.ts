@@ -258,3 +258,26 @@ export function assignedWithinOffice(steps: PermitTrailStep[], currentOfficerId?
 	const last = [...steps].reverse().find((s) => ["submitted", "forwarded", "returned", "assigned"].includes(s.stepType));
 	return last?.stepType === "assigned" && last.toOfficerId === currentOfficerId;
 }
+
+/**
+ * Need-to-know: an item's minutes, names and files are visible only to the offices it has passed
+ * through (and a few read-only exceptions). The server answers anyone else with 403; this marks
+ * that error so screens can explain it instead of saying "couldn't load".
+ */
+export class RestrictedError extends Error {
+	readonly restricted = true;
+	constructor(message = RESTRICTED_MESSAGE) {
+		super(message);
+		this.name = "RestrictedError";
+	}
+}
+
+export const RESTRICTED_MESSAGE =
+	"Only the offices this item has passed through can read its minutes and files.";
+
+export const isRestricted = (err: unknown): boolean =>
+	!!err && typeof err === "object" && (err as { restricted?: boolean }).restricted === true;
+
+/** Who may read a trail, for the line under the staff timeline. */
+export const WHO_CAN_SEE =
+	"Minutes and files are visible only to the offices this item has passed through, and to auditors.";
