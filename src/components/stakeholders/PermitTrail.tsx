@@ -5,6 +5,7 @@ import {
 	Inbox,
 	MapPin,
 	Send,
+	UserCheck,
 	X,
 } from "lucide-react";
 import { useItemTrail } from "@/hooks/stakeholder-portal";
@@ -29,6 +30,7 @@ const ICON: Record<TrailStepType, typeof Check> = {
 	submitted: Send,
 	forwarded: Forward,
 	returned: CornerUpLeft,
+	assigned: UserCheck,
 	acknowledged: Inbox,
 	approved: Check,
 	rejected: X,
@@ -51,7 +53,12 @@ function stepLine(step: PermitTrailStep): string {
 		case "forwarded":
 			return office ? `Forwarded to ${office}` : "Forwarded";
 		case "returned":
+			// A person handing it back to the head of their own office.
+			if (office && step.fromOfficeId && step.fromOfficeId === step.toOfficeId)
+				return `Returned to the head of ${office}`;
 			return office ? `Returned to ${office}` : "Returned";
+		case "assigned":
+			return office ? `Assigned within ${office}` : "Assigned";
 		case "acknowledged":
 			return office ? `Received by ${office}` : "Received";
 		default:

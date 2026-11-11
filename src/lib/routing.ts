@@ -14,6 +14,7 @@ const STEP_TYPES: readonly TrailStepType[] = [
 	"submitted",
 	"forwarded",
 	"returned",
+	"assigned",
 	"acknowledged",
 	"approved",
 	"rejected",
@@ -50,6 +51,7 @@ export function toTrailStep(
 		toOffice:
 			officeName(row.toOffice) ?? row.toOfficeName ?? row.office ?? undefined,
 		toOfficeId: officeId(row.toOffice) ?? row.toOfficeId ?? undefined,
+		toOfficerId: row.toOfficerId ?? undefined,
 		at: row.createdAt ?? row.at,
 		minute: row.minute ?? undefined,
 		actorName: row.actorName ?? officeName(row.actor) ?? undefined,
@@ -168,6 +170,7 @@ export const STEP_LABEL: Record<TrailStepType, string> = {
 	submitted: "Submitted",
 	forwarded: "Forwarded",
 	returned: "Returned",
+	assigned: "Assigned",
 	acknowledged: "Received",
 	approved: "Approved",
 	rejected: "Rejected",
@@ -218,7 +221,7 @@ export function noticeText(n: {
 export function chainOf(steps: PermitTrailStep[]): { id: string; name: string }[] {
 	const chain: { id: string; name: string }[] = [];
 	for (const s of steps) {
-		if (!s.toOfficeId || s.stepType === "acknowledged" || s.stepType === "approved" || s.stepType === "rejected") continue;
+		if (!s.toOfficeId || s.stepType === "assigned" || s.stepType === "acknowledged" || s.stepType === "approved" || s.stepType === "rejected") continue;
 		const at = chain.findIndex((o) => o.id === s.toOfficeId);
 		if (at >= 0) chain.length = at + 1;
 		else chain.push({ id: s.toOfficeId, name: s.toOffice ?? "" });
@@ -230,6 +233,16 @@ export function chainOf(steps: PermitTrailStep[]): { id: string; name: string }[
 export function returnTarget(steps: PermitTrailStep[]): { id: string; name: string } | null {
 	const chain = chainOf(steps);
 	return chain.length >= 2 ? chain[chain.length - 2] : null;
+}
+
+/**
+ * True when the item is with a person the head of the office minuted it to. Their "Return"
+ * goes back to the head of that same office, not up the chain: the server does the same.
+ */
+export function assignedWithinOffice(steps: PermitTrailStep[], currentOfficerId?: string): boolean {
+	if (!currentOfficerId) return false;
+	const last = [...steps].reverse().find((s) => ["submitted", "forwarded", "returned", "assigned"].includes(s.stepType));
+	return last?.stepType === "assigned" && last.toOfficerId === currentOfficerId;
 }
 
 /** Where the server's own "return" sends an item today: the office the last move came from. */

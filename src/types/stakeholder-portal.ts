@@ -215,6 +215,7 @@ export type TrailStepType =
 	| "submitted"
 	| "forwarded"
 	| "returned"
+	| "assigned"
 	| "acknowledged"
 	| "approved"
 	| "rejected";
@@ -244,6 +245,8 @@ export interface PermitTrailStep {
 	toOffice?: string;
 	toOfficeId?: string;
 	at: string;
+	/** Staff only: the named officer a step sent it to (set on "assigned" steps). */
+	toOfficerId?: string;
 	minute?: string;
 	actorName?: string;
 	toOfficerName?: string;

@@ -9,6 +9,14 @@ export function useUsers(params?: { page?: number; limit?: number; role?: string
   });
 }
 
+export function useDepartmentStaff(departmentId?: string) {
+  return useQuery({
+    queryKey: ["department-staff", departmentId],
+    queryFn: () => UsersApi.listDepartmentStaff(departmentId as string),
+    enabled: !!departmentId,
+  });
+}
+
 export function useUser(id: string) {
   return useQuery({
     queryKey: ["users", id],

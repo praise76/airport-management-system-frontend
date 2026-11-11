@@ -20,7 +20,7 @@ vi.mock("@/hooks/departments", () => ({
 	useDepartmentTree: () => ({ data: [], isLoading: false }),
 }));
 vi.mock("@/hooks/positions", () => ({ usePositions: () => ({ data: [] }) }));
-vi.mock("@/hooks/users", () => ({ useUsers: () => ({ data: { data: [] } }) }));
+vi.mock("@/hooks/users", () => ({ useDepartmentStaff: () => ({ data: [] }) }));
 vi.mock("@/stores/auth", () => ({
 	useAuthStore: (selector: any) => selector({ user: mocks.user }),
 }));

@@ -7,6 +7,12 @@ export async function listUsers(params?: { page?: number; limit?: number; role?:
   return res.data;
 }
 
+/** The active staff of one department (id and name only). Open to any signed-in staff member. */
+export async function listDepartmentStaff(departmentId: string): Promise<{ id: string; firstName: string; lastName: string }[]> {
+  const res = await api.get(`/departments/${departmentId}/staff`);
+  return res.data.data ?? res.data;
+}
+
 // Correct endpoint: /admin/staff/{id}
 export async function getUser(id: string): Promise<User> {
   const res = await api.get(`/admin/staff/${id}`);

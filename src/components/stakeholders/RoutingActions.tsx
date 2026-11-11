@@ -26,11 +26,12 @@ import {
 	useItemTrail,
 	useReturnItem,
 } from "@/hooks/stakeholder-portal";
-import { useUsers } from "@/hooks/users";
+import { useDepartmentStaff } from "@/hooks/users";
 import {
 	fallbackTrail,
 	holdsItem,
 	isOpen,
+	assignedWithinOffice,
 	returnTarget,
 	serverReturnTarget,
 } from "@/lib/routing";
@@ -179,13 +180,12 @@ export function ForwardDialog({
 		: next.options;
 	const chosen = options.find((o) => o.value === office);
 	const ownStaff = !!chosen && chosen.id === holder.id;
-	const staff = useUsers(
-		chosen && chosen.type !== "position"
-			? { departmentId: chosen.id, limit: 100 }
-			: undefined,
+	// Any staff member may read a department's people (id and name), unlike the admin list.
+	const staff = useDepartmentStaff(
+		chosen && chosen.type !== "position" ? chosen.id : undefined,
 	);
 	const officers =
-		chosen && chosen.type !== "position" ? (staff.data?.data ?? []) : [];
+		chosen && chosen.type !== "position" ? (staff.data ?? []) : [];
 	// Minuting within your own office only makes sense to a named person.
 	const needsOfficer = ownStaff && !officer;
 	const tooShort = minute.trim().length < MIN_MINUTE;
@@ -483,11 +483,22 @@ export function RoutingButtons({
 	const trail = useItemTrail(kind, item.id, mayAct);
 	const { all } = useOffices();
 	const up = mayAct && trail.data ? returnTarget(trail.data) : null;
+	// A person the head of the office minuted it to hands it back to that head.
+	const handBack =
+		mayAct && !!trail.data && assignedWithinOffice(trail.data, item.currentOfficerId);
+	const target = handBack
+		? { id: item.currentOfficeId ?? "", name: `the head of ${item.currentOffice}` }
+		: up;
 	const close = (o: boolean) => !o && setDialog(null);
 
 	const sendBack = (minute: string) => {
-		if (!up || !trail.data) return;
+		if (!trail.data) return;
 		const done = { onSuccess: () => setDialog(null) };
+		if (handBack) {
+			back.mutate({ id: item.id, minute }, done);
+			return;
+		}
+		if (!up) return;
 		// The server's own "return" goes to the office the last move came from. After a unit
 		// has returned an item to its HOD, that is the unit again, not the RGM. When the two
 		// differ, minute it to the office above instead, so it still goes up the chain.
@@ -513,9 +524,9 @@ export function RoutingButtons({
 				</Button>
 				{mayAct && (
 					<>
-						{up && (
+						{target && (
 							<Button size="sm" variant="outline" onClick={() => setDialog("return")}>
-								<CornerUpLeft className="h-4 w-4" /> Return to {up.name}
+								<CornerUpLeft className="h-4 w-4" /> Return to {target.name}
 							</Button>
 						)}
 						<Button size="sm" variant="outline" onClick={() => setDialog("forward")}>
@@ -542,12 +553,12 @@ export function RoutingButtons({
 					forward.mutate({ id: item.id, input }, { onSuccess: () => setDialog(null) })
 				}
 			/>
-			{up && (
+			{target && (
 				<ReturnDialog
 					open={dialog === "return"}
 					onOpenChange={close}
 					title={`Return ${name}`}
-					to={up.name}
+					to={target.name}
 					busy={back.isPending || forward.isPending}
 					onConfirm={sendBack}
 				/>

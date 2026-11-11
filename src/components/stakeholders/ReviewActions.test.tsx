@@ -20,7 +20,7 @@ vi.mock("@/hooks/stakeholder-portal", () => ({
 }));
 vi.mock("@/hooks/departments", () => ({ useDepartmentTree: () => ({ data: [] }) }));
 vi.mock("@/hooks/positions", () => ({ usePositions: () => ({ data: [] }) }));
-vi.mock("@/hooks/users", () => ({ useUsers: () => ({ data: { data: [] } }) }));
+vi.mock("@/hooks/users", () => ({ useDepartmentStaff: () => ({ data: [] }) }));
 vi.mock("./documents/useDocumentFileViewer", () => ({ useDocumentFileViewer: () => ({ open: vi.fn(), loadingId: null, viewer: null }) }));
 vi.mock("@/stores/auth", () => ({
 	useAuthStore: (selector: any) =>

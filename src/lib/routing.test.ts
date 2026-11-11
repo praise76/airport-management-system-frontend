@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	assignedWithinOffice,
 	currentlyWith,
 	fallbackTrail,
 	holdsItem,
@@ -249,5 +250,48 @@ describe("returning up the chain", () => {
 	});
 	it("ignores acknowledgements", () => {
 		expect(chainOf([...down, step(4, "acknowledged", undefined, "fm")]).map((o) => o.id)).toEqual(["rgm", "env", "fm"]);
+	});
+});
+
+describe("named officers inside an office", () => {
+	const step = (n: number, stepType: string, extra: Record<string, unknown> = {}) => ({
+		stepNumber: n,
+		stepType,
+		createdAt: `2026-11-12T09:0${n}:00Z`,
+		...extra,
+	});
+	const rows = [
+		step(1, "submitted", { toOffice: { id: "rgm", name: "RGM" } }),
+		step(2, "forwarded", { toOffice: { id: "env", name: "Environment" } }),
+		step(3, "assigned", { toOffice: { id: "env", name: "Environment" }, toOfficerId: "u1", toOfficerName: "Ada Obi" }),
+	];
+
+	it("keeps the assigned step in the staff trail with its officer", () => {
+		const trail = toTrail(rows);
+		expect(trail.map((s) => s.stepType)).toEqual(["submitted", "forwarded", "assigned"]);
+		expect(trail[2].toOfficerId).toBe("u1");
+	});
+
+	it("does not change the chain of offices", () => {
+		expect(chainOf(toTrail(rows)).map((o) => o.id)).toEqual(["rgm", "env"]);
+	});
+
+	it("knows when the holder is the person the head minuted it to", () => {
+		const trail = toTrail(rows);
+		expect(assignedWithinOffice(trail, "u1")).toBe(true);
+		expect(assignedWithinOffice(trail, "someone-else")).toBe(false);
+		expect(assignedWithinOffice(trail, undefined)).toBe(false);
+	});
+
+	it("is false once the person hands it back or it moves on", () => {
+		const back = toTrail([...rows, step(4, "returned", { toOffice: { id: "env", name: "Environment" } })]);
+		expect(assignedWithinOffice(back, "u1")).toBe(false);
+		const onward = toTrail([...rows, step(4, "forwarded", { toOffice: { id: "fm", name: "Facility Maintenance" } })]);
+		expect(assignedWithinOffice(onward, "u1")).toBe(false);
+	});
+
+	it("ignores a receipt after the assignment", () => {
+		const ack = toTrail([...rows, step(4, "acknowledged", { toOffice: { id: "env", name: "Environment" } })]);
+		expect(assignedWithinOffice(ack, "u1")).toBe(true);
 	});
 });
