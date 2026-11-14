@@ -1,3 +1,4 @@
+import { ATTENDANCE_VIEWERS } from "@/lib/attendanceScope";
 import {
 	Link,
 	Outlet,
@@ -147,7 +148,8 @@ const navGroups: NavGroup[] = [
 				label: "Attendance registry",
 				to: "/admin/attendance/registry",
 				icon: ListChecks,
-				roles: [...ROLE_GROUPS.supervisors],
+				// HR, GM, RGM and heads only; each sees their own part of the organisation.
+				roles: [...ATTENDANCE_VIEWERS],
 			},
 			{
 				label: "Leave approvals",

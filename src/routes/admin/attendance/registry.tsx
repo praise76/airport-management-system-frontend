@@ -1,4 +1,10 @@
-import { requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { requireStaff } from "@/lib/access";
+import { ATTENDANCE_VIEWERS, attendanceScope } from "@/lib/attendanceScope";
+import { useAuthStore } from "@/stores/auth";
+import { useDepartments } from "@/hooks/departments";
+import { listDepartmentStaff } from "@/api/users";
+import { useQueries } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +18,8 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/attendance/registry")({
-  beforeLoad: requireStaff(ROLE_GROUPS.supervisors),
+  // HR, the GM, the RGM, and heads of departments, units, stations and teams only.
+  beforeLoad: requireStaff(ATTENDANCE_VIEWERS),
   component: AttendanceRegistryPage,
 });
 
@@ -29,12 +36,36 @@ function AttendanceRegistryPage() {
     }
   });
 
+  // Each head sees their own department or unit and everything below it.
+  const user = useAuthStore((s) => s.user);
+  const { data: deptData } = useDepartments({ limit: 300 });
+  const departments = useMemo(() => ((deptData as any)?.data ?? deptData ?? []) as any[], [deptData]);
+  const scope = attendanceScope(user as any, departments);
+  const staffQ = useQueries({
+    queries: (scope.kind === "departments" ? scope.ids : []).map((id) => ({
+      queryKey: ["department-staff", id],
+      queryFn: () => listDepartmentStaff(id),
+    })),
+  });
+  const allowed = useMemo(() => {
+    if (scope.kind !== "departments") return null;
+    return new Set(staffQ.flatMap((q) => (q.data ?? []).map((s) => s.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope.kind, staffQ.map((q) => q.dataUpdatedAt).join(",")]);
+  const allRows = (Array.isArray(records) ? records : (records as any)?.data || []) as any[];
+  const rows =
+    scope.kind === "all" ? allRows : scope.kind === "none" ? [] : allRows.filter((r) => allowed?.has(r.staffId ?? r.user?.id));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
          <div>
             <h1 className="text-2xl font-bold">Attendance Registry</h1>
             <p className="text-muted-foreground">Daily attendance versus roster info</p>
+            <p className="mt-1 text-sm">
+              <span className="text-muted-foreground">Showing: </span>
+              <span className="font-medium">{scope.label}</span>
+            </p>
          </div>
          <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Date:</span>
@@ -63,10 +94,10 @@ function AttendanceRegistryPage() {
                {isLoading && (
                   <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr>
                )}
-               {!isLoading && (Array.isArray(records) ? records : (records as any)?.data || []).length === 0 && (
+               {!isLoading && rows.length === 0 && (
                   <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No records found for this date.</td></tr>
                )}
-               {(Array.isArray(records) ? records : (records as any)?.data || []).map((record: any) => {
+               {rows.map((record: any) => {
                   const rosterEntry = record.rosterEntry || record; 
                   const user = record.user || rosterEntry.user;
                   const isLate = rosterEntry.lateMinutes > 0;
