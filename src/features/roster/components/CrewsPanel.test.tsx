@@ -42,7 +42,7 @@ vi.mock("@/components/departments/DepartmentSelector", () => ({
 import { CrewsPanel } from "./CrewsPanel";
 
 describe("CrewsPanel", () => {
-	it("allows selecting departments and operational units", () => {
+	it("allows selecting departments, units and stations", () => {
 		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 		render(
 			<QueryClientProvider client={client}>
@@ -51,8 +51,8 @@ describe("CrewsPanel", () => {
 		);
 
 		const selector = screen.getByTestId("department-selector");
-		expect(selector.getAttribute("data-placeholder")).toBe("Choose a department or unit");
-		expect(selector.getAttribute("data-max-level")).toBe("2");
+		expect(selector.getAttribute("data-placeholder")).toBe("Choose a unit or station");
+		expect(selector.getAttribute("data-max-level")).toBe("3");
 		expect(selector.getAttribute("data-filter-level")).not.toBe("1");
 	});
 });

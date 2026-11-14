@@ -61,8 +61,8 @@ export function CrewsPanel() {
 					<DepartmentSelector
 						value={departmentId}
 						onChange={(v) => setDepartmentId(v ?? "")}
-						placeholder="Choose a department or unit"
-						maxLevel={2}
+						placeholder="Choose a unit or station"
+						maxLevel={3}
 					/>
 				</div>
 			</div>
@@ -74,7 +74,9 @@ export function CrewsPanel() {
 			)}
 			{!departmentId ? (
 				<p className="rounded-lg border bg-muted/20 p-6 text-sm text-muted-foreground">
-					Choose a department to see and set up its teams.
+					Choose a unit or a station to see and set up its teams. A team can belong to a unit
+					(for example Passenger Screening) or to one of its stations (for example D Wing
+					Screening).
 				</p>
 			) : crewsQ.isLoading ? (
 				<p className="text-sm text-muted-foreground">Loading teams…</p>

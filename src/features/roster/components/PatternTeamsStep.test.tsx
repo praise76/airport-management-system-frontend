@@ -23,8 +23,8 @@ vi.mock("../api", () => ({
 }));
 vi.mock("../crews", async (orig) => ({
 	...(await orig<any>()),
-	listCrews: async () =>
-		["A", "B", "C"].map((n) => ({
+	listCrews: async (owner: string) =>
+		(owner === "s1" ? ["S"] : ["A", "B", "C"]).map((n) => ({
 			id: n,
 			name: `Team ${n}`,
 			meta: { patternId: "", startDate: "2026-11-01" },
@@ -76,5 +76,24 @@ describe("PatternTeamsStep", () => {
 		const last = onPlan.mock.calls.at(-1)?.[0];
 		expect(last.shifts).toHaveLength(24); // 6 days x (1 day team + 1 night team) x 2 people
 		expect(onPlan.mock.calls.length).toBeLessThan(10);
+	});
+	it("offers the station's own teams and its unit's teams, labelled", async () => {
+		render(
+			<QueryClientProvider client={new QueryClient()}>
+				<PatternTeamsStep
+					unitId="u1"
+					stationId="s1"
+					from="2026-11-30"
+					to="2026-12-05"
+					value={{ patternId: "p1", starts: {} }}
+					onChange={() => {}}
+					onPlan={() => {}}
+				/>
+			</QueryClientProvider>,
+		);
+		await waitFor(() => expect(screen.getByText("Team S")).toBeTruthy());
+		expect(screen.getByText("Team A")).toBeTruthy();
+		expect(screen.getAllByText("Station team")).toHaveLength(1);
+		expect(screen.getAllByText("Unit team")).toHaveLength(3);
 	});
 });

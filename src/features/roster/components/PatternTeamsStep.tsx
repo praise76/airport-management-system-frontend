@@ -26,11 +26,13 @@ export type PatternTeamsValue = {
 };
 
 /**
- * Part of "Create roster": choose the shift pattern and which of the unit's teams work it,
- * and from which day. The shifts are created with the roster.
+ * Part of "Create roster": choose the shift pattern and which teams work it, and from which
+ * day. A team belongs to a unit or to one of the unit's stations; when a station is chosen,
+ * both its own teams and the unit's teams are offered. The shifts are created with the roster.
  */
 export function PatternTeamsStep({
 	unitId,
+	stationId,
 	from,
 	to,
 	value,
@@ -38,6 +40,8 @@ export function PatternTeamsStep({
 	onPlan,
 }: {
 	unitId: string;
+	/** Optional station under the unit: its teams are listed first. */
+	stationId?: string;
 	from: string;
 	to: string;
 	value: PatternTeamsValue;
@@ -58,13 +62,27 @@ export function PatternTeamsStep({
 		queryFn: () => listCrews(unitId),
 		enabled: !!unitId,
 	});
+	const stationTeamsQ = useQuery({
+		queryKey: ["crews", stationId],
+		queryFn: () => listCrews(stationId as string),
+		enabled: !!stationId,
+	});
 	// Stable references: a fresh [] on every render would re-plan forever.
 	const patterns = useMemo(() => patternsQ.data ?? [], [patternsQ.data]);
 	const definitions = useMemo(
 		() => definitionsQ.data ?? [],
 		[definitionsQ.data],
 	);
-	const teams = useMemo(() => teamsQ.data ?? [], [teamsQ.data]);
+	// Station teams first, then the unit's own teams.
+	const teams = useMemo(() => {
+		const station = (stationId ? (stationTeamsQ.data ?? []) : []).map((t) => ({
+			...t,
+			scope: "Station team" as const,
+		}));
+		const unit = (teamsQ.data ?? []).map((t) => ({ ...t, scope: "Unit team" as const }));
+		return [...station, ...unit];
+	}, [stationId, stationTeamsQ.data, teamsQ.data]);
+	const teamsLoading = teamsQ.isLoading || (!!stationId && stationTeamsQ.isLoading);
 	const membersQ = useQueries({
 		queries: teams.map((t) => ({
 			queryKey: ["crews", t.id, "members"],
@@ -172,12 +190,13 @@ export function PatternTeamsStep({
 					Choose the department or unit above to see its teams.
 				</p>
 			)}
-			{pattern && unitId && teamsQ.isLoading && (
+			{pattern && unitId && teamsLoading && (
 				<p className="text-sm text-muted-foreground">Loading teams…</p>
 			)}
-			{pattern && unitId && !teamsQ.isLoading && teams.length === 0 && (
+			{pattern && unitId && !teamsLoading && teams.length === 0 && (
 				<p className="text-sm text-muted-foreground">
-					This unit has no teams yet. Create them under{" "}
+					{stationId ? "This station and its unit have" : "This unit has"} no teams
+					yet. Create them under{" "}
 					<Link to="/roster/patterns" className="text-primary underline">
 						Patterns &amp; teams
 					</Link>
@@ -213,6 +232,9 @@ export function PatternTeamsStep({
 											}}
 										/>
 										<span className="truncate font-medium">{t.name}</span>
+										<span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+											{t.scope}
+										</span>
 										<span className="text-muted-foreground">
 											({n} {n === 1 ? "person" : "people"})
 										</span>

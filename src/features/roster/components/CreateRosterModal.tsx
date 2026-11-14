@@ -63,7 +63,6 @@ export function CreateRosterModal({
   const [plan, setPlan] = useState<{ teams: (TeamPlan & { id: string })[]; shifts: ReturnType<typeof planShifts> }>({ teams: [], shifts: [] });
   const onPlan = useCallback((p: typeof plan) => setPlan(p), []);
   const [progress, setProgress] = useState<string | null>(null);
-  const teamUnit = stationId || unitId || departmentId;
 
   const handleDepartmentChange = (value: string) => {
     setDepartmentId(value);
@@ -102,7 +101,8 @@ export function CreateRosterModal({
       const failed: string[] = [];
       if (patternTeams.patternId && plan.shifts.length && roster?.id) {
         // Remember each team's pattern and day 1, so Patterns & teams and later rosters agree.
-        const teams = await listCrews(teamUnit).catch(() => []);
+        const owners = [stationId, unitId || departmentId].filter(Boolean) as string[];
+        const teams = (await Promise.all(owners.map((o) => listCrews(o).catch(() => [])))).flat();
         for (const t of plan.teams) {
           const team = teams.find((x) => x.id === t.id);
           if (team && (team.meta.patternId !== patternTeams.patternId || team.meta.startDate !== t.startDate))
@@ -261,7 +261,8 @@ export function CreateRosterModal({
           </div>
 
           <PatternTeamsStep
-            unitId={teamUnit}
+            unitId={unitId || departmentId}
+            stationId={stationId || undefined}
             from={startDate}
             to={endDate}
             value={patternTeams}
