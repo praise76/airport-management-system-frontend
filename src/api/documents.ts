@@ -288,3 +288,36 @@ export async function createBulkOperation(
 ): Promise<void> {
 	await api.post("/templates/bulk", input);
 }
+
+// ---------------------------------------------------------------------------
+// Memo through my HOD: an officer writes to another department; their own HOD reads it first
+// and sends it on to that department's HOD, or returns it. The server resolves both HODs.
+
+export type MemoThroughHodInput = {
+	toDepartmentId: string;
+	subject: string;
+	content: string;
+	file?: File;
+};
+
+export async function sendMemoThroughHod(input: MemoThroughHodInput): Promise<Document> {
+	const form = new FormData();
+	form.append("toDepartmentId", input.toDepartmentId);
+	form.append("subject", input.subject.trim());
+	form.append("content", input.content.trim());
+	if (input.file) form.append("file", input.file);
+	const res = await api.post("/documents/memos", form);
+	return (res.data?.data ?? res.data) as Document;
+}
+
+/** The sender's HOD sends the memo on to the receiving department's HOD. */
+export async function hodSendMemoOn(id: string, comments?: string): Promise<Document> {
+	const res = await api.post(`/documents/${id}/hod-approve`, { comments });
+	return (res.data?.data ?? res.data) as Document;
+}
+
+/** The sender's HOD returns the memo to the sender with a reason. */
+export async function hodReturnMemo(id: string, comments: string): Promise<Document> {
+	const res = await api.post(`/documents/${id}/hod-return`, { comments });
+	return (res.data?.data ?? res.data) as Document;
+}

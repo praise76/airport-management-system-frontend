@@ -1,3 +1,4 @@
+import { HodMemoActions } from "@/features/documents/components/MemoThroughHod";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
@@ -106,6 +107,8 @@ function DocumentDetailsPage() {
 					</div>
 				</div>
 			</div>
+
+			{doc && <HodMemoActions doc={doc} />}
 
 			<div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6">
 				{/* The document itself */}

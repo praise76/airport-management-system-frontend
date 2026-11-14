@@ -1,3 +1,4 @@
+import { SendThroughHodDialog } from "@/features/documents/components/MemoThroughHod";
 import { DocumentsTabs } from "@/components/layout/areas";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, Plus, Paperclip, Radio } from "lucide-react";
@@ -98,6 +99,7 @@ function DocumentsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <SendThroughHodDialog />
           <InternalBroadcastDialog />
           <Link to="/documents/new">
             <Button>

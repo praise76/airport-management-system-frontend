@@ -106,3 +106,39 @@ To finish:
 - The roster planner still shows the unit's old Morning/Afternoon shift rows as "Shift with
   nobody on it" when a 12-hour roster is built; consider hiding shift rows the roster's pattern
   does not use.
+
+## 7. Memo through my HOD (officer to another department)
+
+An officer writes to another department; their own HOD reads it first and sends it on to that
+department's HOD, or returns it. Today an officer can register a document but cannot forward or
+dispatch it (403), and `dispatch` only works from the registry. Add:
+
+1. `POST /documents/memos` (multipart: `toDepartmentId`, `subject`, `content`, optional `file`),
+   any staff member. Creates an internal memo (`direction: "internal"`, destination the target
+   department), resolves the **sender's HOD** (head of the sender's top-level department; the
+   acting HOD if one is active) and holds it with them: `status: "awaiting_hod"`,
+   `assignedToHodId`. Notify that HOD. Refuse if the department has no HOD set ("Your department
+   has no Head of Department set") and refuse a memo to the sender's own department.
+2. `POST /documents/:id/hod-approve` `{ comments? }`, by that HOD only: resolve the **receiving
+   department's HOD** and assign it to them (`status: "with_receiving_hod"`), notify them and the
+   sender.
+3. `POST /documents/:id/hod-return` `{ comments }` (required), by that HOD only: back to the
+   sender (`status: "returned_to_sender"`), notify the sender.
+4. The receiving HOD then works it with the existing actions (minute to staff, return, approve).
+5. Journey records each step with the user and the minute. Visibility: the sender, the two HODs
+   and anyone the receiving HOD minutes it to.
+
+**Data:** no department on the live site has a Head of Department set (`headUserId` is null for
+all 18 top-level departments), so nothing can reach an HOD until HR sets them.
+
+## 8. Ping officers on duty
+
+Built on existing messaging, no backend change needed: a group chat with the officers checked in
+at the post, and for an urgent ping an emergency message with acknowledgment. Two notes:
+
+- `GET /stations/:id/staffing` returns sessions without names (`firstName`/`lastName` missing),
+  so the station card shows "Officer"; please include the names.
+- Zone check-ins (`/attendance/check-in`) are not station check-ins, so officers who only check
+  in at a terminal zone do not appear on a station card. If posts are the terminal zones, offer
+  `GET /attendance/on-duty?zoneId=` (id and name of everyone checked in there now) and the ping
+  can use it too.
