@@ -75,6 +75,7 @@ export function PatternTeamsStep({
 	const membersKey = membersQ.map((q) => q.dataUpdatedAt).join(",");
 
 	// When a pattern is chosen, suggest staggered day-1 dates for the unit's teams.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: suggest only when the pattern, start date or team list changes, never over the planner's own edits
 	useEffect(() => {
 		if (
 			!pattern ||
@@ -111,9 +112,9 @@ export function PatternTeamsStep({
 			starts[t.id] = keep ? t.meta.startDate : suggested[i];
 		});
 		onChange({ ...value, starts });
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pattern?.id, from, teams.length]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: membersKey stands in for the member lists, which are new arrays on every render
 	const plan = useMemo(() => {
 		if (!pattern || !from || !to) return { teams: [], shifts: [] };
 		const chosen = teams
@@ -128,7 +129,6 @@ export function PatternTeamsStep({
 			teams: chosen,
 			shifts: planShifts({ pattern, teams: chosen, from, to, definitions }),
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pattern, from, to, value.starts, membersKey, definitions, teams]);
 	// Tell the form only when the plan actually changes.
 	const sent = useRef("");
