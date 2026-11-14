@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuthStore } from "@/stores/auth";
 import { getPosition, locationErrorMessage } from "@/lib/geo";
 import { toast } from "sonner";
+import { PingOnDuty } from "./PingOnDuty";
 
 interface StationCheckInProps {
   stationId: string;
@@ -106,7 +107,7 @@ export function StationCheckIn({ stationId, stationName }: StationCheckInProps) 
             ) : (
               staffing?.map((staff) => (
                 <div key={staff.userId} className="flex justify-between items-center py-1 border-b last:border-0">
-                  <span className="text-sm">{staff.firstName} {staff.lastName}</span>
+                  <span className="text-sm">{[staff.firstName, staff.lastName].filter(Boolean).join(" ") || "Officer"}</span>
                   <span className="text-[10px] opacity-60">
                     {new Date(staff.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -115,6 +116,8 @@ export function StationCheckIn({ stationId, stationName }: StationCheckInProps) 
             )}
           </ScrollArea>
         </div>
+
+        <PingOnDuty postName={stationName} officerIds={(staffing ?? []).map((s) => s.userId)} />
       </CardContent>
     </Card>
   );
