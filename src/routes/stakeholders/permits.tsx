@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Printer, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
-import { HeldInvoices, HeldRequests } from "@/components/stakeholders/OfficeInbox";
+import { DocumentsTabs } from "@/components/layout/areas";
 import { CurrentlyWith } from "@/components/stakeholders/PermitTrail";
 import { ContractorsToConfirm } from "@/components/stakeholders/ContractorsToConfirm";
 import { PermitDecision } from "@/components/stakeholders/PermitDecision";
@@ -78,6 +78,7 @@ function PermitQueuePage() {
 
 	return (
 		<div className="space-y-6">
+			<DocumentsTabs />
 			<div>
 				<h1 className="text-2xl font-semibold">Permit applications</h1>
 				<p className="text-sm text-muted-foreground">
@@ -222,13 +223,6 @@ function PermitQueuePage() {
 						Next
 					</Button>
 				</div>
-			)}
-
-			{status === "mine" && (
-				<>
-					<HeldRequests />
-					<HeldInvoices />
-				</>
 			)}
 
 			{badgeFor && (

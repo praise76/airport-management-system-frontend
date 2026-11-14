@@ -1,3 +1,4 @@
+import { DocumentsTabs } from "@/components/layout/areas";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, Plus, Paperclip, Radio } from "lucide-react";
 import { useState } from "react";
@@ -87,6 +88,7 @@ function DocumentsPage() {
 
   return (
     <div className="space-y-6">
+      <DocumentsTabs />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

@@ -83,14 +83,26 @@ const navGroups: NavGroup[] = [
 	{
 		label: "Workflow",
 		items: [
-			{ label: "Documents", to: "/documents", icon: FileText },
+			{
+				label: "Documents",
+				to: "/documents",
+				icon: FileText,
+				// Permit applications is a tab of Documents.
+				match: ["/stakeholders/permits"],
+			},
 			{
 				label: "Registry desk",
 				to: "/documents/registry",
 				icon: Inbox,
 				roles: [...ROLE_GROUPS.registry],
 			},
-			{ label: "Tasks", to: "/tasks", icon: ClipboardList },
+			{
+				label: "Tasks",
+				to: "/tasks",
+				icon: ClipboardList,
+				// Requests and invoices with my office are tabs of Tasks: the day's work.
+				match: ["/stakeholders/activities", "/stakeholders/invoices"],
+			},
 			{ label: "Messages", to: "/messages", icon: MessageSquare },
 			{
 				label: "Stakeholders",
@@ -100,37 +112,17 @@ const navGroups: NavGroup[] = [
 				allowIf: canReviewStakeholders,
 			},
 			{
-				label: "Verification queue",
-				to: "/admin/stakeholders/verification",
-				icon: ShieldCheck,
-				roles: [...ROLE_GROUPS.stakeholderOfficers],
-				allowIf: canReviewStakeholders,
-			},
-			{
-				label: "Routing settings",
+				// Super admin only: who may read every item's minutes (need-to-know exceptions).
+				// Where submissions start is set by the system, not here.
+				label: "Minute access",
 				to: "/admin/routing",
 				icon: RouteIcon,
 				roles: ["SUPER_ADMIN"],
 			},
 			{
-				// Every staff member: a permit can be forwarded to any office, and that office must
-				// be able to open it. People who aren't stakeholder officers see only what their own
-				// office holds.
-				label: "Permit applications",
-				to: "/stakeholders/permits",
-				icon: IdCard,
-			},
-			{
-				label: "Activities with my office",
-				to: "/stakeholders/activities",
-				icon: ClipboardList,
-				roles: [...ROLE_GROUPS.stakeholderOfficers],
-				allowIf: canReviewStakeholders,
-			},
-			{
-				label: "Invoices with my office",
-				to: "/stakeholders/invoices",
-				icon: FileText,
+				label: "Verification queue",
+				to: "/admin/stakeholders/verification",
+				icon: ShieldCheck,
 				roles: [...ROLE_GROUPS.stakeholderOfficers],
 				allowIf: canReviewStakeholders,
 			},

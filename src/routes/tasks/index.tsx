@@ -1,3 +1,4 @@
+import { TasksTabs } from "@/components/layout/areas";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { getAccessToken } from "@/utils/auth";
 import {
@@ -54,6 +55,7 @@ function Page() {
 
   return (
     <div className="space-y-6">
+      <TasksTabs />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
