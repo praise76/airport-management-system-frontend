@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useDepartments } from "@/hooks/departments";
+import { usePositions } from "@/hooks/positions";
+import { authorityOffices } from "@/lib/permitAuthority";
 import { useAuthStore } from "@/stores/auth";
 
 const notYet = (e: any, fallback: string) =>
@@ -29,6 +31,9 @@ export function SendThroughHodDialog() {
 	let own = all.find((d) => d.id === me?.departmentId);
 	while (own?.parentDepartmentId) own = all.find((d) => d.id === own.parentDepartmentId) ?? null;
 	const departments = all.filter((d) => d.departmentLevel === 1 && !/registry/i.test(d.name) && d.id !== own?.id);
+	// The RGM's office can be written to as well, still through the officer's own HOD.
+	const { data: positions } = usePositions();
+	const rgm = authorityOffices(positions ?? []).rgm;
 	const [open, setOpen] = useState(false);
 	const [to, setTo] = useState("");
 	const [subject, setSubject] = useState("");
@@ -41,7 +46,12 @@ export function SendThroughHodDialog() {
 		setFile(undefined);
 	};
 	const send = useMutation({
-		mutationFn: () => sendMemoThroughHod({ toDepartmentId: to, subject, content, file }),
+		mutationFn: () =>
+			sendMemoThroughHod(
+				rgm && to === `position:${rgm.id}`
+					? { toPositionId: rgm.id, subject, content, file }
+					: { toDepartmentId: to, subject, content, file },
+			),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["documents"] });
 			toast.success("Sent to your HOD. They will send it on to the other department, or return it to you.");
@@ -50,7 +60,8 @@ export function SendThroughHodDialog() {
 		},
 		onError: (e: any) => toast.error(notYet(e, "Couldn't send the memo.")),
 	});
-	const toName = departments.find((d: any) => d.id === to)?.name;
+	const toName =
+		rgm && to === `position:${rgm.id}` ? "the Regional General Manager" : departments.find((d: any) => d.id === to)?.name;
 	return (
 		<>
 			<Button variant="secondary" onClick={() => setOpen(true)}>
@@ -61,17 +72,18 @@ export function SendThroughHodDialog() {
 					<DialogHeader>
 						<DialogTitle>Send through my HOD</DialogTitle>
 						<DialogDescription>
-							Write to another department. Your Head of Department reads it first and sends it on to that department's HOD.
+							Write to the RGM or another department. Your Head of Department reads it first and sends it on.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="space-y-4">
 						<div className="space-y-1.5">
-							<Label htmlFor={ids.to}>To department</Label>
+							<Label htmlFor={ids.to}>To</Label>
 							<Select value={to} onValueChange={setTo}>
 								<SelectTrigger id={ids.to} className="w-full">
-									<SelectValue placeholder="Choose the department" />
+									<SelectValue placeholder="Choose the RGM or a department" />
 								</SelectTrigger>
 								<SelectContent className="max-h-72">
+									{rgm && <SelectItem value={`position:${rgm.id}`}>Regional General Manager (RGM)</SelectItem>}
 									{departments.map((d: any) => (
 										<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
 									))}
@@ -90,7 +102,11 @@ export function SendThroughHodDialog() {
 							<Label htmlFor={ids.file}>Attachment (optional)</Label>
 							<Input id={ids.file} type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0])} />
 						</div>
-						{toName && <p className="text-xs text-muted-foreground">Route: you → your HOD → HOD, {toName}.</p>}
+						{toName && (
+							<p className="text-xs text-muted-foreground">
+								Route: you → your HOD → {rgm && to === `position:${rgm.id}` ? "the RGM's office" : `HOD, ${toName}`}.
+							</p>
+						)}
 					</div>
 					<DialogFooter>
 						<Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -111,6 +127,8 @@ export function HodMemoActions({ doc }: { doc: any }) {
 	const me = useAuthStore((s) => s.user);
 	const myId = me?.userId ?? (me as any)?.id;
 	const [minute, setMinute] = useState("");
+	const toRgm = !!doc?.toPositionId || /general manager|\(RGM\)/i.test(doc?.finalDestinationName ?? "");
+	const target = toRgm ? "the RGM" : `HOD, ${doc?.finalDestinationName ?? "the other department"}`;
 	const waiting = doc?.status === "awaiting_hod" && (!doc.assignedToHodId || doc.assignedToHodId === myId || doc.currentHandlerUserId === myId);
 	const done = () => {
 		qc.invalidateQueries({ queryKey: ["documents"] });
@@ -119,7 +137,7 @@ export function HodMemoActions({ doc }: { doc: any }) {
 	};
 	const on = useMutation({
 		mutationFn: () => hodSendMemoOn(doc.id, minute.trim() || undefined),
-		onSuccess: () => { done(); toast.success(`Sent on to the HOD of ${doc.finalDestinationName ?? "the other department"}.`); },
+		onSuccess: () => { done(); toast.success(`Sent on to ${toRgm ? "the RGM's office" : `the HOD of ${doc.finalDestinationName ?? "the other department"}`}.`); },
 		onError: (e: any) => toast.error(notYet(e, "Couldn't send it on.")),
 	});
 	const back = useMutation({
@@ -131,8 +149,8 @@ export function HodMemoActions({ doc }: { doc: any }) {
 	return (
 		<section className="space-y-3 rounded-lg border bg-card p-4" aria-label="Memo waiting for you">
 			<div>
-				<h2 className="font-semibold">From your department, for {doc.finalDestinationName ?? "another department"}</h2>
-				<p className="text-sm text-muted-foreground">Send it on to that department's HOD, or return it to the sender.</p>
+				<h2 className="font-semibold">From your department, for {toRgm ? "the RGM" : (doc.finalDestinationName ?? "another department")}</h2>
+				<p className="text-sm text-muted-foreground">Send it on to {toRgm ? "the RGM's office" : "that department's HOD"}, or return it to the sender.</p>
 			</div>
 			<div className="space-y-1.5">
 				<Label htmlFor={ids.minute}>Your minute</Label>
@@ -141,7 +159,7 @@ export function HodMemoActions({ doc }: { doc: any }) {
 			<div className="flex flex-wrap gap-2">
 				<Button disabled={on.isPending || back.isPending} onClick={() => on.mutate()}>
 					{on.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-					Send to HOD, {doc.finalDestinationName ?? "the other department"}
+					Send to {target}
 				</Button>
 				<Button variant="outline" disabled={on.isPending || back.isPending || minute.trim().length < 5} onClick={() => back.mutate()}>
 					<CornerUpLeft className="mr-2 h-4 w-4" /> Return to sender

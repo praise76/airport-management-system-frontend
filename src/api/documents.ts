@@ -294,7 +294,10 @@ export async function createBulkOperation(
 // and sends it on to that department's HOD, or returns it. The server resolves both HODs.
 
 export type MemoThroughHodInput = {
-	toDepartmentId: string;
+	/** A department (its HOD receives it) ... */
+	toDepartmentId?: string;
+	/** ... or a position such as the RGM's office. */
+	toPositionId?: string;
 	subject: string;
 	content: string;
 	file?: File;
@@ -302,7 +305,8 @@ export type MemoThroughHodInput = {
 
 export async function sendMemoThroughHod(input: MemoThroughHodInput): Promise<Document> {
 	const form = new FormData();
-	form.append("toDepartmentId", input.toDepartmentId);
+	if (input.toDepartmentId) form.append("toDepartmentId", input.toDepartmentId);
+	if (input.toPositionId) form.append("toPositionId", input.toPositionId);
 	form.append("subject", input.subject.trim());
 	form.append("content", input.content.trim());
 	if (input.file) form.append("file", input.file);

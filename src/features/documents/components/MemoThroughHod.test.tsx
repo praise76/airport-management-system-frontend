@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/stores/auth", () => ({ useAuthStore: (sel: any) => sel({ user: { id: "hod1", role: "hod" } }) }));
 vi.mock("@/hooks/departments", () => ({ useDepartments: () => ({ data: { data: [] } }) }));
+vi.mock("@/hooks/positions", () => ({ usePositions: () => ({ data: [{ id: "rgm", title: "Regional General Manager (RGM)", code: "RGM" }] }) }));
 
 import { HodMemoActions } from "./MemoThroughHod";
 
@@ -18,6 +19,10 @@ describe("HodMemoActions", () => {
 		expect(screen.getByRole("button", { name: /Send to HOD, Environmental Services/ })).toBeTruthy();
 		const back = screen.getByRole("button", { name: /Return to sender/ }) as HTMLButtonElement;
 		expect(back.disabled).toBe(true); // a reason is required to return it
+	});
+	it("offers to send a memo for the RGM on to the RGM's office", () => {
+		wrap(<HodMemoActions doc={{ id: "d3", status: "awaiting_hod", assignedToHodId: "hod1", toPositionId: "rgm", finalDestinationName: "Regional General Manager (RGM)" }} />);
+		expect(screen.getByRole("button", { name: "Send to the RGM" })).toBeTruthy();
 	});
 	it("shows nothing for another HOD's memo or a memo already sent on", () => {
 		const { container } = wrap(

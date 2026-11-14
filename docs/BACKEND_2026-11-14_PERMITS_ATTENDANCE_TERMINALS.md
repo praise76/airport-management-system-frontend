@@ -113,14 +113,17 @@ An officer writes to another department; their own HOD reads it first and sends 
 department's HOD, or returns it. Today an officer can register a document but cannot forward or
 dispatch it (403), and `dispatch` only works from the registry. Add:
 
-1. `POST /documents/memos` (multipart: `toDepartmentId`, `subject`, `content`, optional `file`),
+1. `POST /documents/memos` (multipart: `toDepartmentId` **or** `toPositionId`, `subject`,
+   `content`, optional `file`). `toPositionId` is the RGM's office (position code `RGM`): the
+   memo still goes to the sender's HOD first, and step 2 then assigns it to the RGM office
+   instead of a department HOD. Any staff member;
    any staff member. Creates an internal memo (`direction: "internal"`, destination the target
    department), resolves the **sender's HOD** (head of the sender's top-level department; the
    acting HOD if one is active) and holds it with them: `status: "awaiting_hod"`,
    `assignedToHodId`. Notify that HOD. Refuse if the department has no HOD set ("Your department
    has no Head of Department set") and refuse a memo to the sender's own department.
 2. `POST /documents/:id/hod-approve` `{ comments? }`, by that HOD only: resolve the **receiving
-   department's HOD** and assign it to them (`status: "with_receiving_hod"`), notify them and the
+   department's HOD** (or, for `toPositionId`, the RGM office) and assign it to them (`status: "with_receiving_hod"`), notify them and the
    sender.
 3. `POST /documents/:id/hod-return` `{ comments }` (required), by that HOD only: back to the
    sender (`status: "returned_to_sender"`), notify the sender.
