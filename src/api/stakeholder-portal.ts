@@ -422,6 +422,10 @@ interface PermitRow {
 	createdAt: string;
 	organizationName?: string;
 	stakeholderType?: GlobalPermit["stakeholderType"];
+	sponsorDepartmentId?: string | null;
+	sponsorDepartmentName?: string | null;
+	introducedAt?: string | null;
+	rgmApprovedAt?: string | null;
 }
 
 /**
@@ -449,6 +453,10 @@ function toPermit<T extends StakeholderPermit = StakeholderPermit>(row: PermitRo
 		rejectionReason: row.rejectionReason,
 		isActive: row.status === "approved" && row.validUntil >= today,
 		createdAt: row.createdAt,
+		sponsorDepartmentId: row.sponsorDepartmentId ?? null,
+		sponsorDepartmentName: row.sponsorDepartmentName ?? null,
+		introducedAt: row.introducedAt ?? null,
+		rgmApprovedAt: row.rgmApprovedAt ?? undefined,
 		...readRouting(row),
 		...(row.organizationName
 			? { organizationName: row.organizationName, stakeholderType: row.stakeholderType }
@@ -483,6 +491,9 @@ export async function createStakeholderPermit(
 		permitType: input.permitType,
 		accessLevel: input.accessLevel,
 		personnelName: input.personName,
+		// A contractor names the department it works for; that HOD confirms it.
+		...(input.sponsorDepartmentId ? { sponsorDepartmentId: input.sponsorDepartmentId } : {}),
+		...(input.sponsorDepartmentName ? { sponsorDepartmentName: input.sponsorDepartmentName } : {}),
 		personnelDesignation: input.personDesignation || undefined,
 		personnelPhotoUrl: input.personPhoto || undefined,
 		validFrom: input.validFrom,
@@ -899,6 +910,35 @@ async function listHeld<Row, T>(kind: "activities" | "invoices", map: (row: Row)
 export const listHeldActivities = () => listHeld<ActivityRow, StakeholderActivity>("activities", toActivity);
 /** Invoices currently held by the signed-in staff member's office. */
 export const listHeldInvoices = () => listHeld<InvoiceRow, StakeholderInvoice>("invoices", toInvoice);
+
+/** Contractors' permits waiting for the signed-in HOD's letter of introduction. null until the server has the list. */
+export async function listPermitsAwaitingIntroduction(): Promise<GlobalPermit[] | null> {
+	try {
+		const res = await api.get("/stakeholder-orgs/permits", { params: { awaitingIntroduction: true, limit: 100 } });
+		const body = res.data.data ?? res.data;
+		const rows: PermitRow[] = body.items ?? body ?? [];
+		return rows.map((r) => toPermit<GlobalPermit>(r));
+	} catch (err: any) {
+		if (err?.status === 404 || err?.status === 400 || err?.status === 500) return null;
+		throw err;
+	}
+}
+
+/** The sponsoring HOD confirms a contractor: letter of introduction (uploaded files) and a note. */
+export async function introducePermit(permitId: string, input: { note: string; attachments: string[] }): Promise<void> {
+	await api.post(`/stakeholder-orgs/permits/${permitId}/introduce`, input);
+}
+
+/** Departments a contractor can name as the one it works for (portal). null until the server has the list. */
+export async function listSponsorDepartments(): Promise<{ id: string; name: string }[] | null> {
+	try {
+		const res = await api.get("/stakeholder-orgs/sponsor-departments");
+		return (res.data.data ?? res.data) as { id: string; name: string }[];
+	} catch (err: any) {
+		if (err?.status === 404 || err?.status === 403 || err?.status === 500) return null;
+		throw err;
+	}
+}
 
 export const getPermitTrail = (permitId: string) => getItemTrail("permits", permitId);
 export const forwardPermit = (permitId: string, input: ForwardInput) => forwardItem("permits", permitId, input);

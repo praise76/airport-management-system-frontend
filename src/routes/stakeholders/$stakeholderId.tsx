@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
 import { CurrentlyWith } from "@/components/stakeholders/PermitTrail";
+import { PermitDecision } from "@/components/stakeholders/PermitDecision";
 import { RoutingButtons } from "@/components/stakeholders/RoutingActions";
 import { CompanyDocumentsReview } from "@/components/stakeholders/documents/CompanyDocumentsReview";
 import { VerificationDocumentsNotice } from "@/components/stakeholders/documents/VerificationDocumentsNotice";
@@ -64,7 +65,6 @@ import { formatNaira, label } from "@/lib/labels";
 import { StatusPill } from "@/components/ui/status-pill";
 import {
 	ActivitiesReviewTab,
-	DecisionButtons,
 	InvoicesReviewTab,
 	ReasonDialog,
 } from "@/components/stakeholders/ReviewActions";
@@ -696,14 +696,14 @@ function PermitsTab({
 									<StatusPill status={permit.status} />
 									<RoutingButtons kind="permits" item={permit} name={`${permit.personName}'s permit`} />
 									{permit.status === "pending" && (
-										<DecisionButtons
-											item={permit}
-											busy={
+										<PermitDecision
+									permit={permit}
+									name={`${permit.personName}'s permit`}
+									busy={
 												(approve.isPending && approve.variables === permit.id) ||
 												(reject.isPending && reject.variables?.permitId === permit.id)
 											}
-											rejectTitle={`Reject ${permit.personName}'s permit?`}
-											onApprove={() => {
+									onIssue={() => {
 												// QA finding STK-02: don't approve a permit that ends before it starts.
 												if (permit.validFrom && permit.validUntil && new Date(permit.validUntil) < new Date(permit.validFrom)) {
 													toast.error("This permit ends before it starts. Reject it and ask the company to correct the dates.");
@@ -711,8 +711,8 @@ function PermitsTab({
 												}
 												approve.mutate(permit.id);
 											}}
-											onReject={(reason) => reject.mutate({ permitId: permit.id, reason })}
-										/>
+									onReject={(reason) => reject.mutate({ permitId: permit.id, reason })}
+								/>
 									)}
 									{permit.status === "approved" && (
 										<Button

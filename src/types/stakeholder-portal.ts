@@ -218,6 +218,10 @@ export type TrailStepType =
 	| "assigned"
 	| "acknowledged"
 	| "approved"
+	/** The RGM approved an access permit and sent it to ACOS to issue. */
+	| "rgm_approved"
+	/** The sponsoring HOD confirmed a contractor with a letter of introduction. */
+	| "introduced"
 	| "rejected";
 
 /** Where a submission is now. Present once the backend supports office routing. */
@@ -351,6 +355,13 @@ export interface StakeholderActivity extends RoutingFields {
 // ============================================
 
 export interface StakeholderPermit extends RoutingFields {
+	/** Contractors: the department the contractor works for, whose HOD confirms it. */
+	sponsorDepartmentId?: string | null;
+	sponsorDepartmentName?: string | null;
+	/** When that HOD sent the letter of introduction. */
+	introducedAt?: string | null;
+	/** When the RGM approved it for ACOS to issue. */
+	rgmApprovedAt?: string;
 	id: string;
 	stakeholderOrganizationId: string;
 	stakeholderUserId?: string;
@@ -595,6 +606,8 @@ export interface CreateActivityInput {
 }
 
 export interface CreatePermitInput {
+	sponsorDepartmentId?: string;
+	sponsorDepartmentName?: string;
 	permitType: string;
 	personName: string;
 	personDesignation?: string;

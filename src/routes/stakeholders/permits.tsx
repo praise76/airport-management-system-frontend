@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { PermitBadge } from "@/components/stakeholders/PermitBadge";
 import { HeldInvoices, HeldRequests } from "@/components/stakeholders/OfficeInbox";
 import { CurrentlyWith } from "@/components/stakeholders/PermitTrail";
-import { DecisionButtons } from "@/components/stakeholders/ReviewActions";
+import { ContractorsToConfirm } from "@/components/stakeholders/ContractorsToConfirm";
+import { PermitDecision } from "@/components/stakeholders/PermitDecision";
 import { RoutingButtons } from "@/components/stakeholders/RoutingActions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,6 +118,7 @@ function PermitQueuePage() {
 				</div>
 			</div>
 
+			{status === "mine" && <ContractorsToConfirm />}
 			{status === "mine" && (
 				<h2 className="text-lg font-semibold">
 					Permits <span className="text-sm font-normal text-muted-foreground">({permits.length})</span>
@@ -174,15 +176,15 @@ function PermitQueuePage() {
 						<div className="flex flex-wrap items-center gap-2">
 							<RoutingButtons kind="permits" held={status === "mine" || undefined} item={p} name={`${p.personName}'s permit`} />
 							{p.status === "pending" && (
-								<DecisionButtons
+								<PermitDecision
+									permit={p}
 									held={status === "mine" || undefined}
-									item={p}
+									name={`${p.personName}'s permit`}
 									busy={
 										(approve.isPending && approve.variables === p.id) ||
 										(reject.isPending && reject.variables?.permitId === p.id)
 									}
-									rejectTitle={`Reject ${p.personName}'s permit?`}
-									onApprove={() => {
+									onIssue={() => {
 												// QA finding STK-02: don't approve a permit that ends before it starts.
 												if (p.validFrom && p.validUntil && new Date(p.validUntil) < new Date(p.validFrom)) {
 													toast.error("This permit ends before it starts. Reject it and ask the company to correct the dates.");

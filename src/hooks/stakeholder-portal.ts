@@ -827,3 +827,37 @@ export function useDecideHeldItem(kind: "activities" | "invoices") {
 		onError: (err: any) => toast.error(err.message || "That didn't work. Please try again."),
 	});
 }
+
+/** Contractors waiting for my letter of introduction (HOD). `data` is null until the server has the list. */
+export function usePermitsAwaitingIntroduction() {
+	return useQuery({
+		queryKey: ["global-permits", "awaiting-introduction"],
+		queryFn: StakeholderPortalApi.listPermitsAwaitingIntroduction,
+		retry: false,
+	});
+}
+
+export function useIntroducePermit() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ id, note, attachments }: { id: string; note: string; attachments: string[] }) =>
+			StakeholderPortalApi.introducePermit(id, { note, attachments }),
+		onSuccess: (_d, { id }) => {
+			qc.invalidateQueries({ queryKey: ["global-permits"] });
+			qc.invalidateQueries({ queryKey: ["routed-trail", "permits", id] });
+			toast.success("Letter of introduction sent. The RGM can now approve the permit.");
+		},
+		onError: (err: any) =>
+			toast.error(err?.status === 404 ? "Confirming contractors isn't available on the server yet." : err?.message || "Couldn't send the letter."),
+	});
+}
+
+export function useSponsorDepartments(enabled = true) {
+	return useQuery({
+		queryKey: ["sponsor-departments"],
+		queryFn: StakeholderPortalApi.listSponsorDepartments,
+		enabled,
+		retry: false,
+		staleTime: 10 * 60_000,
+	});
+}

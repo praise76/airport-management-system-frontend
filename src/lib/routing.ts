@@ -17,6 +17,8 @@ const STEP_TYPES: readonly TrailStepType[] = [
 	"assigned",
 	"acknowledged",
 	"approved",
+	"rgm_approved",
+	"introduced",
 	"rejected",
 ];
 
@@ -187,6 +189,8 @@ export const STEP_LABEL: Record<TrailStepType, string> = {
 	assigned: "Assigned",
 	acknowledged: "Received",
 	approved: "Approved",
+	rgm_approved: "Approved by the RGM",
+	introduced: "Letter of introduction",
 	rejected: "Rejected",
 };
 

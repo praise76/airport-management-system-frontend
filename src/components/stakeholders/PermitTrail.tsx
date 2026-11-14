@@ -6,7 +6,7 @@ import {
 	MapPin,
 	Send,
 	UserCheck,
-	X, Lock } from "lucide-react";
+	X, Lock, FileCheck } from "lucide-react";
 import { useItemTrail } from "@/hooks/stakeholder-portal";
 import { AttachmentLink } from "./AttachmentPicker";
 import { currentlyWith, fallbackTrail, STEP_LABEL, RESTRICTED_MESSAGE, isRestricted } from "@/lib/routing";
@@ -33,6 +33,8 @@ const ICON: Record<TrailStepType, typeof Check> = {
 	assigned: UserCheck,
 	acknowledged: Inbox,
 	approved: Check,
+	rgm_approved: Check,
+	introduced: FileCheck,
 	rejected: X,
 };
 
@@ -61,6 +63,10 @@ function stepLine(step: PermitTrailStep): string {
 			return office ? `Assigned within ${office}` : "Assigned";
 		case "acknowledged":
 			return office ? `Received by ${office}` : "Received";
+		case "introduced":
+			return office ? `Confirmed by ${office} (letter of introduction)` : "Contractor confirmed (letter of introduction)";
+		case "rgm_approved":
+			return office ? `Approved by the RGM, sent to ${office}` : "Approved by the RGM";
 		default:
 			return office
 				? `${STEP_LABEL[step.stepType]} by ${office}`

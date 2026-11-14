@@ -42,6 +42,8 @@ import {
 import {
 	useStakeholderPermits,
 	useCreateStakeholderPermits,
+	useSponsorDepartments,
+	useStakeholderOrg,
 } from "@/hooks/stakeholder-portal";
 import {
 	MAX_PEOPLE_PER_APPLICATION,
@@ -145,6 +147,12 @@ function PermitsPage() {
 		status: statusFilter !== "all" ? statusFilter : undefined,
 	});
 	const createPermit = useCreateStakeholderPermits(orgId);
+	// Contractors name the department they work for; its HOD confirms them with a letter of introduction.
+	const { data: company } = useStakeholderOrg(orgId);
+	const isContractor = company?.stakeholderType === "contractor";
+	const sponsors = useSponsorDepartments(isContractor);
+	const [sponsor, setSponsor] = useState("");
+	const sponsorName = sponsors.data?.find((d) => d.id === sponsor)?.name ?? sponsor;
 
 	const permits = permitsData?.data ?? [];
 
@@ -173,6 +181,7 @@ function PermitsPage() {
 		if (
 			!formData.permitType ||
 			named.length === 0 ||
+			(isContractor && !sponsor.trim()) ||
 			!formData.validFrom ||
 			!formData.validUntil ||
 			!formData.accessLevel
@@ -194,6 +203,11 @@ function PermitsPage() {
 				validFrom: formData.validFrom,
 				validUntil: formData.validUntil,
 				accessLevel: formData.accessLevel,
+				...(isContractor
+					? sponsors.data
+						? { sponsorDepartmentId: sponsor, sponsorDepartmentName: sponsorName }
+						: { sponsorDepartmentName: sponsor.trim() }
+					: {}),
 			},
 			people: named,
 		});
@@ -450,6 +464,35 @@ function PermitsPage() {
 							</Select>
 						</div>
 
+						{isContractor && (
+							<div className="space-y-2">
+								<Label htmlFor="permit-sponsor" className="text-slate-300">Department you are working for *</Label>
+								{sponsors.data ? (
+									<Select value={sponsor} onValueChange={setSponsor}>
+										<SelectTrigger id="permit-sponsor" className="bg-slate-800 border-slate-700">
+											<SelectValue placeholder="Choose the department" />
+										</SelectTrigger>
+										<SelectContent>
+											{sponsors.data.map((d) => (
+												<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								) : (
+									<Input
+										id="permit-sponsor"
+										value={sponsor}
+										onChange={(e) => setSponsor(e.target.value)}
+										placeholder="e.g. Environmental Services"
+										className="bg-slate-800 border-slate-700"
+									/>
+								)}
+								<p className="text-xs text-slate-400">
+									Its Head of Department confirms your company with a letter of introduction before the permit can be approved.
+								</p>
+							</div>
+						)}
+
 						<fieldset className="space-y-2">
 							<div className="flex items-center justify-between gap-2">
 								<legend className="text-sm font-medium text-slate-300">
@@ -590,6 +633,7 @@ function PermitsPage() {
 							disabled={
 								!formData.permitType ||
 								named.length === 0 ||
+								(isContractor && !sponsor.trim()) ||
 								duplicates.length > 0 ||
 								!formData.validFrom ||
 								!formData.validUntil ||
