@@ -162,6 +162,15 @@ at the post, and for an urgent ping an emergency message with acknowledgment. Tw
 **Duty board (added 14 Nov, evening).** Signed-in staff can now ping a post straight from the
 Public duty board: each unit card has "Ping on-duty officers", which messages the people checked
 in there (or, if nobody has checked in yet, everyone rostered there). It uses `onDutyStaff[].id`
-as the user id, so please make sure that field is the user's id, not a roster-entry id. On the
-live site `GET /public/duty-board` returns no departments at all (`totalOnDuty: 0`) even while
-staff are checked in, so the board is empty; please check what it is built from.
+as the user id, so please make sure that field is the user's id, not a roster-entry id. 
+
+**The duty board never shows anyone.** Tested on the live site on 14 Nov: Chika Nwankwo
+(Passenger Screening) was clocked in at International Terminal 1 (`POST /attendance/check-in`,
+200), checked in at the International Terminal station (`POST /stations/:id/check-in`, 201) and
+rostered on an approved, then active, roster for that day, 14:00 to 23:00 at terminal IT1.
+The Attendance Registry showed her as rostered and Present. `GET /public/duty-board` still
+returned `{ departments: [], totalOnDuty: 0, totalScheduled: 0 }` after every step, with and
+without a sign-in, with `departmentId=all`, with her department, with `terminalId` for IT1 and
+with the organisation id. Please make the board list, for each department and unit, the people
+rostered for the current shift and mark those who have clocked in (`checkedIn`, `checkedInAt`,
+`isLate`), with `onDutyStaff[].id` = the user id so the ping reaches them.
