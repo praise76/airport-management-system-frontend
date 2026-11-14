@@ -1,4 +1,3 @@
-import { HodMemoActions } from "@/features/documents/components/MemoThroughHod";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
@@ -14,6 +13,7 @@ import {
 import { cloneElement, useId, useState } from "react";
 import { fileUrl } from "@/api/client";
 import { DepartmentSelector } from "@/components/departments";
+import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -29,6 +29,10 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { DocumentJourney } from "@/features/documents/components/DocumentJourney";
 import {
+	HodMemoActions,
+	RgmSendOn,
+} from "@/features/documents/components/MemoThroughHod";
+import {
 	useAcknowledgeDocument,
 	useApproveDocument,
 	useDocument,
@@ -38,7 +42,6 @@ import {
 	useReturnDocument,
 	useRgmForwardDocument,
 } from "@/hooks/documents";
-import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { hasAnyRole, ROLE_GROUPS } from "@/lib/access";
 import { label } from "@/lib/labels";
 import { useAuthStore } from "@/stores/auth";
@@ -48,26 +51,39 @@ export const Route = createFileRoute("/documents/$docId")({
 	component: DocumentDetailsPage,
 });
 
-const fmtDate = (d?: string) => (d ? format(new Date(d), "d MMM yyyy") : undefined);
+const fmtDate = (d?: string) =>
+	d ? format(new Date(d), "d MMM yyyy") : undefined;
 
 function DocumentDetailsPage() {
 	const { docId } = Route.useParams();
 	const user = useAuthStore((s) => s.user);
-	const isValid = !!docId && !["new", "undefined", "null"].includes(docId) && docId.length > 5;
+	const isValid =
+		!!docId &&
+		!["new", "undefined", "null"].includes(docId) &&
+		docId.length > 5;
 
 	const details = useDocument(docId);
 	const journey = useDocumentJourney(docId);
 
 	if (!isValid) {
-		return <p className="py-12 text-center text-muted-foreground">This document link isn't valid.</p>;
+		return (
+			<p className="py-12 text-center text-muted-foreground">
+				This document link isn't valid.
+			</p>
+		);
 	}
 	if (details.isLoading && journey.isLoading) {
-		return <p className="py-12 text-center text-muted-foreground">Loading document…</p>;
+		return (
+			<p className="py-12 text-center text-muted-foreground">
+				Loading document…
+			</p>
+		);
 	}
 	if (details.isError && journey.isError) {
 		return (
 			<p className="py-12 text-center text-destructive">
-				Couldn't load this document. It may have been removed, or you may not have access.
+				Couldn't load this document. It may have been removed, or you may not
+				have access.
 			</p>
 		);
 	}
@@ -77,14 +93,23 @@ function DocumentDetailsPage() {
 	const isSupervisor = hasAnyRole(user, ROLE_GROUPS.supervisors);
 	const isRgm = hasAnyRole(user, ["RGM", ...ROLE_GROUPS.admins]);
 	const link = fileUrl(doc?.fileUrl);
-	const deadline = doc?.responseDeadline ? new Date(doc.responseDeadline) : null;
-	const overdue = deadline && deadline < new Date() && !/closed|approved|rejected/i.test(doc?.status ?? "");
+	const deadline = doc?.responseDeadline
+		? new Date(doc.responseDeadline)
+		: null;
+	const overdue =
+		deadline &&
+		deadline < new Date() &&
+		!/closed|approved|rejected/i.test(doc?.status ?? "");
 
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-wrap items-start justify-between gap-4">
 				<div className="flex items-start gap-3 min-w-0">
-					<Link to="/documents" className="mt-1 text-muted-foreground hover:text-foreground" aria-label="Back to documents">
+					<Link
+						to="/documents"
+						className="mt-1 text-muted-foreground hover:text-foreground"
+						aria-label="Back to documents"
+					>
 						<ArrowLeft className="h-5 w-5" />
 					</Link>
 					<div className="min-w-0">
@@ -96,9 +121,13 @@ function DocumentDetailsPage() {
 						</h1>
 						<div className="mt-2 flex flex-wrap items-center gap-2">
 							{doc?.status && <StatusPill status={doc.status} />}
-							{doc?.priority && doc.priority !== "normal" && <StatusPill status={`${doc.priority}_priority`} />}
+							{doc?.priority && doc.priority !== "normal" && (
+								<StatusPill status={`${doc.priority}_priority`} />
+							)}
 							{deadline && (
-								<span className={`text-sm ${overdue ? "text-red-600 font-semibold" : "text-muted-foreground"}`}>
+								<span
+									className={`text-sm ${overdue ? "text-red-600 font-semibold" : "text-muted-foreground"}`}
+								>
 									{overdue ? "Overdue: " : "Due "}
 									{format(deadline, "d MMM yyyy")}
 								</span>
@@ -109,6 +138,7 @@ function DocumentDetailsPage() {
 			</div>
 
 			{doc && <HodMemoActions doc={doc} />}
+			{doc && <RgmSendOn doc={doc} />}
 
 			<div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-6">
 				{/* The document itself */}
@@ -117,30 +147,60 @@ function DocumentDetailsPage() {
 						{link ? (
 							<>
 								{/\.(png|jpe?g|gif|webp)$/i.test(link) ? (
-									<img src={link} alt={doc?.subject ?? "Document"} className="w-full max-h-[70vh] object-contain bg-muted" />
+									<img
+										src={link}
+										alt={doc?.subject ?? "Document"}
+										className="w-full max-h-[70vh] object-contain bg-muted"
+									/>
 								) : /\.pdf($|\?)/i.test(link) ? (
-									<iframe src={link} title={doc?.subject ?? "Document"} className="w-full h-[70vh] bg-muted" />
+									<iframe
+										src={link}
+										title={doc?.subject ?? "Document"}
+										className="w-full h-[70vh] bg-muted"
+									/>
 								) : (
-									<p className="p-6 text-sm text-muted-foreground">This file type can't be previewed here.</p>
+									<p className="p-6 text-sm text-muted-foreground">
+										This file type can't be previewed here.
+									</p>
 								)}
 								<div className="border-t p-2 text-right">
-									<a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-										Open file in a new tab <ExternalLink className="h-3.5 w-3.5" />
+									<a
+										href={link}
+										target="_blank"
+										rel="noreferrer"
+										className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+									>
+										Open file in a new tab{" "}
+										<ExternalLink className="h-3.5 w-3.5" />
 									</a>
 								</div>
 							</>
 						) : (
-							<p className="p-6 text-sm text-muted-foreground">No file was attached when this document was registered.</p>
+							<p className="p-6 text-sm text-muted-foreground">
+								No file was attached when this document was registered.
+							</p>
 						)}
 					</div>
 
 					<dl className="rounded-lg border bg-card p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
 						<Detail term="Direction" value={label(doc?.direction)} />
 						<Detail term="Type" value={label(doc?.documentType)} />
-						<Detail term="From" value={[doc?.senderName, doc?.senderOrganization].filter(Boolean).join(", ")} />
+						<Detail
+							term="From"
+							value={[doc?.senderName, doc?.senderOrganization]
+								.filter(Boolean)
+								.join(", ")}
+						/>
 						<Detail term="Their reference" value={doc?.senderReference} />
 						<Detail term="Date on letter" value={fmtDate(doc?.dateReceived)} />
-						<Detail term="Registered" value={doc?.createdAt ? format(new Date(doc.createdAt), "d MMM yyyy, HH:mm") : undefined} />
+						<Detail
+							term="Registered"
+							value={
+								doc?.createdAt
+									? format(new Date(doc.createdAt), "d MMM yyyy, HH:mm")
+									: undefined
+							}
+						/>
 						<Detail term="Stage" value={label(doc?.workflowStage)} />
 						<Detail term="Terminal" value={doc?.terminalCode} />
 					</dl>
@@ -158,7 +218,8 @@ function DocumentDetailsPage() {
 							{isManager && <DecisionDialogs docId={docId} />}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							Your minute (comment) is saved with each action and shown in the timeline.
+							Your minute (comment) is saved with each action and shown in the
+							timeline.
 						</p>
 					</div>
 
@@ -167,7 +228,9 @@ function DocumentDetailsPage() {
 						{journey.data?.journey?.length ? (
 							<DocumentJourney steps={journey.data.journey} />
 						) : (
-							<p className="text-sm text-muted-foreground">No movements recorded yet.</p>
+							<p className="text-sm text-muted-foreground">
+								No movements recorded yet.
+							</p>
 						)}
 					</div>
 				</div>
@@ -179,8 +242,12 @@ function DocumentDetailsPage() {
 function Detail({ term, value }: { term: string; value?: string }) {
 	return (
 		<div>
-			<dt className="text-xs uppercase tracking-wide text-muted-foreground">{term}</dt>
-			<dd className="mt-0.5">{value || <span className="text-muted-foreground">Not recorded</span>}</dd>
+			<dt className="text-xs uppercase tracking-wide text-muted-foreground">
+				{term}
+			</dt>
+			<dd className="mt-0.5">
+				{value || <span className="text-muted-foreground">Not recorded</span>}
+			</dd>
 		</div>
 	);
 }
@@ -224,20 +291,36 @@ function ActionDialog({
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>{title}</DialogTitle>
-						{description && <DialogDescription>{description}</DialogDescription>}
+						{description && (
+							<DialogDescription>{description}</DialogDescription>
+						)}
 					</DialogHeader>
 					<div className="space-y-4">
 						{extra}
 						<div className="space-y-2">
-							<Label htmlFor={minuteId}>Minute{requireMinute ? "" : " (optional)"}</Label>
-							<Textarea id={minuteId} rows={4} value={minute} onChange={(e) => setMinute(e.target.value)} placeholder="e.g. AVSEC to treat urgently and brief me" />
+							<Label htmlFor={minuteId}>
+								Minute{requireMinute ? "" : " (optional)"}
+							</Label>
+							<Textarea
+								id={minuteId}
+								rows={4}
+								value={minute}
+								onChange={(e) => setMinute(e.target.value)}
+								placeholder="e.g. AVSEC to treat urgently and brief me"
+							/>
 						</div>
 					</div>
 					<DialogFooter>
-						<Button variant="outline" onClick={close}>Cancel</Button>
+						<Button variant="outline" onClick={close}>
+							Cancel
+						</Button>
 						<Button
 							variant={destructive ? "destructive" : "default"}
-							disabled={busy || !canSubmit || (requireMinute && minute.trim().length < 3)}
+							disabled={
+								busy ||
+								!canSubmit ||
+								(requireMinute && minute.trim().length < 3)
+							}
 							onClick={() => onSubmit(minute.trim(), close)}
 						>
 							{busy && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -259,7 +342,11 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 	const officerId = useId();
 	return (
 		<ActionDialog
-			trigger={<Button size="sm"><UserPlus className="h-4 w-4" /> Assign to officer</Button>}
+			trigger={
+				<Button size="sm">
+					<UserPlus className="h-4 w-4" /> Assign to officer
+				</Button>
+			}
 			title="Assign to an officer"
 			description="The officer will see it under My Assignments."
 			confirmLabel="Assign"
@@ -276,7 +363,9 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 							value={toUserId || undefined}
 							onChange={(id, person) => {
 								setToUserId(id ?? "");
-								setToRole(person?.role ? String(person.role).toLowerCase() : undefined);
+								setToRole(
+									person?.role ? String(person.role).toLowerCase() : undefined,
+								);
 							}}
 							roles={ASSIGNABLE_ROLES}
 							placeholder="Search for an officer, manager or HOD"
@@ -284,7 +373,12 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 					</div>
 					<div className="space-y-2">
 						<Label htmlFor={deadlineId}>Act by (optional)</Label>
-						<Input id={deadlineId} type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+						<Input
+							id={deadlineId}
+							type="date"
+							value={deadline}
+							onChange={(e) => setDeadline(e.target.value)}
+						/>
 					</div>
 				</>
 			}
@@ -294,9 +388,18 @@ function ForwardToPersonDialog({ docId }: { docId: string }) {
 						toUserId,
 						toRole,
 						comments: minute || undefined,
-						deadline: deadline ? new Date(`${deadline}T17:00:00`).toISOString() : undefined,
+						deadline: deadline
+							? new Date(`${deadline}T17:00:00`).toISOString()
+							: undefined,
 					},
-					{ onSuccess: () => { setToUserId(""); setToRole(undefined); setDeadline(""); close(); } },
+					{
+						onSuccess: () => {
+							setToUserId("");
+							setToRole(undefined);
+							setDeadline("");
+							close();
+						},
+					},
 				)
 			}
 		/>
@@ -311,7 +414,11 @@ function ForwardToDeptDialog({ docId }: { docId: string }) {
 	const [dept, setDept] = useState("");
 	return (
 		<ActionDialog
-			trigger={<Button size="sm" variant="outline"><Send className="h-4 w-4" /> Forward to department</Button>}
+			trigger={
+				<Button size="sm" variant="outline">
+					<Send className="h-4 w-4" /> Forward to department
+				</Button>
+			}
 			title="Forward to a department"
 			confirmLabel="Forward"
 			busy={forward.isPending}
@@ -319,11 +426,24 @@ function ForwardToDeptDialog({ docId }: { docId: string }) {
 			extra={
 				<div className="space-y-2">
 					<Label>Department</Label>
-					<DepartmentSelector value={dept} onChange={(v) => setDept(v ?? "")} placeholder="Select department" filterLevel={1} />
+					<DepartmentSelector
+						value={dept}
+						onChange={(v) => setDept(v ?? "")}
+						placeholder="Select department"
+						filterLevel={1}
+					/>
 				</div>
 			}
 			onSubmit={(minute, close) =>
-				forward.mutate({ targetDeptId: dept, comments: minute || undefined }, { onSuccess: () => { setDept(""); close(); } })
+				forward.mutate(
+					{ targetDeptId: dept, comments: minute || undefined },
+					{
+						onSuccess: () => {
+							setDept("");
+							close();
+						},
+					},
+				)
 			}
 		/>
 	);
@@ -333,13 +453,19 @@ function ReturnDialog({ docId }: { docId: string }) {
 	const ret = useReturnDocument(docId);
 	return (
 		<ActionDialog
-			trigger={<Button size="sm" variant="outline"><CornerUpLeft className="h-4 w-4" /> Return</Button>}
+			trigger={
+				<Button size="sm" variant="outline">
+					<CornerUpLeft className="h-4 w-4" /> Return
+				</Button>
+			}
 			title="Return to the previous desk"
 			description="Say what needs to be corrected or added."
 			confirmLabel="Return"
 			requireMinute
 			busy={ret.isPending}
-			onSubmit={(minute, close) => ret.mutate({ comments: minute }, { onSuccess: close })}
+			onSubmit={(minute, close) =>
+				ret.mutate({ comments: minute }, { onSuccess: close })
+			}
 		/>
 	);
 }
@@ -348,11 +474,17 @@ function AcknowledgeDialog({ docId }: { docId: string }) {
 	const ack = useAcknowledgeDocument(docId);
 	return (
 		<ActionDialog
-			trigger={<Button size="sm" variant="outline"><CheckCircle2 className="h-4 w-4" /> Acknowledge receipt</Button>}
+			trigger={
+				<Button size="sm" variant="outline">
+					<CheckCircle2 className="h-4 w-4" /> Acknowledge receipt
+				</Button>
+			}
 			title="Acknowledge receipt"
 			confirmLabel="Acknowledge"
 			busy={ack.isPending}
-			onSubmit={(minute, close) => ack.mutate({ notes: minute || undefined }, { onSuccess: close })}
+			onSubmit={(minute, close) =>
+				ack.mutate({ notes: minute || undefined }, { onSuccess: close })
+			}
 		/>
 	);
 }
@@ -363,21 +495,36 @@ function DecisionDialogs({ docId }: { docId: string }) {
 	return (
 		<>
 			<ActionDialog
-				trigger={<Button size="sm"><CheckCircle2 className="h-4 w-4" /> Approve</Button>}
+				trigger={
+					<Button size="sm">
+						<CheckCircle2 className="h-4 w-4" /> Approve
+					</Button>
+				}
 				title="Approve"
 				confirmLabel="Approve"
 				busy={approve.isPending}
-				onSubmit={(minute, close) => approve.mutate({ comments: minute || undefined }, { onSuccess: close })}
+				onSubmit={(minute, close) =>
+					approve.mutate(
+						{ comments: minute || undefined },
+						{ onSuccess: close },
+					)
+				}
 			/>
 			<ActionDialog
-				trigger={<Button size="sm" variant="outline"><XCircle className="h-4 w-4" /> Reject</Button>}
+				trigger={
+					<Button size="sm" variant="outline">
+						<XCircle className="h-4 w-4" /> Reject
+					</Button>
+				}
 				title="Reject"
 				description="Give the reason. It's recorded in the timeline."
 				confirmLabel="Reject"
 				requireMinute
 				destructive
 				busy={reject.isPending}
-				onSubmit={(minute, close) => reject.mutate({ comments: minute }, { onSuccess: close })}
+				onSubmit={(minute, close) =>
+					reject.mutate({ comments: minute }, { onSuccess: close })
+				}
 			/>
 		</>
 	);

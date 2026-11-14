@@ -116,19 +116,32 @@ dispatch it (403), and `dispatch` only works from the registry. Add:
 1. `POST /documents/memos` (multipart: `toDepartmentId` **or** `toPositionId`, `subject`,
    `content`, optional `file`). `toPositionId` is the RGM's office (position code `RGM`): the
    memo still goes to the sender's HOD first, and step 2 then assigns it to the RGM office
-   instead of a department HOD. Any staff member;
-   any staff member. Creates an internal memo (`direction: "internal"`, destination the target
+   instead of a department HOD. Any staff member. Creates an internal memo (`direction: "internal"`, destination the target
    department), resolves the **sender's HOD** (head of the sender's top-level department; the
    acting HOD if one is active) and holds it with them: `status: "awaiting_hod"`,
    `assignedToHodId`. Notify that HOD. Refuse if the department has no HOD set ("Your department
    has no Head of Department set") and refuse a memo to the sender's own department.
-2. `POST /documents/:id/hod-approve` `{ comments? }`, by that HOD only: resolve the **receiving
+2. `POST /documents/:id/hod-approve` `{ comments?, attachmentIds? }`, by that HOD only: resolve the **receiving
    department's HOD** (or, for `toPositionId`, the RGM office) and assign it to them (`status: "with_receiving_hod"`), notify them and the
    sender.
-3. `POST /documents/:id/hod-return` `{ comments }` (required), by that HOD only: back to the
+3. `POST /documents/:id/hod-return` `{ comments, attachmentIds? }` (comments required), by that HOD only: back to the
    sender (`status: "returned_to_sender"`), notify the sender.
 4. The receiving HOD then works it with the existing actions (minute to staff, return, approve).
-5. Journey records each step with the user and the minute. Visibility: the sender, the two HODs
+5. **HOD minutes and signature.** `attachmentIds` are ids from `POST /uploads` (the HOD can
+   already upload with `relatedEntityType: "document"`, `relatedEntityId` = the memo; tested,
+   201). Link them to the journey step so they show with that minute. Before sending on or
+   returning, the frontend records the HOD's signature with the existing
+   `POST /signatures { relatedEntityType: "document", relatedEntityId, intent: "approved" |
+   "rejected", signatureType, signatureData, reason }`; please list `GET /signatures?relatedEntityType=document&relatedEntityId=`
+   on the document page for everyone who can see the memo.
+6. **The RGM sends on to several departments.** The document page now lets the RGM tick several
+   departments and calls `POST /documents/:id/rgm-forward { targetDeptId, comments,
+   attachmentIds? }` once per department. Please: accept `attachmentIds` there (same as above);
+   allow a second and third call on the same document (today the first call may move it out of
+   the RGM's hands, and the next one is refused) — either keep one copy per department or accept
+   `targetDeptIds: string[]` in a single call; accept it for internal memos sent to the RGM
+   (`toPositionId` = RGM); and add each department to the need-to-know chain.
+7. Journey records each step with the user and the minute. Visibility: the sender, the two HODs
    and anyone the receiving HOD minutes it to.
 
 **Data:** no department on the live site has a Head of Department set (`headUserId` is null for

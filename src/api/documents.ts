@@ -1,16 +1,16 @@
 import type {
+	AcknowledgeDocumentRequest,
+	BulkOperationRequest,
+	CreateTemplateRequest,
 	Document,
 	DocumentDirection,
 	DocumentListResponse,
 	DocumentWorkflowResponse,
-	Template,
-	CreateTemplateRequest,
-	PreviewTemplateRequest,
 	GenerateDocumentRequest,
-	BulkOperationRequest,
-	RgmForwardRequest,
 	InternalBroadcastRequest,
-	AcknowledgeDocumentRequest,
+	PreviewTemplateRequest,
+	RgmForwardRequest,
+	Template,
 } from "@/types/document";
 
 export type {
@@ -303,7 +303,9 @@ export type MemoThroughHodInput = {
 	file?: File;
 };
 
-export async function sendMemoThroughHod(input: MemoThroughHodInput): Promise<Document> {
+export async function sendMemoThroughHod(
+	input: MemoThroughHodInput,
+): Promise<Document> {
 	const form = new FormData();
 	if (input.toDepartmentId) form.append("toDepartmentId", input.toDepartmentId);
 	if (input.toPositionId) form.append("toPositionId", input.toPositionId);
@@ -315,13 +317,46 @@ export async function sendMemoThroughHod(input: MemoThroughHodInput): Promise<Do
 }
 
 /** The sender's HOD sends the memo on to the receiving department's HOD. */
-export async function hodSendMemoOn(id: string, comments?: string): Promise<Document> {
-	const res = await api.post(`/documents/${id}/hod-approve`, { comments });
+export async function hodSendMemoOn(
+	id: string,
+	comments?: string,
+	attachmentIds?: string[],
+): Promise<Document> {
+	const res = await api.post(`/documents/${id}/hod-approve`, {
+		comments,
+		...(attachmentIds?.length ? { attachmentIds } : {}),
+	});
 	return (res.data?.data ?? res.data) as Document;
 }
 
 /** The sender's HOD returns the memo to the sender with a reason. */
-export async function hodReturnMemo(id: string, comments: string): Promise<Document> {
-	const res = await api.post(`/documents/${id}/hod-return`, { comments });
+export async function hodReturnMemo(
+	id: string,
+	comments: string,
+	attachmentIds?: string[],
+): Promise<Document> {
+	const res = await api.post(`/documents/${id}/hod-return`, {
+		comments,
+		...(attachmentIds?.length ? { attachmentIds } : {}),
+	});
 	return (res.data?.data ?? res.data) as Document;
+}
+
+/** The RGM sends a document on to one or more departments (their HODs), with a minute and files. */
+export async function rgmSendToDepartments(
+	id: string,
+	input: {
+		departmentIds: string[];
+		comments?: string;
+		attachmentIds?: string[];
+	},
+): Promise<void> {
+	for (const targetDeptId of input.departmentIds)
+		await api.post(`/documents/${id}/rgm-forward`, {
+			targetDeptId,
+			comments: input.comments,
+			...(input.attachmentIds?.length
+				? { attachmentIds: input.attachmentIds }
+				: {}),
+		});
 }
