@@ -1,5 +1,5 @@
 import { FileCheck } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	useIntroducePermit,
@@ -18,10 +18,11 @@ export function ContractorsToConfirm() {
 	const { data } = usePermitsAwaitingIntroduction();
 	const introduce = useIntroducePermit();
 	const [open, setOpen] = useState<GlobalPermit | null>(null);
+	const headingId = useId();
 	if (!data || data.length === 0) return null;
 	return (
-		<section aria-labelledby="to-confirm" className="space-y-2">
-			<h2 id="to-confirm" className="text-lg font-semibold">
+		<section aria-labelledby={headingId} className="space-y-2">
+			<h2 id={headingId} className="text-lg font-semibold">
 				Contractors waiting for your letter of introduction{" "}
 				<span className="text-sm font-normal text-muted-foreground">
 					({data.length})
