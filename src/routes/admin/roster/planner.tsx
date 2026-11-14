@@ -48,6 +48,7 @@ import { format, parseISO } from "date-fns";
 import { RosterEntry } from "@/features/roster/types";
 import { toast } from "sonner";
 import { byCrew, useCrewMap } from "@/features/roster/useCrewMap";
+import { RosterSectionNav } from "@/features/roster/components/RosterSectionNav";
 
 export const Route = createFileRoute("/admin/roster/planner")({
   beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
@@ -416,6 +417,7 @@ function RosterPlannerPage() {
 
   return (
     <div className="space-y-6">
+      <RosterSectionNav />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Roster Planner</h1>

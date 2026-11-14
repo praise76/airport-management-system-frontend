@@ -59,6 +59,8 @@ type NavItem = {
 	icon: LucideIcon;
 	roles?: string[]; // if provided, only these roles can see
 	allowIf?: (user: Parameters<typeof canReviewStakeholders>[0]) => boolean; // ...or anyone this says yes to
+	/** Other pages that belong to this item, so it stays highlighted on them (e.g. a tab of the same area). */
+	match?: string[];
 };
 
 type NavGroup = {
@@ -172,12 +174,8 @@ const navGroups: NavGroup[] = [
 				to: "/admin/roster/planner",
 				icon: CalendarRange,
 				roles: [...ROLE_GROUPS.rosterPlanners],
-			},
-			{
-				label: "Patterns & crews",
-				to: "/roster/patterns",
-				icon: Users,
-				roles: [...ROLE_GROUPS.rosterPlanners],
+				// Patterns & crews is a tab of the roster planner, not a menu item of its own.
+				match: ["/roster/patterns"],
 			},
 			{
 				label: "Roster templates",
@@ -375,7 +373,9 @@ function SidebarNav({
 							const isActive =
 								item.to === "/"
 									? pathname === "/"
-									: pathname === item.to || pathname.startsWith(`${item.to}/`);
+									: [item.to, ...(item.match ?? [])].some(
+											(to) => pathname === to || pathname.startsWith(`${to}/`),
+										);
 							const Icon = item.icon;
 							return (
 								<Link

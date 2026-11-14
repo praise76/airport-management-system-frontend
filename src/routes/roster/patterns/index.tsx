@@ -35,6 +35,7 @@ import {
 } from "@/features/roster/api";
 import type { ShiftPattern } from "@/features/roster/types";
 import { CrewsPanel } from "@/features/roster/components/CrewsPanel";
+import { RosterSectionNav } from "@/features/roster/components/RosterSectionNav";
 import {
 	PATTERN_PRESETS,
 	PATTERN_SHIFT_OPTIONS,
@@ -54,7 +55,8 @@ function ShiftPatternsPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+			<RosterSectionNav />
+			<div className="flex flex-wrap items-center justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-bold tracking-tight">Patterns &amp; crews</h1>
 					<p className="text-muted-foreground">
