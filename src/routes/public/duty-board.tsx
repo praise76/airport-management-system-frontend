@@ -464,11 +464,20 @@ function UnitCard({ unit, canPing }: { unit: DutyUnit; canPing: boolean }) {
 							No staff currently logged at this post.
 						</div>
 					)}
-					{canPing && targets.ids.length > 0 && (
+					{canPing && (unit.onDutyStaff ?? []).length > 0 && (
 						<PingOnDuty
-							postName={unit.location ? `${unit.name}, ${unit.location}` : unit.name}
+							postName={
+								unit.location && unit.location !== unit.name
+									? `${unit.name}, ${unit.location}`
+									: unit.name
+							}
 							officerIds={targets.ids}
 							who={targets.who}
+							people={(unit.onDutyStaff ?? []).map((s) => ({
+								id: s.id,
+								name: s.name,
+								onPost: s.checkedIn,
+							}))}
 							buttonClassName="w-full border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
 						/>
 					)}

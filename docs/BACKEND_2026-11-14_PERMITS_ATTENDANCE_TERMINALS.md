@@ -164,13 +164,13 @@ Public duty board: each unit card has "Ping on-duty officers", which messages th
 in there (or, if nobody has checked in yet, everyone rostered there). It uses `onDutyStaff[].id`
 as the user id, so please make sure that field is the user's id, not a roster-entry id. 
 
-**The duty board never shows anyone.** Tested on the live site on 14 Nov: Chika Nwankwo
-(Passenger Screening) was clocked in at International Terminal 1 (`POST /attendance/check-in`,
-200), checked in at the International Terminal station (`POST /stations/:id/check-in`, 201) and
-rostered on an approved, then active, roster for that day, 14:00 to 23:00 at terminal IT1.
-The Attendance Registry showed her as rostered and Present. `GET /public/duty-board` still
-returned `{ departments: [], totalOnDuty: 0, totalScheduled: 0 }` after every step, with and
-without a sign-in, with `departmentId=all`, with her department, with `terminalId` for IT1 and
-with the organisation id. Please make the board list, for each department and unit, the people
-rostered for the current shift and mark those who have clocked in (`checkedIn`, `checkedInAt`,
-`isLate`), with `onDutyStaff[].id` = the user id so the ping reaches them.
+**Duty board: works, two notes.** Retested late on 14 Nov. The board lists the people rostered
+for the shift that is on now and marks who has clocked in; my first test only looked empty
+because every shift I gave had already ended (it was 23:50 in Lagos). Two notes:
+
+1. A clock-in only counts for the shift the person was rostered on at the moment they clocked
+   in. Chika clocked in, was then moved onto the night shift, and stayed "Not checked in" until
+   she clocked out and in again; Kemi has been clocked in since 11:50 and shows "Not checked in"
+   on her night shift. Consider matching an open clock-in to the current shift as well.
+2. The ping uses `onDutyStaff[].id`; it is the user id today (Musa pinged Kemi and she received
+   it), please keep it that way.

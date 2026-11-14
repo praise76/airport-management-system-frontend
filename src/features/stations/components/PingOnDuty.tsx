@@ -26,9 +26,13 @@ export function PingOnDuty({
 	officerIds,
 	who = "checked in at this post now",
 	buttonClassName,
+	people,
 }: {
 	postName: string;
+	/** Who is ticked to start with (all of them when `people` is not given). */
 	officerIds: string[];
+	/** Everyone at the post, so the sender can tick who gets the ping. */
+	people?: { id: string; name: string; onPost: boolean }[];
 	/** Who the ping goes to, completing "Goes to the N officers …". */
 	who?: string;
 	buttonClassName?: string;
@@ -36,7 +40,11 @@ export function PingOnDuty({
 	const ids = { issue: useId(), urgent: useId() };
 	const me = useAuthStore((s) => s.user);
 	const myId = me?.userId ?? (me as { id?: string } | null)?.id;
-	const to = [...new Set(officerIds)].filter((id) => id !== myId);
+	const everyone = (people ?? []).filter((p) => p.id !== myId);
+	const [chosen, setChosen] = useState<string[] | null>(null);
+	const picked = chosen ?? officerIds;
+	const to = [...new Set(people ? picked : officerIds)].filter((id) => id !== myId);
+	const startCount = [...new Set(officerIds)].filter((id) => id !== myId).length;
 	const [open, setOpen] = useState(false);
 	const [issue, setIssue] = useState("");
 	const [urgent, setUrgent] = useState(true);
@@ -74,6 +82,7 @@ export function PingOnDuty({
 			setIssue("");
 			setChatId(null);
 			setUrgent(true);
+			setChosen(null);
 		}
 		setOpen(o);
 	};
@@ -83,21 +92,26 @@ export function PingOnDuty({
 			<Button
 				variant="outline"
 				className={buttonClassName ?? "w-full"}
-				disabled={to.length === 0}
+				disabled={people ? everyone.length === 0 : to.length === 0}
 				onClick={() => setOpen(true)}
 			>
 				<BellRing className="mr-2 h-4 w-4" />
-				{to.length
-					? `Ping on-duty officers (${to.length})`
-					: "No one on duty to ping"}
+				{people
+					? everyone.length
+						? `Ping officers at this post (${startCount || everyone.length})`
+						: "No one else on duty to ping"
+					: to.length
+						? `Ping on-duty officers (${to.length})`
+						: "No one on duty to ping"}
 			</Button>
 			<Dialog open={open} onOpenChange={close}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Ping officers on duty at {postName}</DialogTitle>
 						<DialogDescription>
-							Goes to the {to.length} {to.length === 1 ? "officer" : "officers"}{" "}
-							{who}, as a chat they can reply in.
+							{people
+								? `Goes to the officers you tick, as a chat they can reply in. Those ${who.replace(/^checked in at this post now$/, "on post now")} are ticked to start with.`
+								: `Goes to the ${to.length} ${to.length === 1 ? "officer" : "officers"} ${who}, as a chat they can reply in.`}
 						</DialogDescription>
 					</DialogHeader>
 					{chatId ? (
@@ -119,6 +133,30 @@ export function PingOnDuty({
 						</div>
 					) : (
 						<div className="space-y-4">
+							{people && (
+								<fieldset className="space-y-1.5">
+									<legend className="text-sm font-medium">Who to ping</legend>
+									{everyone.map((p) => (
+										<label key={p.id} className="flex items-center gap-2 text-sm">
+											<input
+												type="checkbox"
+												checked={to.includes(p.id)}
+												onChange={(e) =>
+													setChosen(
+														e.target.checked
+															? [...to, p.id]
+															: to.filter((x) => x !== p.id),
+													)
+												}
+											/>
+											{p.name}
+											<span className="text-muted-foreground">
+												{p.onPost ? "on post" : "not checked in"}
+											</span>
+										</label>
+									))}
+								</fieldset>
+							)}
 							<div className="space-y-1.5">
 								<Label htmlFor={ids.issue}>What is the issue?</Label>
 								<Textarea
@@ -156,7 +194,7 @@ export function PingOnDuty({
 						</Button>
 						{!chatId && (
 							<Button
-								disabled={send.isPending || issue.trim().length < 5}
+								disabled={send.isPending || issue.trim().length < 5 || to.length === 0}
 								onClick={() => send.mutate()}
 							>
 								{send.isPending ? (
