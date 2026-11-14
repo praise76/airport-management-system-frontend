@@ -31,6 +31,10 @@ import {
 import { useTerminals } from "@/hooks/terminals";
 import { useDutyBoardData } from "@/hooks/useDutyBoard";
 import type { DutyUnit } from "@/types/dutyBoard";
+import { PingOnDuty } from "@/features/stations/components/PingOnDuty";
+import { isStakeholderUser } from "@/lib/access";
+import { pingTargets } from "@/lib/dutyPing";
+import { useAuthStore } from "@/stores/auth";
 import { getAccessToken } from "@/utils/auth";
 
 // Custom CSS for coverage status pulsing
@@ -61,6 +65,8 @@ function PublicDutyBoardPage() {
 	const { data: terminals } = useTerminals();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const terminalFilterId = useId();
+	const user = useAuthStore((st) => st.user);
+	const canPing = !!getAccessToken() && !!user && !isStakeholderUser(user);
 
 	const currentTerminal = terminals?.find((t) => t.id === search.terminalId);
 
@@ -107,6 +113,7 @@ function PublicDutyBoardPage() {
 
 	// Missing lists from the server show as empty instead of crashing the board.
 	const departments = data.departments ?? [];
+	// Only signed-in staff can ping; the board is also shown on public screens.
 	const contractors = data.contractors ?? [];
 
 	return (
@@ -249,7 +256,7 @@ function PublicDutyBoardPage() {
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 								{(dept.units ?? []).map((unit) => (
-									<UnitCard key={unit.id} unit={unit} />
+									<UnitCard key={unit.id} unit={unit} canPing={canPing} />
 								))}
 							</div>
 						</div>
@@ -366,7 +373,8 @@ function StatCard({
 	);
 }
 
-function UnitCard({ unit }: { unit: DutyUnit }) {
+function UnitCard({ unit, canPing }: { unit: DutyUnit; canPing: boolean }) {
+	const targets = pingTargets(unit);
 	const statusColor =
 		{
 			adequate: "border-emerald-900/50 bg-emerald-950/10",
@@ -455,6 +463,14 @@ function UnitCard({ unit }: { unit: DutyUnit }) {
 						<div className="text-center py-4 text-xs text-slate-600">
 							No staff currently logged at this post.
 						</div>
+					)}
+					{canPing && targets.ids.length > 0 && (
+						<PingOnDuty
+							postName={unit.location ? `${unit.name}, ${unit.location}` : unit.name}
+							officerIds={targets.ids}
+							who={targets.who}
+							buttonClassName="w-full border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+						/>
 					)}
 				</div>
 			</CardContent>

@@ -24,9 +24,14 @@ import { useAuthStore } from "@/stores/auth";
 export function PingOnDuty({
 	postName,
 	officerIds,
+	who = "checked in at this post now",
+	buttonClassName,
 }: {
 	postName: string;
 	officerIds: string[];
+	/** Who the ping goes to, completing "Goes to the N officers …". */
+	who?: string;
+	buttonClassName?: string;
 }) {
 	const ids = { issue: useId(), urgent: useId() };
 	const me = useAuthStore((s) => s.user);
@@ -77,7 +82,7 @@ export function PingOnDuty({
 		<>
 			<Button
 				variant="outline"
-				className="w-full"
+				className={buttonClassName ?? "w-full"}
 				disabled={to.length === 0}
 				onClick={() => setOpen(true)}
 			>
@@ -92,7 +97,7 @@ export function PingOnDuty({
 						<DialogTitle>Ping officers on duty at {postName}</DialogTitle>
 						<DialogDescription>
 							Goes to the {to.length} {to.length === 1 ? "officer" : "officers"}{" "}
-							checked in at this post now, as a chat they can reply in.
+							{who}, as a chat they can reply in.
 						</DialogDescription>
 					</DialogHeader>
 					{chatId ? (

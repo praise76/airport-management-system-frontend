@@ -158,3 +158,10 @@ at the post, and for an urgent ping an emergency message with acknowledgment. Tw
   in at a terminal zone do not appear on a station card. If posts are the terminal zones, offer
   `GET /attendance/on-duty?zoneId=` (id and name of everyone checked in there now) and the ping
   can use it too.
+
+**Duty board (added 14 Nov, evening).** Signed-in staff can now ping a post straight from the
+Public duty board: each unit card has "Ping on-duty officers", which messages the people checked
+in there (or, if nobody has checked in yet, everyone rostered there). It uses `onDutyStaff[].id`
+as the user id, so please make sure that field is the user's id, not a roster-entry id. On the
+live site `GET /public/duty-board` returns no departments at all (`totalOnDuty: 0`) even while
+staff are checked in, so the board is empty; please check what it is built from.
