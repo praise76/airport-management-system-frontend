@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
+	SelectLabel,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
@@ -36,6 +38,8 @@ import {
 	useMyAttendanceToday,
 } from "@/hooks/attendance";
 import { useTerminals } from "@/hooks/terminals";
+import { useMyProfile } from "@/hooks/self-service";
+import { parseTerminalCodes } from "@/components/staff/TerminalCheckboxes";
 import {
 	getAttendanceEventDisplay,
 	getDailyAttendanceState,
@@ -79,6 +83,12 @@ function AttendancePage() {
 	});
 	const { data: zones } = useGeofenceZones();
 	const { data: terminals } = useTerminals();
+	// Staff such as AVSEC officers can be assigned to more than one terminal.
+	const { data: profile } = useMyProfile();
+	const myTerminals = useMemo(
+		() => parseTerminalCodes((profile as any)?.assignedTerminals ?? (profile as any)?.user?.assignedTerminals),
+		[profile],
+	);
 	const { data: todayShift } = useQuery({
 		queryKey: ["roster", "today"],
 		queryFn: getTodaysRoster,
@@ -142,6 +152,15 @@ function AttendancePage() {
 		);
 		if (t) setTerminalCode(t.terminalCode);
 	}, [todayShift, terminals, terminalCode]);
+
+	// Not rostered today: pick the assigned terminal the person is standing in, or their only one.
+	useEffect(() => {
+		if (terminalCode || todayShift || myTerminals.length === 0) return;
+		const zoneName: string = (locStatus as any)?.zone?.name ?? "";
+		const here = myTerminals.find((c) => zoneName.includes(`(${c})`));
+		if (here) setTerminalCode(here);
+		else if (myTerminals.length === 1) setTerminalCode(myTerminals[0]);
+	}, [terminalCode, todayShift, myTerminals, locStatus]);
 
 	const nearest = fix ? nearestZone(fix.lat, fix.lng, activeZones) : null;
 
@@ -327,13 +346,35 @@ function AttendancePage() {
 											<SelectValue placeholder="Choose your terminal" />
 										</SelectTrigger>
 										<SelectContent>
-											{(terminals ?? []).map((t) => (
-												<SelectItem key={t.id} value={t.terminalCode}>
-													{t.terminalName} ({t.terminalCode})
-												</SelectItem>
-											))}
+											{myTerminals.length > 0 && (
+												<SelectGroup>
+													<SelectLabel>Your terminals</SelectLabel>
+													{(terminals ?? [])
+														.filter((t) => myTerminals.includes(t.terminalCode))
+														.map((t) => (
+															<SelectItem key={t.id} value={t.terminalCode}>
+																{t.terminalName} ({t.terminalCode})
+															</SelectItem>
+														))}
+												</SelectGroup>
+											)}
+											<SelectGroup>
+												{myTerminals.length > 0 && <SelectLabel>Other terminals</SelectLabel>}
+												{(terminals ?? [])
+													.filter((t) => !myTerminals.includes(t.terminalCode))
+													.map((t) => (
+														<SelectItem key={t.id} value={t.terminalCode}>
+															{t.terminalName} ({t.terminalCode})
+														</SelectItem>
+													))}
+											</SelectGroup>
 										</SelectContent>
 									</Select>
+									{myTerminals.length > 1 && (
+										<p className="text-xs text-muted-foreground">
+											You work at {myTerminals.length} terminals: {myTerminals.join(", ")}. Choose the one you are at now.
+										</p>
+									)}
 								</div>
 
 								{visibleError && <ErrorBox message={visibleError} />}
