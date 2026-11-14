@@ -1,6 +1,7 @@
 import { DocumentJourneyStep } from "@/types/document";
 import { cn } from "@/lib/utils";
-import { Check, Clock, XCircle } from "lucide-react";
+import { Check, Clock, Paperclip, XCircle } from "lucide-react";
+import { fileUrl } from "@/api/client";
 
 interface DocumentJourneyProps {
   steps: DocumentJourneyStep[];
@@ -89,6 +90,11 @@ export function DocumentJourney({ steps }: DocumentJourneyProps) {
                   >
                     {step.location}
                   </div>
+                  {step.actorName && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {step.actorName}
+                    </div>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground whitespace-nowrap text-right">
                   {step.date ? (
@@ -106,6 +112,24 @@ export function DocumentJourney({ steps }: DocumentJourneyProps) {
                 <div className="mt-2 p-3 bg-muted/30 rounded-md text-sm italic">
                   "{step.comments}"
                 </div>
+              )}
+
+              {step.attachments && step.attachments.length > 0 && (
+                <ul className="mt-2 flex flex-wrap gap-2" aria-label="Attached files">
+                  {step.attachments.map((file) => (
+                    <li key={file.id}>
+                      <a
+                        href={fileUrl(file.url)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-0.5 text-xs text-primary hover:underline"
+                      >
+                        <Paperclip className="h-3 w-3" />
+                        {file.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           </div>

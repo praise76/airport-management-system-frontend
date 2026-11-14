@@ -21,6 +21,10 @@ export interface DocumentJourneyStep {
   location: string;
   date: string;
   comments?: string;
+  /** Files attached to this minute. */
+  attachments?: { id: string; name: string; mimeType?: string; size?: number; url: string }[];
+  /** Who acted (named on memos that went through a head of department). */
+  actorName?: string;
 }
 
 export interface DocumentJourneyResponse {
