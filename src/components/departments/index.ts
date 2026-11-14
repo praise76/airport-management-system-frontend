@@ -3,3 +3,4 @@ export {
 	DepartmentSelector,
 	CascadingDepartmentSelector,
 } from "./DepartmentSelector";
+export { DepartmentRowActions } from "./DepartmentRowActions";

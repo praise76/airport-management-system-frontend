@@ -11,6 +11,8 @@ import {
 	listDepartments,
 	updateDepartment,
 	deleteDepartment,
+	archiveDepartment,
+	restoreDepartment,
 	type UpdateDepartmentRequest,
 	getUnitsByDepartment,
 	getStationsByUnit,
@@ -32,10 +34,42 @@ export function useDepartment(id: string) {
 	});
 }
 
-export function useDepartmentTree(organizationId?: string) {
+/** Archived departments are left out unless `includeArchived` is set (the Departments screen's toggle). */
+export function useDepartmentTree(organizationId?: string, includeArchived = false) {
 	return useQuery({
-		queryKey: ["departments", "tree", organizationId],
-		queryFn: () => getDepartmentTree(organizationId),
+		queryKey: ["departments", "tree", organizationId, includeArchived],
+		queryFn: () => getDepartmentTree(organizationId, includeArchived),
+	});
+}
+
+const reasonFrom = (error: unknown, fallback: string) =>
+	(error instanceof Error && error.message) ||
+	(typeof error === "object" && error && "message" in error
+		? String((error as { message?: unknown }).message ?? "")
+		: "") ||
+	fallback;
+
+export function useArchiveDepartment() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => archiveDepartment(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["departments"] });
+			toast.success("Department archived. Its history is kept.");
+		},
+		onError: (error: unknown) => toast.error(reasonFrom(error, "Failed to archive department")),
+	});
+}
+
+export function useRestoreDepartment() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => restoreDepartment(id),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["departments"] });
+			toast.success("Department restored");
+		},
+		onError: (error: unknown) => toast.error(reasonFrom(error, "Failed to restore department")),
 	});
 }
 

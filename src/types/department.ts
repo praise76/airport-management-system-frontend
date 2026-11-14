@@ -30,6 +30,9 @@ export interface Department {
 	description: string | null;
 	isRegistry: boolean;
 
+	// Set when the department is archived (hidden from pickers, history kept)
+	archivedAt?: string | null;
+
 	// Timestamps
 	createdAt: string;
 	updatedAt: string;

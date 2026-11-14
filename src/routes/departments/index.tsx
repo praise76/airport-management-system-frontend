@@ -3,13 +3,8 @@ import {
   Building2,
   ChevronDown,
   ChevronRight,
-  Edit2,
-  FolderPlus,
-  MapPinPlus,
   Plus,
-  Trash2,
   UserCircle,
-  UserCog,
   Users,
 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
@@ -37,10 +32,12 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
+  useArchiveDepartment,
   useAssignHOD,
   useCreateDepartment,
   useDeleteDepartment,
   useDepartmentTree,
+  useRestoreDepartment,
 } from "@/hooks/departments";
 import { useUsers } from "@/hooks/users";
 import { useUiStore } from "@/stores/ui";
@@ -58,6 +55,7 @@ import { getAccessToken } from "@/utils/auth";
 import {
   DepartmentBadge,
   DepartmentLevelIndicator,
+  DepartmentRowActions,
 } from "@/components/departments";
 import { prepareCreateRequest } from "@/api/departments";
 
@@ -91,7 +89,8 @@ const initialFormState: FormState = {
 };
 
 function DepartmentsPage() {
-  const { data: tree, isLoading, error } = useDepartmentTree();
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: tree, isLoading, error } = useDepartmentTree(undefined, showArchived);
   const selectedOrganizationId = useUiStore((s) => s.selectedOrganizationId);
   const user = useAuthStore((s) => s.user);
   
@@ -113,6 +112,8 @@ function DepartmentsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [departmentToDelete, setDepartmentToDelete] =
     useState<DepartmentTreeNode | null>(null);
+  const [departmentToArchive, setDepartmentToArchive] =
+    useState<DepartmentTreeNode | null>(null);
 
   // IDs for form elements
   const nameInputId = useId();
@@ -127,6 +128,8 @@ function DepartmentsPage() {
   const createMutation = useCreateDepartment();
   const assignMutation = useAssignHOD();
   const deleteMutation = useDeleteDepartment();
+  const archiveMutation = useArchiveDepartment();
+  const restoreMutation = useRestoreDepartment();
 
   // Get parent options based on the selected level
   const parentOptions = useMemo(() => {
@@ -145,7 +148,7 @@ function DepartmentsPage() {
               ? node.departmentLevel === 2
               : false;
 
-        if (validParentLevel) {
+        if (validParentLevel && !node.archivedAt) {
           result.push({
             id: node.id,
             label: `${"— ".repeat(depth)}${node.name} (${node.code})`,
@@ -266,22 +269,34 @@ function DepartmentsPage() {
 
   const handleDelete = async () => {
     if (!departmentToDelete) return;
-    await deleteMutation.mutateAsync(departmentToDelete.id);
+    try {
+      await deleteMutation.mutateAsync(departmentToDelete.id);
+    } catch {
+      // The reason (still in use, and what by) is already on screen as a toast.
+    }
     setDeleteConfirmOpen(false);
     setDepartmentToDelete(null);
+  };
+
+  const handleArchive = async () => {
+    if (!departmentToArchive) return;
+    try {
+      await archiveMutation.mutateAsync(departmentToArchive.id);
+    } catch {
+      // The reason (who or what is still in it) is already on screen as a toast.
+    }
+    setDepartmentToArchive(null);
   };
 
   const renderTree = (nodes: DepartmentTreeNode[], level = 0) => {
     return nodes.map((node) => {
       const isExpanded = expandedNodes.has(node.id);
       const hasChildren = node.children && node.children.length > 0;
-      const canAddUnit = node.departmentLevel === 1;
-      const canAddStation = node.departmentLevel === 2;
 
       return (
         <div key={node.id}>
           <div
-            className="flex items-center gap-2 p-3 hover:bg-muted/30 rounded-lg transition-colors group"
+            className={`flex items-center gap-2 p-3 hover:bg-muted/30 rounded-lg transition-colors group ${node.archivedAt ? "opacity-60" : ""}`}
             style={{ paddingLeft: `${level * 24 + 12}px` }}
           >
             {/* Expand/Collapse */}
@@ -321,6 +336,11 @@ function DepartmentsPage() {
                     Registry
                   </Badge>
                 )}
+                {node.archivedAt && (
+                  <Badge variant="outline" className="text-xs">
+                    Archived
+                  </Badge>
+                )}
                 {node.employeeCount !== undefined && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Users className="h-3 w-3" />
@@ -342,72 +362,23 @@ function DepartmentsPage() {
             </div>
 
             {/* Actions */}
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-              {canAddUnit && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => openCreateDialog(2, node.id)}
-                  title="Add Unit"
-                >
-                  <FolderPlus className="h-4 w-4" />
-                  <span className="sr-only sm:not-sr-only sm:ml-1">Unit</span>
-                </Button>
-              )}
-              {canAddStation && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => openCreateDialog(3, node.id)}
-                  title="Add Station"
-                >
-                  <MapPinPlus className="h-4 w-4" />
-                  <span className="sr-only sm:not-sr-only sm:ml-1">
-                    Station
-                  </span>
-                </Button>
-              )}
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => openEditDialog(node)}
-                title="Edit"
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setSelectedDept(node);
-                  setAssignHODDialog(true);
-                }}
-                title={
-                  node.hod
-                    ? `Change ${node.departmentLevel === 2 ? "HOU" : "HOD"}`
-                    : `Assign ${node.departmentLevel === 2 ? "HOU" : "HOD"}`
-                }
-              >
-                <UserCog className="h-4 w-4" />
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={() => {
-                  setDepartmentToDelete(node);
-                  setDeleteConfirmOpen(true);
-                }}
-                title="Delete"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            <DepartmentRowActions
+              node={node}
+              restoring={restoreMutation.isPending}
+              onAddUnit={() => openCreateDialog(2, node.id)}
+              onAddStation={() => openCreateDialog(3, node.id)}
+              onEdit={() => openEditDialog(node)}
+              onAssignHead={() => {
+                setSelectedDept(node);
+                setAssignHODDialog(true);
+              }}
+              onArchive={() => setDepartmentToArchive(node)}
+              onDelete={() => {
+                setDepartmentToDelete(node);
+                setDeleteConfirmOpen(true);
+              }}
+              onRestore={() => restoreMutation.mutate(node.id)}
+            />
           </div>
 
           {/* Children */}
@@ -429,14 +400,20 @@ function DepartmentsPage() {
             Manage organizational hierarchy: Departments → Units → Stations
           </p>
         </div>
-        <Button
-          type="button"
-          onClick={() => openCreateDialog(1)}
-          disabled={!organizationId}
-        >
-          <Plus className="h-4 w-4" />
-          Add Department
-        </Button>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+            Show archived
+          </label>
+          <Button
+            type="button"
+            onClick={() => openCreateDialog(1)}
+            disabled={!organizationId}
+          >
+            <Plus className="h-4 w-4" />
+            Add Department
+          </Button>
+        </div>
       </div>
 
       {/* Legend */}
@@ -767,10 +744,23 @@ function DepartmentsPage() {
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         title="Delete Department"
-        description={`Are you sure you want to delete "${departmentToDelete?.name}"? This action cannot be undone.`}
+        description={`Delete "${departmentToDelete?.name}" for good? This only works for a department nothing has used. If it has staff, documents or history, archive it instead.`}
         confirmLabel="Delete"
         onConfirm={handleDelete}
         variant="destructive"
+      />
+
+      {/* Archive Confirmation */}
+      <ConfirmDialog
+        open={!!departmentToArchive}
+        onOpenChange={(open) => {
+          if (!open) setDepartmentToArchive(null);
+        }}
+        title="Archive Department"
+        description={`Archive "${departmentToArchive?.name}"? It disappears from lists and pickers but its history is kept, and you can restore it later. It must have no active staff or open items.`}
+        confirmLabel="Archive"
+        onConfirm={handleArchive}
+        loading={archiveMutation.isPending}
       />
     </div>
   );

@@ -26,9 +26,10 @@ export async function listDepartments(
 
 export async function getDepartmentTree(
 	organizationId?: string,
+	includeArchived = false,
 ): Promise<DepartmentTreeNode[]> {
 	const res = await api.get("/departments/tree", {
-		params: { organizationId },
+		params: { organizationId, ...(includeArchived ? { includeArchived: true } : {}) },
 	});
 	const payload = (res.data?.data ?? res.data) as DepartmentTreeNode[];
 	return payload;
@@ -98,6 +99,17 @@ export async function assignHOD(
 
 export async function deleteDepartment(id: string): Promise<void> {
 	await api.delete(`/departments/${id}`);
+}
+
+/** Hide a department that has history. Refused (409) while staff or open items are still in it. */
+export async function archiveDepartment(id: string): Promise<Department> {
+	const res = await api.post(`/departments/${id}/archive`);
+	return (res.data?.data ?? res.data) as Department;
+}
+
+export async function restoreDepartment(id: string): Promise<Department> {
+	const res = await api.post(`/departments/${id}/restore`);
+	return (res.data?.data ?? res.data) as Department;
 }
 
 export async function getUnitsByDepartment(departmentId: string): Promise<{data: Department[]}> {
