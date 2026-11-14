@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  */
 const TABS = [
 	{ to: "/admin/roster/planner", label: "Rosters", icon: CalendarRange },
-	{ to: "/roster/patterns", label: "Patterns & crews", icon: Users },
+	{ to: "/roster/patterns", label: "Patterns & teams", icon: Users },
 ] as const;
 
 export function RosterSectionNav() {

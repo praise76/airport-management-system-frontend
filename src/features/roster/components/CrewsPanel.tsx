@@ -50,10 +50,10 @@ export function CrewsPanel() {
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div>
 					<h2 id="crews-heading" className="text-xl font-semibold tracking-tight">
-						Crews
+						Teams
 					</h2>
 					<p className="text-sm text-muted-foreground">
-						Put people into crews, give each crew a pattern and start date, and message a crew or
+						Put people into teams, give each team a pattern and start date, and message a team or
 						today's shift.
 					</p>
 				</div>
@@ -69,18 +69,18 @@ export function CrewsPanel() {
 
 			{patternsFailed && (
 				<p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-					Saved patterns couldn't be loaded, so crews can't be created or shown on a shift yet.
+					Saved patterns couldn't be loaded, so teams can't be created or shown on a shift yet.
 				</p>
 			)}
 			{!departmentId ? (
 				<p className="rounded-lg border bg-muted/20 p-6 text-sm text-muted-foreground">
-					Choose a department to see and set up its crews.
+					Choose a department to see and set up its teams.
 				</p>
 			) : crewsQ.isLoading ? (
-				<p className="text-sm text-muted-foreground">Loading crews…</p>
+				<p className="text-sm text-muted-foreground">Loading teams…</p>
 			) : crewsQ.isError ? (
 				<p role="alert" className="text-sm text-destructive">
-					Couldn't load crews. Please refresh the page.
+					Couldn't load teams. Please refresh the page.
 				</p>
 			) : (
 				<>
@@ -109,7 +109,7 @@ function OnDutyToday({ crews, patterns, date }: { crews: Crew[]; patterns: Shift
 				<CardTitle className="flex items-center gap-2 text-base">
 					<CalendarCheck className="h-4 w-4" /> On duty today ({date})
 				</CardTitle>
-				<CardDescription>Each shift's crews. Message a crew to reach everyone on that shift.</CardDescription>
+				<CardDescription>Each shift's teams. Message a team to reach everyone on that shift.</CardDescription>
 			</CardHeader>
 			<CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 				{codes.map((code) => (
@@ -166,18 +166,18 @@ function CrewCard({
 			if (crew.meta.conversationId) await addChatMember(crew.meta.conversationId, userId).catch(() => undefined);
 		},
 		onSuccess: () => {
-			toast.success("Added to crew");
+			toast.success("Added to team");
 			refresh();
 		},
-		onError: (e: any) => toast.error(e?.message || "Couldn't add to crew"),
+		onError: (e: any) => toast.error(e?.message || "Couldn't add to team"),
 	});
 	const remove = useMutation({
 		mutationFn: (userId: string) => removeCrewMember(crew.id, userId),
 		onSuccess: () => {
-			toast.success("Removed from crew");
+			toast.success("Removed from team");
 			refresh();
 		},
-		onError: (e: any) => toast.error(e?.message || "Couldn't remove from crew"),
+		onError: (e: any) => toast.error(e?.message || "Couldn't remove from team"),
 	});
 	const apply = useMutation({
 		mutationFn: () => applyCrewPattern(crew, members),
@@ -194,10 +194,10 @@ function CrewCard({
 	const chat = useMutation({
 		mutationFn: () => createCrewChat(crew, members),
 		onSuccess: () => {
-			toast.success("Crew chat created");
+			toast.success("Team chat created");
 			qc.invalidateQueries({ queryKey: ["crews", departmentId] });
 		},
-		onError: (e: any) => toast.error(e?.message || "Couldn't create the crew chat"),
+		onError: (e: any) => toast.error(e?.message || "Couldn't create the team chat"),
 	});
 
 	const memberIds = members.map((m) => m.userId);
@@ -235,7 +235,7 @@ function CrewCard({
 				{membersQ.isLoading ? (
 					<p className="text-sm text-muted-foreground">Loading members…</p>
 				) : members.length === 0 ? (
-					<p className="text-sm text-muted-foreground">No one in this crew yet.</p>
+					<p className="text-sm text-muted-foreground">No one in this team yet.</p>
 				) : (
 					<ul className="divide-y rounded-md border">
 						{members.map((m) => (
@@ -269,7 +269,7 @@ function CrewCard({
 					{crew.meta.conversationId ? (
 						<Button asChild variant="outline">
 							<Link to="/messages/$conversationId" params={{ conversationId: crew.meta.conversationId }}>
-								<MessageSquare className="mr-2 h-4 w-4" /> Open crew chat
+								<MessageSquare className="mr-2 h-4 w-4" /> Open team chat
 							</Link>
 						</Button>
 					) : (
@@ -279,7 +279,7 @@ function CrewCard({
 							onClick={() => chat.mutate()}
 							disabled={!members.length || chat.isPending}
 						>
-							<MessageSquare className="mr-2 h-4 w-4" /> Create crew chat
+							<MessageSquare className="mr-2 h-4 w-4" /> Create team chat
 						</Button>
 					)}
 				</div>
@@ -308,7 +308,7 @@ function NewCrewCard({
 	// Next crew letter and start date: first crew's start + the plan's next offset.
 	const suggestion = useMemo(() => {
 		const index = onPattern.length;
-		const name = `Crew ${crewLabel(index)}`;
+		const name = `Team ${crewLabel(index)}`;
 		const base = onPattern[0]?.meta.startDate ?? todayLocal();
 		const offset = plan?.offsets[index] ?? 0;
 		return { name, start: index === 0 ? base : addDays(base, offset) };
@@ -327,12 +327,12 @@ function NewCrewCard({
 				patternName: pattern?.patternName,
 			}),
 		onSuccess: () => {
-			toast.success("Crew created");
+			toast.success("Team created");
 			setName("");
 			setStart("");
 			qc.invalidateQueries({ queryKey: ["crews", departmentId] });
 		},
-		onError: (e: any) => toast.error(e?.message || "Couldn't create the crew"),
+		onError: (e: any) => toast.error(e?.message || "Couldn't create the team"),
 	});
 
 	const full = plan && onPattern.length >= plan.crews;
@@ -341,11 +341,11 @@ function NewCrewCard({
 		<Card className="border-dashed">
 			<CardHeader className="pb-3">
 				<CardTitle className="flex items-center gap-2 text-lg">
-					<Plus className="h-4 w-4" /> New crew
+					<Plus className="h-4 w-4" /> New team
 				</CardTitle>
 				<CardDescription>
 					{plan
-						? `This pattern needs ${plan.crews} crews for 24-hour cover; ${onPattern.length} set up so far.`
+						? `This pattern needs ${plan.crews} teams for 24-hour cover; ${onPattern.length} set up so far.`
 						: "Choose a pattern to get a suggested name and start date."}
 				</CardDescription>
 			</CardHeader>
@@ -367,7 +367,7 @@ function NewCrewCard({
 				</div>
 				<div className="grid grid-cols-2 gap-3">
 					<div className="space-y-1">
-						<Label htmlFor={ids.name}>Crew name</Label>
+						<Label htmlFor={ids.name}>Team name</Label>
 						<Input id={ids.name} value={name} onChange={(e) => setName(e.target.value)} placeholder={suggestion.name} />
 					</div>
 					<div className="space-y-1">
@@ -377,11 +377,11 @@ function NewCrewCard({
 				</div>
 				{full && (
 					<p className="text-xs text-muted-foreground">
-						All {plan?.crews} crews exist for this pattern. Another crew would double up a shift.
+						All {plan?.crews} teams exist for this pattern. Another team would double up a shift.
 					</p>
 				)}
 				<Button type="button" onClick={() => create.mutate()} disabled={!patternId || create.isPending}>
-					{create.isPending ? "Creating…" : "Create crew"}
+					{create.isPending ? "Creating…" : "Create team"}
 				</Button>
 			</CardContent>
 		</Card>

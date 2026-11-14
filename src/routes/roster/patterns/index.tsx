@@ -58,9 +58,9 @@ function ShiftPatternsPage() {
 			<RosterSectionNav />
 			<div className="flex flex-wrap items-center justify-between gap-4">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Patterns &amp; crews</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Patterns &amp; teams</h1>
 					<p className="text-muted-foreground">
-						Define rotation patterns, then put staff into crews that work them.
+						Define rotation patterns, then put staff into teams that work them.
 					</p>
 				</div>
 				<CreatePatternDialog />
@@ -340,13 +340,13 @@ function CrewPlanNote({ pattern }: { pattern: ShiftPattern }) {
 	if (!plan) {
 		return (
 			<p className="mt-3 text-xs text-muted-foreground">
-				Staggered crews can't cover every shift every day with this pattern.
+				Staggered teams can't cover every shift every day with this pattern.
 			</p>
 		);
 	}
 	return (
 		<p className="mt-3 text-xs text-muted-foreground">
-			For 24-hour cover use {plan.crews} crews. Assign the pattern with start dates{" "}
+			For 24-hour cover use {plan.crews} teams. Assign the pattern with start dates{" "}
 			{plan.offsets
 				.map((o, i) => `${crewLabel(i)}: ${o === 0 ? "day 0" : `+${o} days`}`)
 				.join(", ")}

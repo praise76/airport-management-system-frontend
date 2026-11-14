@@ -76,7 +76,7 @@ export function RosterGrid({ roster, users, onCellClick }: RosterGridProps) {
             {users.some((u: any) => u.crewName) && (i === 0 || users[i - 1].crewName !== user.crewName) && (
               <tr>
                 <td colSpan={(dates?.length ?? 0) + 1} className="sticky left-0 border-b bg-muted/40 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {user.crewName ?? "Not in a crew"}
+                  {user.crewName ?? "Not in a team"}
                 </td>
               </tr>
             )}

@@ -128,7 +128,7 @@ export async function createCrew(input: {
 		visibility: "private",
 		description: writeCrewDescription(
 			meta,
-			`Rotation crew${input.patternName ? ` on "${input.patternName}"` : ""}, starting ${input.startDate}`,
+			`Rotation team${input.patternName ? ` on "${input.patternName}"` : ""}, starting ${input.startDate}`,
 		),
 	} as any);
 	return { id: g.id, name: g.name ?? input.name, departmentId: input.departmentId, meta };
@@ -136,7 +136,7 @@ export async function createCrew(input: {
 
 export async function updateCrewMeta(crew: Crew, meta: CrewMeta): Promise<void> {
 	await api.patch(`/groups/${crew.id}`, {
-		description: writeCrewDescription(meta, `Rotation crew, starting ${meta.startDate}`),
+		description: writeCrewDescription(meta, `Rotation team, starting ${meta.startDate}`),
 	});
 }
 
@@ -166,7 +166,7 @@ export async function applyCrewPattern(crew: Crew, members: GroupMember[]) {
 export async function createCrewChat(crew: Crew, members: GroupMember[]): Promise<string> {
 	const convo = await createGroupConversation({
 		name: crew.name,
-		description: "Crew chat for shift handover and notices",
+		description: "Team chat for shift handover and notices",
 		memberIds: members.map((m) => m.userId),
 		type: "group",
 	});

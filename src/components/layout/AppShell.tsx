@@ -174,7 +174,7 @@ const navGroups: NavGroup[] = [
 				to: "/admin/roster/planner",
 				icon: CalendarRange,
 				roles: [...ROLE_GROUPS.rosterPlanners],
-				// Patterns & crews is a tab of the roster planner, not a menu item of its own.
+				// Patterns & teams is a tab of the roster planner, not a menu item of its own.
 				match: ["/roster/patterns"],
 			},
 			{

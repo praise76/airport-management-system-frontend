@@ -19,7 +19,7 @@ import { RosterSectionNav } from "./RosterSectionNav";
 afterEach(cleanup);
 
 describe("RosterSectionNav", () => {
-	it("shows Patterns & crews as a tab of the roster area", () => {
+	it("shows Patterns & teams as a tab of the roster area", () => {
 		render(<RosterSectionNav />);
 		const nav = screen.getByRole("navigation", { name: "Roster" });
 		expect(nav).toBeTruthy();
@@ -28,7 +28,7 @@ describe("RosterSectionNav", () => {
 		).toBe("/admin/roster/planner");
 		expect(
 			screen
-				.getByRole("link", { name: "Patterns & crews" })
+				.getByRole("link", { name: "Patterns & teams" })
 				.getAttribute("aria-current"),
 		).toBe("page");
 		expect(

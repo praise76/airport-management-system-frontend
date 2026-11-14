@@ -33,7 +33,7 @@ export const PATTERN_PRESETS: PatternPreset[] = [
 		cycleLengthDays: 8,
 		shiftSequenceJson: seq(["afternoon", "afternoon", "morning", "morning", "night", "night", "off", "off"]),
 		summary:
-			"2 afternoons, 2 mornings, 2 nights, 2 off. 4 crews give 24-hour cover. Note: only 8 h rest from the last afternoon (ends 22:00) to the first morning (06:00).",
+			"2 afternoons, 2 mornings, 2 nights, 2 off. 4 teams give 24-hour cover. Note: only 8 h rest from the last afternoon (ends 22:00) to the first morning (06:00).",
 		hours: "Morning 06:00-14:00, Afternoon 14:00-22:00, Night 22:00-06:00",
 	},
 	{
@@ -43,7 +43,7 @@ export const PATTERN_PRESETS: PatternPreset[] = [
 		cycleLengthDays: 8,
 		shiftSequenceJson: seq(["morning", "morning", "afternoon", "afternoon", "night", "night", "off", "off"]),
 		summary:
-			"Same shifts, rotating forward: at least 24 h rest at every changeover. 4 crews give 24-hour cover.",
+			"Same shifts, rotating forward: at least 24 h rest at every changeover. 4 teams give 24-hour cover.",
 		hours: "Morning 06:00-14:00, Afternoon 14:00-22:00, Night 22:00-06:00",
 	},
 	{
@@ -52,7 +52,7 @@ export const PATTERN_PRESETS: PatternPreset[] = [
 		patternType: "rotating",
 		cycleLengthDays: 6,
 		shiftSequenceJson: seq(["day", "day", "night", "night", "off", "off"]),
-		summary: "Two 12-hour days, two 12-hour nights, two days off. 3 crews give 24-hour cover.",
+		summary: "Two 12-hour days, two 12-hour nights, two days off. 3 teams give 24-hour cover.",
 		hours: "Day 07:00-19:00, Night 19:00-07:00",
 	},
 	{

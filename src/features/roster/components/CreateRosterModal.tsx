@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { api } from "@/api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { updateCrewMeta, listCrews } from "../crews";
+import type { planShifts, TeamPlan } from "../buildRoster";
+import { PatternTeamsStep, type PatternTeamsValue } from "./PatternTeamsStep";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,7 +57,13 @@ export function CreateRosterModal({
 
   // console.log("units", units);
 
-  const { mutate, isPending } = useCreateRoster();
+  const { mutateAsync, isPending } = useCreateRoster();
+  const qc = useQueryClient();
+  const [patternTeams, setPatternTeams] = useState<PatternTeamsValue>({ patternId: "", starts: {} });
+  const [plan, setPlan] = useState<{ teams: (TeamPlan & { id: string })[]; shifts: ReturnType<typeof planShifts> }>({ teams: [], shifts: [] });
+  const onPlan = useCallback((p: typeof plan) => setPlan(p), []);
+  const [progress, setProgress] = useState<string | null>(null);
+  const teamUnit = stationId || unitId || departmentId;
 
   const handleDepartmentChange = (value: string) => {
     setDepartmentId(value);
@@ -72,39 +83,68 @@ export function CreateRosterModal({
       toast.error("The end date must be on or after the start date.");
       return;
     }
-    mutate(
-      {
-        rosterName: name,
-        startDate,
-        endDate,
-        unitDepartmentId: stationId || unitId || undefined,
-        departmentId: departmentId || undefined,
-        approvalStatus: "draft" as any,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Roster created successfully");
-          onOpenChange(false);
-          setName("");
-          setStartDate("");
-          setEndDate("");
-          setDepartmentId("");
-          setUnitId("");
-          setStationId("");
-        },
-        onError: (err: any) =>
-          toast.error(err?.message || "Failed to create roster"),
-      },
-    );
+    void (async () => {
+      let roster: any;
+      try {
+        roster = await mutateAsync({
+          rosterName: name,
+          startDate,
+          endDate,
+          unitDepartmentId: stationId || unitId || undefined,
+          departmentId: departmentId || undefined,
+          approvalStatus: "draft" as any,
+        });
+      } catch (err: any) {
+        toast.error(err?.message || "Failed to create roster");
+        return;
+      }
+      let made = 0;
+      const failed: string[] = [];
+      if (patternTeams.patternId && plan.shifts.length && roster?.id) {
+        // Remember each team's pattern and day 1, so Patterns & teams and later rosters agree.
+        const teams = await listCrews(teamUnit).catch(() => []);
+        for (const t of plan.teams) {
+          const team = teams.find((x) => x.id === t.id);
+          if (team && (team.meta.patternId !== patternTeams.patternId || team.meta.startDate !== t.startDate))
+            await updateCrewMeta(team, { ...team.meta, patternId: patternTeams.patternId, startDate: t.startDate }).catch(() => {});
+        }
+        const queue = [...plan.shifts];
+        const worker = async () => {
+          for (let s = queue.shift(); s; s = queue.shift()) {
+            try {
+              await api.post(`/roster/${roster.id}/entries`, { ...s, rosterId: roster.id, status: "scheduled" });
+              made++;
+            } catch (err: any) {
+              failed.push(err?.message || "refused");
+            }
+            setProgress(`Adding shifts: ${made + failed.length} of ${plan.shifts.length}`);
+          }
+        };
+        await Promise.all([worker(), worker(), worker(), worker()]);
+        qc.invalidateQueries({ queryKey: ["roster", roster.id] });
+      }
+      setProgress(null);
+      if (failed.length)
+        toast.warning(`Roster created with ${made} of ${plan.shifts.length} shifts. ${failed.length} were refused, for example: ${failed[0]}`);
+      else toast.success(made ? `Roster created with ${made} shifts` : "Roster created");
+      onOpenChange(false);
+      setName("");
+      setStartDate("");
+      setEndDate("");
+      setDepartmentId("");
+      setUnitId("");
+      setStationId("");
+      setPatternTeams({ patternId: "", starts: {} });
+    })();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Roster</DialogTitle>
           <DialogDescription>
-            Define the period and team for this roster.
+            Set the period and unit, then choose the shift pattern and the teams that work it.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -220,6 +260,15 @@ export function CreateRosterModal({
             </Select>
           </div>
 
+          <PatternTeamsStep
+            unitId={teamUnit}
+            from={startDate}
+            to={endDate}
+            value={patternTeams}
+            onChange={setPatternTeams}
+            onPlan={onPlan}
+          />
+
           <DialogFooter>
             <Button
               type="button"
@@ -228,9 +277,9 @@ export function CreateRosterModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Roster
+            <Button type="submit" disabled={isPending || !!progress}>
+              {(isPending || progress) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {progress ?? (plan.shifts.length ? `Create roster with ${plan.shifts.length} shifts` : "Create Roster")}
             </Button>
           </DialogFooter>
         </form>
