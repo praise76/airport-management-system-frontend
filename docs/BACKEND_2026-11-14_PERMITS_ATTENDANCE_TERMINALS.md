@@ -216,3 +216,35 @@ the "MMIA Full System Test" report. The frontend fixes for the items marked (fro
     order; check the date handling of `/roster/my` (time zone).
 14. **Duty board by station.** Roster entries now carry `dutyLocation` (station) and `dutyTerminalIds`.
     Please return each person's station on the board so AVSEC can be shown by station.
+
+## 11. Duty board by terminal (decided 15 Nov 2026)
+
+The signed-in duty board is now organised by terminal (frontend in this package):
+
+| Who | Sees |
+|---|---|
+| RGM, GM, HR, super admin, org admin | Every terminal: a summary card per terminal, then the detail |
+| HOD, ACOS | Their department across every terminal |
+| Head of Unit, manager | Their unit across every terminal |
+| Everyone else (officers, supervisors, staff) | Everyone on duty at the terminal they clocked in at today (all departments), or the terminal of today's shift |
+| Staff of a unit that works around the airport (Wildlife and Bird Control) | Every terminal |
+| Non-AVSEC junior staff | No AVSEC coverage warnings ("critical", "understaffed") |
+
+People whose shift has no terminal appear under "Around the airport".
+
+The frontend builds this from `GET /public/duty-board?terminalId=` (one call per terminal), which
+already filters correctly by the roster entry's `terminalId`. Please:
+
+1. **Enforce the same rules on the server.** Today anyone, even signed out, can call
+   `/public/duty-board` and see every terminal's security staffing. Return only what the caller may
+   see, as in the table. Decide what the signed-out (wall screen) version shows; our suggestion is one
+   terminal, on an approved screen only.
+2. **`PATCH /roster/:id/entries/:entryId` ignores `terminalId`** (sending TDT stored GAT). It had left 287
+   AVSEC shifts on the wrong terminal; we recreated them. Save the `terminalId` that is sent.
+3. **Clock-in for units that work around the airport.** Wildlife and Bird Control officers on the
+   airfield are refused ("outside every check-in zone"). Add an airside zone covering the airfield
+   (admin needs the real boundary) and accept a clock-in there with no terminal for such units.
+4. `GET /roster/my` leaves out today's shift; `GET /self-service/attendance` leaves out the open
+   clock-in. The board uses `/self-service/roster?startDate&endDate` and `/attendance/me/today` instead.
+5. Return each person's station (`dutyLocation`) on the board, so AVSEC can be shown by station inside
+   each terminal.

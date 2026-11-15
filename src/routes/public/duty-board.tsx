@@ -10,7 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,10 +30,9 @@ import {
 } from "@/components/ui/select";
 import { useTerminals } from "@/hooks/terminals";
 import { useDutyBoardData } from "@/hooks/useDutyBoard";
-import type { DutyUnit } from "@/types/dutyBoard";
-import { PingOnDuty } from "@/features/stations/components/PingOnDuty";
+import { TerminalDutyBoard } from "@/features/dutyBoard/TerminalDutyBoard";
+import { UnitCard } from "@/features/dutyBoard/UnitCard";
 import { isStakeholderUser } from "@/lib/access";
-import { pingTargets } from "@/lib/dutyPing";
 import { useAuthStore } from "@/stores/auth";
 import { getAccessToken } from "@/utils/auth";
 
@@ -202,142 +201,150 @@ function PublicDutyBoardPage() {
 				</div>
 			</header>
 
-			{/* Stats Row */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
-				<StatCard
-					label="Total On Duty"
-					value={data.totalOnDuty}
-					total={data.totalScheduled}
-					icon={<Users className="h-5 w-5 text-blue-400" />}
-				/>
-				<StatCard
-					label="Security Staff"
-					value={
-						departments.find((d) => d.name.includes("Security"))?.onDutyCount ||
-						0
-					}
-					icon={<Shield className="h-5 w-5 text-emerald-400" />}
-				/>
-				<StatCard
-					label="Operations Staff"
-					value={
-						departments.find((d) => d.name.includes("Operations"))
-							?.onDutyCount || 0
-					}
-					icon={<Briefcase className="h-5 w-5 text-amber-400" />}
-				/>
-				<StatCard
-					label="Contractors"
-					value={contractors.reduce(
-						(acc, c) => acc + (c.onDutyPersonnel?.length ?? 0),
-						0,
-					)}
-					icon={<Users className="h-5 w-5 text-purple-400" />}
-				/>
-			</div>
-
-			{/* Main Content Grid */}
-			<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden">
-				{/* Left: Department Units */}
-				<div className="lg:col-span-8 lg:overflow-y-auto lg:pr-2 space-y-8 no-scrollbar">
-					{departments.map((dept) => (
-						<div key={dept.id} className="space-y-4">
-							<div className="flex items-center justify-between">
-								<h2 className="text-lg md:text-xl font-semibold text-blue-100 flex flex-wrap items-center gap-2">
-									{dept.name}
-									<Badge
-										variant="outline"
-										className="text-xs bg-slate-900 border-slate-700 text-slate-400"
-									>
-										{dept.currentShift} Shift
-									</Badge>
-								</h2>
-							</div>
-
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								{(dept.units ?? []).map((unit) => (
-									<UnitCard key={unit.id} unit={unit} canPing={canPing} />
-								))}
-							</div>
-						</div>
-					))}
-				</div>
-
-				{/* Right: Contractors & Notices */}
-				<div className="lg:col-span-4 space-y-6 flex flex-col">
-					<Card className="bg-slate-900/50 border-slate-800 flex-1">
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2 text-purple-200">
-								<Briefcase className="h-5 w-5" />
-								Contractors On Site
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-6">
-							{contractors.length === 0 && (
-								<p className="text-sm text-slate-500">
-									No contractors checked in.
-								</p>
+			{canPing ? (
+				<TerminalDutyBoard canPing={canPing} />
+			) : (
+				<>
+					{/* Stats Row */}
+					<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+						<StatCard
+							label="Total On Duty"
+							value={data.totalOnDuty}
+							total={data.totalScheduled}
+							icon={<Users className="h-5 w-5 text-blue-400" />}
+						/>
+						<StatCard
+							label="Security Staff"
+							value={
+								departments.find((d) => d.name.includes("Security"))
+									?.onDutyCount || 0
+							}
+							icon={<Shield className="h-5 w-5 text-emerald-400" />}
+						/>
+						<StatCard
+							label="Operations Staff"
+							value={
+								departments.find((d) => d.name.includes("Operations"))
+									?.onDutyCount || 0
+							}
+							icon={<Briefcase className="h-5 w-5 text-amber-400" />}
+						/>
+						<StatCard
+							label="Contractors"
+							value={contractors.reduce(
+								(acc, c) => acc + (c.onDutyPersonnel?.length ?? 0),
+								0,
 							)}
-							{contractors.map((org) => (
-								<div key={org.orgId}>
-									<h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
-										{org.organizationName} ({org.contractType})
-									</h4>
-									<div className="space-y-3">
-										{org.onDutyPersonnel.map((person) => (
-											<div
-												key={person.id}
-												className="flex items-center gap-3 bg-slate-950 p-2 rounded-lg border border-slate-800/50"
+							icon={<Users className="h-5 w-5 text-purple-400" />}
+						/>
+					</div>
+
+					{/* Main Content Grid */}
+					<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 flex-1 lg:overflow-hidden">
+						{/* Left: Department Units */}
+						<div className="lg:col-span-8 lg:overflow-y-auto lg:pr-2 space-y-8 no-scrollbar">
+							{departments.map((dept) => (
+								<div key={dept.id} className="space-y-4">
+									<div className="flex items-center justify-between">
+										<h2 className="text-lg md:text-xl font-semibold text-blue-100 flex flex-wrap items-center gap-2">
+											{dept.name}
+											<Badge
+												variant="outline"
+												className="text-xs bg-slate-900 border-slate-700 text-slate-400"
 											>
-												<Avatar className="h-8 w-8">
-													<AvatarFallback className="bg-purple-900 text-purple-200 text-xs">
-														{person.name.substring(0, 2)}
-													</AvatarFallback>
-												</Avatar>
-												<div className="flex-1 min-w-0">
-													<p className="text-sm font-medium truncate text-slate-100">
-														{person.name}
-													</p>
-													<div className="flex items-center gap-2 text-xs text-slate-500">
-														<span className="truncate">{person.role}</span>
-														<span>•</span>
-														<span className="truncate text-blue-400/80">
-															{person.currentLocation}
-														</span>
-													</div>
-												</div>
-											</div>
+												{dept.currentShift} Shift
+											</Badge>
+										</h2>
+									</div>
+
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+										{(dept.units ?? []).map((unit) => (
+											<UnitCard key={unit.id} unit={unit} canPing={canPing} />
 										))}
-										{org.onDutyPersonnel.length === 0 && (
-											<p className="text-xs text-slate-600 italic">
-												No personnel checked in.
-											</p>
-										)}
 									</div>
 								</div>
 							))}
-						</CardContent>
-					</Card>
+						</div>
 
-					<div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-xl">
-						<div className="flex gap-3">
-							<CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
-							<div>
-								<h4 className="font-semibold text-emerald-100 text-sm">
-									Live data
-								</h4>
-								<p className="text-xs text-emerald-400/70 mt-1">
-									Refreshes every minute. Last updated:{" "}
-									{format(
-										data.lastUpdated ? new Date(data.lastUpdated) : new Date(),
-										"HH:mm",
+						{/* Right: Contractors & Notices */}
+						<div className="lg:col-span-4 space-y-6 flex flex-col">
+							<Card className="bg-slate-900/50 border-slate-800 flex-1">
+								<CardHeader>
+									<CardTitle className="flex items-center gap-2 text-purple-200">
+										<Briefcase className="h-5 w-5" />
+										Contractors On Site
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-6">
+									{contractors.length === 0 && (
+										<p className="text-sm text-slate-500">
+											No contractors checked in.
+										</p>
 									)}
-								</p>
+									{contractors.map((org) => (
+										<div key={org.orgId}>
+											<h4 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
+												{org.organizationName} ({org.contractType})
+											</h4>
+											<div className="space-y-3">
+												{org.onDutyPersonnel.map((person) => (
+													<div
+														key={person.id}
+														className="flex items-center gap-3 bg-slate-950 p-2 rounded-lg border border-slate-800/50"
+													>
+														<Avatar className="h-8 w-8">
+															<AvatarFallback className="bg-purple-900 text-purple-200 text-xs">
+																{person.name.substring(0, 2)}
+															</AvatarFallback>
+														</Avatar>
+														<div className="flex-1 min-w-0">
+															<p className="text-sm font-medium truncate text-slate-100">
+																{person.name}
+															</p>
+															<div className="flex items-center gap-2 text-xs text-slate-500">
+																<span className="truncate">{person.role}</span>
+																<span>•</span>
+																<span className="truncate text-blue-400/80">
+																	{person.currentLocation}
+																</span>
+															</div>
+														</div>
+													</div>
+												))}
+												{org.onDutyPersonnel.length === 0 && (
+													<p className="text-xs text-slate-600 italic">
+														No personnel checked in.
+													</p>
+												)}
+											</div>
+										</div>
+									))}
+								</CardContent>
+							</Card>
+
+							<div className="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-xl">
+								<div className="flex gap-3">
+									<CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
+									<div>
+										<h4 className="font-semibold text-emerald-100 text-sm">
+											Live data
+										</h4>
+										<p className="text-xs text-emerald-400/70 mt-1">
+											Refreshes every minute. Last updated:{" "}
+											{format(
+												data.lastUpdated
+													? new Date(data.lastUpdated)
+													: new Date(),
+												"HH:mm",
+											)}
+										</p>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			</div>
+				</>
+			)}
 		</div>
 	);
 }
@@ -370,119 +377,5 @@ function StatCard({
 				{icon}
 			</div>
 		</div>
-	);
-}
-
-function UnitCard({ unit, canPing }: { unit: DutyUnit; canPing: boolean }) {
-	const targets = pingTargets(unit);
-	const statusColor =
-		{
-			adequate: "border-emerald-900/50 bg-emerald-950/10",
-			understaffed: "border-amber-900/50 bg-amber-950/10",
-			critical: "border-red-900/50 bg-red-950/10 coverage-critical",
-		}[unit.coverageStatus] || "border-slate-800 bg-slate-900/50";
-
-	const statusText =
-		{
-			adequate: "text-emerald-400",
-			understaffed: "text-amber-400",
-			critical: "text-red-400",
-		}[unit.coverageStatus] || "text-slate-400";
-
-	return (
-		<Card className={`border ${statusColor} transition-colors`}>
-			<CardHeader className="pb-2">
-				<div className="flex flex-wrap justify-between items-start gap-2">
-					<div className="min-w-0">
-						<CardTitle className="text-base text-slate-100">
-							{unit.name}
-						</CardTitle>
-						<p className="text-xs text-slate-500">{unit.location}</p>
-					</div>
-					<Badge
-						variant="outline"
-						className={`shrink-0 bg-slate-950 uppercase text-[10px] tracking-wider ${statusText} border-opacity-20`}
-					>
-						{unit.coverageStatus}
-					</Badge>
-				</div>
-			</CardHeader>
-			<CardContent>
-				<div className="space-y-3">
-					<div className="grid grid-cols-2 gap-2">
-						{[...(unit.onDutyStaff ?? [])]
-							// People at their post first, then late, then not yet arrived.
-							.sort((a, b) => Number(b.checkedIn) - Number(a.checkedIn))
-							.map((staff) => (
-								<div
-									key={staff.id}
-									className={`flex items-center gap-2 p-1.5 rounded border ${
-										staff.checkedIn
-											? "bg-emerald-950/40 border-emerald-700/50"
-											: "bg-slate-950/50 border-slate-800/50 opacity-70"
-									}`}
-								>
-									<Avatar className="h-6 w-6">
-										<AvatarImage src={staff.avatar ?? undefined} />
-										<AvatarFallback className="text-[10px] bg-slate-800 text-slate-300">
-											{staff.name.substring(0, 2)}
-										</AvatarFallback>
-									</Avatar>
-									<div className="min-w-0 overflow-hidden">
-										<p className="text-xs font-medium truncate text-slate-200">
-											{staff.name}
-										</p>
-										<p className="text-[10px] text-slate-500 truncate">
-											{staff.position}
-										</p>
-										<p
-											className={`text-[10px] font-medium truncate ${
-												staff.checkedIn
-													? staff.isLate
-														? "text-amber-400"
-														: "text-emerald-400"
-													: "text-slate-500"
-											}`}
-										>
-											{staff.checkedIn
-												? `${staff.isLate ? "Late · " : "On post · "}${
-														staff.checkedInAt
-															? new Date(staff.checkedInAt).toLocaleTimeString(
-																	[],
-																	{ hour: "2-digit", minute: "2-digit" },
-																)
-															: ""
-													}`
-												: "Not checked in"}
-										</p>
-									</div>
-								</div>
-							))}
-					</div>
-					{(unit.onDutyStaff ?? []).length === 0 && (
-						<div className="text-center py-4 text-xs text-slate-600">
-							No staff currently logged at this post.
-						</div>
-					)}
-					{canPing && (unit.onDutyStaff ?? []).length > 0 && (
-						<PingOnDuty
-							postName={
-								unit.location && unit.location !== unit.name
-									? `${unit.name}, ${unit.location}`
-									: unit.name
-							}
-							officerIds={targets.ids}
-							who={targets.who}
-							people={(unit.onDutyStaff ?? []).map((s) => ({
-								id: s.id,
-								name: s.name,
-								onPost: s.checkedIn,
-							}))}
-							buttonClassName="w-full border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
-						/>
-					)}
-				</div>
-			</CardContent>
-		</Card>
 	);
 }
