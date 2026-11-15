@@ -1,4 +1,5 @@
 import { HodMemoActions, RgmSendOn } from "@/features/documents/components/MemoThroughHod";
+import { SignatureList } from "@/features/signatures/SignatureList";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
@@ -171,6 +172,12 @@ function DocumentDetailsPage() {
 							<p className="text-sm text-muted-foreground">No movements recorded yet.</p>
 						)}
 					</div>
+					{doc && (
+						<div className="rounded-lg border bg-card p-4">
+							<h2 className="font-semibold mb-3">Signatures</h2>
+							<SignatureList relatedEntityType="document" relatedEntityId={doc.id} />
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

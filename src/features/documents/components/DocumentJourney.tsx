@@ -3,6 +3,33 @@ import { cn } from "@/lib/utils";
 import { Check, Clock, Paperclip, XCircle } from "lucide-react";
 import { fileUrl } from "@/api/client";
 
+const STEP_LABELS: Record<string, string> = {
+  registered: "Registered",
+  memo_sent: "Memo sent to the Head of Department",
+  sent_on_by_hod: "Sent on by the Head of Department",
+  returned_by_hod: "Returned to the sender",
+  forwarded: "Forwarded",
+  forwarded_to_department: "Sent to the department",
+  copy_sent: "Copy sent",
+  dispatched_to_hod: "Passed to the Head of Department",
+  assigned: "Assigned to an officer",
+  acknowledged: "Acknowledged",
+  approved: "Approved",
+  rejected: "Rejected",
+  returned: "Returned",
+};
+
+/** A readable name for a journey step ("sent_on_by_hod" -> "Sent on by the Head of Department"). */
+export function stepLabel(step: Pick<DocumentJourneyStep, "action" | "status" | "location">): string {
+  const raw = (step.action ?? "").trim();
+  if (raw && STEP_LABELS[raw.toLowerCase()]) return STEP_LABELS[raw.toLowerCase()];
+  if (raw) {
+    const words = raw.replace(/[_-]+/g, " ").toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+  return step.status === "completed" ? "Done" : `Waiting with ${step.location || "the next office"}`;
+}
+
 interface DocumentJourneyProps {
   steps: DocumentJourneyStep[];
 }
@@ -71,9 +98,7 @@ export function DocumentJourney({ steps }: DocumentJourneyProps) {
             <div className="flex-1 pb-8 pt-1">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                 <div>
-                  <h3 className="font-semibold text-sm capitalize">
-                    {step.action || `Step ${step.stepNumber}`}
-                  </h3>
+                  <h3 className="font-semibold text-sm">{stepLabel(step)}</h3>
                   <div
                     className={cn(
                       "text-xs font-medium px-2 py-0.5 rounded-full w-fit mt-1",

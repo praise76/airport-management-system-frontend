@@ -119,9 +119,12 @@ export async function getUnitsByDepartment(departmentId: string): Promise<{data:
 }
 
 export async function getStationsByUnit(unitId: string): Promise<{data: Department[]}> {
-	const res = await api.get(`/departments/${unitId}/stations`);
-	const payload = (res.data) as {data: Department[]};
-	return payload;
+	// There is no /departments/:id/stations route (404); stations are level-3 departments whose
+	// parent is the unit.
+	const res = await api.get("/departments", { params: { limit: 500 } });
+	const body = res.data?.data ?? res.data;
+	const all = (Array.isArray(body) ? body : (body?.items ?? body?.data ?? [])) as Department[];
+	return { data: all.filter((d) => d.parentDepartmentId === unitId && d.departmentLevel === 3) };
 }
 
 export async function listUnits(params: { departmentId?: string } = {}): Promise<Department[]> {

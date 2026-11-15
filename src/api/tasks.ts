@@ -54,7 +54,8 @@ export async function deleteTask(id: string): Promise<void> {
 
 // Assign user to task
 export async function assignTask(taskId: string, input: TaskAssignInput): Promise<TaskAssignment> {
-  const res = await api.post(`/tasks/${taskId}/assign`, input);
+  // The server reads the assignee from `assigneeUserId` (QA 15 Nov: `userId` alone was refused with 400).
+  const res = await api.post(`/tasks/${taskId}/assign`, { ...input, assigneeUserId: input.userId });
   return res.data.data;
 }
 

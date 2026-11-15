@@ -351,11 +351,13 @@ export async function rgmSendToDepartments(
 		attachmentIds?: string[];
 	},
 ): Promise<void> {
-	for (const targetDeptId of input.departmentIds)
+	// A file can belong to one minute only (the server refuses it a second time), so the files
+	// travel with the first department's minute; everyone the item reaches can open them.
+	for (const [i, targetDeptId] of input.departmentIds.entries())
 		await api.post(`/documents/${id}/rgm-forward`, {
 			targetDeptId,
 			comments: input.comments,
-			...(input.attachmentIds?.length
+			...(i === 0 && input.attachmentIds?.length
 				? { attachmentIds: input.attachmentIds }
 				: {}),
 		});

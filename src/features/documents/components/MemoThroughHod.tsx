@@ -332,12 +332,12 @@ export function RgmSendOn({ doc }: { doc: any }) {
 	const [chosen, setChosen] = useState<string[]>([]);
 	const [minute, setMinute] = useState("");
 	const [extras, setExtras] = useState<MinuteExtrasValue>(emptyExtras());
+	const myId = me?.userId ?? (me as { id?: string } | null)?.id;
 	const isRgm = hasAnyRole(me, ["RGM", "SUPER_ADMIN", "ORG_ADMIN"]);
-	// Same people as the RGM's "Forward to department" button, minus finished items.
-	const atRgm =
-		!/closed|archived|dispatched|completed|returned_to_sender|awaiting_hod/i.test(
-			doc?.status ?? "",
-		);
+	// Only while the RGM's office holds it: assigned to me, or (for admins) not yet with anyone else.
+	const holder = doc?.currentHandlerUserId ?? doc?.assignedToHodId;
+	const finished = /closed|archived|dispatched|completed|returned_to_sender|awaiting_hod|forwarded_to_department/i.test(doc?.status ?? "");
+	const atRgm = !finished && (holder ? holder === myId : true);
 	const send = useMutation({
 		mutationFn: async () => {
 			if (extras.signature)
