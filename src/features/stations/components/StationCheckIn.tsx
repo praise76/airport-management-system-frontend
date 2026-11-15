@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCheckIn, useCheckOut, useStationStaffing } from "@/hooks/useStations";
+import { useCheckIn, useCheckOut, useStationOnDuty, useStationStaffing } from "@/hooks/useStations";
 import { MapPin, UserCheck, UserMinus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ interface StationCheckInProps {
 export function StationCheckIn({ stationId, stationName }: StationCheckInProps) {
   const [isChecking, setIsChecking] = useState(false);
   const { data: staffing, isLoading: loadingStaff } = useStationStaffing(stationId);
+  const { data: onDuty } = useStationOnDuty(stationId);
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const user = useAuthStore((s) => s.user);
@@ -117,7 +118,7 @@ export function StationCheckIn({ stationId, stationName }: StationCheckInProps) 
           </ScrollArea>
         </div>
 
-        <PingOnDuty postName={stationName} officerIds={(staffing ?? []).map((s) => s.userId)} />
+        <PingOnDuty postName={stationName} officerIds={(onDuty ?? []).map((s) => s.userId)} />
       </CardContent>
     </Card>
   );

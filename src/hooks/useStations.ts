@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { checkInStation, checkOutStation, getStationStaffing } from "@/api/stations";
+import { checkInStation, checkOutStation, getStationOnDuty, getStationStaffing } from "@/api/stations";
 import { listDepartments } from "@/api/departments";
 import type { CheckInRequest } from "@/types/stations";
 
@@ -19,6 +19,16 @@ export function useStationStaffing(stationId: string) {
   });
 }
 
+/** Who an emergency ping at this post reaches: everyone on duty there, refreshed while the card is open. */
+export function useStationOnDuty(stationId: string) {
+  return useQuery({
+    queryKey: ["stations", stationId, "on-duty"],
+    queryFn: () => getStationOnDuty(stationId),
+    enabled: !!stationId,
+    refetchInterval: 30_000,
+  });
+}
+
 export function useCheckIn() {
   const queryClient = useQueryClient();
 
@@ -26,7 +36,7 @@ export function useCheckIn() {
     mutationFn: ({ stationId, coords }: { stationId: string; coords: CheckInRequest }) =>
       checkInStation(stationId, coords),
     onSuccess: (_, { stationId }) => {
-      queryClient.invalidateQueries({ queryKey: ["stations", stationId, "staffing"] });
+      queryClient.invalidateQueries({ queryKey: ["stations", stationId] });
       toast.success("Checked in successfully");
     },
     onError: (error: any) => {
@@ -41,7 +51,7 @@ export function useCheckOut() {
   return useMutation({
     mutationFn: (stationId: string) => checkOutStation(stationId),
     onSuccess: (_, stationId) => {
-      queryClient.invalidateQueries({ queryKey: ["stations", stationId, "staffing"] });
+      queryClient.invalidateQueries({ queryKey: ["stations", stationId] });
       toast.success("Checked out successfully");
     },
     onError: (error: any) => {

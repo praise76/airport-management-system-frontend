@@ -13,3 +13,9 @@ export async function getStationStaffing(stationId: string): Promise<StationStaf
   const res = await api.get(`/stations/${stationId}/staffing`);
   return (res.data?.data ?? res.data) as StationStaffing[];
 }
+
+/** Everyone on duty at the station, however they clocked in (post check-in or normal attendance). */
+export async function getStationOnDuty(stationId: string): Promise<StationStaffing[]> {
+  const res = await api.get(`/stations/${stationId}/on-duty`);
+  return (res.data?.data ?? res.data) as StationStaffing[];
+}
