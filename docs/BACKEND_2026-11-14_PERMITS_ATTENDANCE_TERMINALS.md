@@ -174,3 +174,45 @@ because every shift I gave had already ended (it was 23:50 in Lagos). Two notes:
    on her night shift. Consider matching an open clock-in to the current shift as well.
 2. The ping uses `onDutyStaff[].id`; it is the user id today (Musa pinged Kemi and she received
    it), please keep it that way.
+
+## 10. Full system test, 15 Nov 2026 (backend items)
+
+Found while setting MMIA up from scratch and testing every feature on the live site. Full results:
+the "MMIA Full System Test" report. The frontend fixes for the items marked (frontend) are in this package.
+
+1. **Clock-in and terminals.** `/attendance/check-in` checks that the person is inside some active zone
+   and assigned to the `terminalCode` they send, but not that the zone belongs to that terminal: at
+   International Terminal II you can clock in as `PRES`. Match the zone to the terminal. Zones cannot be
+   deleted (no DELETE route); they can only be switched off.
+2. **Shift swap not applied.** After `POST /roster/swaps/:id/review {approved:true}` the requester's entry is
+   marked `swapped` with `swappedWithStaffId`, but neither entry changes hands; the roster, duty board and
+   clock-in still expect the old people. Swap the two entries' `staffId` (or create the reassigned entries).
+3. **Swap expiry.** With no `expiresInHours`, `expiresAt` is midnight the day before, so the request is
+   already expired. Default to, say, 48 hours or the start of the shift.
+4. **Minuting to the new roles.** `POST /documents/:id/forward` refuses recipients with role `hou` or
+   `supervisor` ("must be an HOD, manager, or officer"). Accept the new roles.
+5. **RGM to several departments.** The second `rgm-forward` on the same document is recorded as
+   `copy_sent`, but that department's registry and HOD get 404 on it. Either give each department its own
+   copy they can act on, or accept `targetDeptIds: string[]`. A file id can be attached to one minute only
+   (the frontend now sends files with the first department only).
+6. **Staff notifications.** There is no staff notifications route (`/notifications` 404) and the bell is not
+   connected. Add one (swap requested/approved, task assigned, leave decided, document minuted to you,
+   ping) and the frontend will wire the bell.
+7. **Tasks.** `GET /tasks/my` returns 500. `GET /tasks?assignedToMe=true` ignores the filter.
+   `POST /tasks/:id/assign` wants `assigneeUserId` (frontend now sends it).
+8. **Requisitions.** A requisition raised by a Head of Unit is approved within a second by the
+   Chief Executive Officer position, skipping the HOD, because every position's approval limit is 0. Route
+   it to the requester's HOD first. No store role can `issue`; only super admin can.
+9. **Staff import.** The `Position Code` column is validated but not saved: nobody imported holds their
+   position. Assign it on import.
+10. **Positions.** No route lists a position's holders (`GET /positions/:id/assignments` 404), so the
+    Positions page cannot show them.
+11. **Stations.** `POST /departments` refuses `latitude`/`longitude` as numbers (expects strings). There is
+    no `GET /departments/:id/stations` (frontend now filters the department list).
+12. **Company portal.** Duplicate invoice number gives 500, not 409. `GET /stakeholder-orgs/:id/dashboard`
+    is 404. A company admin cannot add their own users (`POST /stakeholder-orgs/:id/users` is staff only).
+    A suspended company can still sign in (it cannot submit anything).
+13. **My schedule.** Says "not scheduled today" during a rostered shift and lists upcoming shifts out of
+    order; check the date handling of `/roster/my` (time zone).
+14. **Duty board by station.** Roster entries now carry `dutyLocation` (station) and `dutyTerminalIds`.
+    Please return each person's station on the board so AVSEC can be shown by station.
