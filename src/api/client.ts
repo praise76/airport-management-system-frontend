@@ -107,6 +107,19 @@ function createApiClient(): AxiosInstance {
 				redirectToPasswordChange();
 			}
 
+			// FAAN suspended this company while its people were signed in: end the session and say why,
+			// rather than leaving a portal whose every call fails.
+			if (
+				status === 403 &&
+				responseCode === "COMPANY_SUSPENDED" &&
+				typeof window !== "undefined" &&
+				!window.location.pathname.startsWith("/stakeholder/login")
+			) {
+				useAuthStore.getState().logout();
+				window.location.assign("/stakeholder/login?reason=company-suspended");
+				return Promise.reject(normalizeError(error));
+			}
+
 			if (status === 401 && original && !original._retry) {
 				if (isRefreshing) {
 					try {

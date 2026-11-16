@@ -25,4 +25,12 @@ describe("attendanceScope", () => {
 		expect(attendanceScope({ role: "staff", departmentId: "fm" }, deps).kind).toBe("none");
 		expect(attendanceScope({ role: "officer", departmentId: "scr" }, deps).kind).toBe("none");
 	});
+	it("gives an officer who runs a terminal that terminal, and nothing else", () => {
+		expect(attendanceScope({ role: "officer", departmentId: "scr" }, deps, "IT2")).toMatchObject({ kind: "terminal", code: "IT2" });
+		expect(attendanceScope({ role: "officer", departmentId: "scr" }, deps, null).kind).toBe("none");
+	});
+	it("leaves heads and org-wide roles as they were, even when they run a terminal", () => {
+		expect(attendanceScope({ role: "hr", departmentId: "fm" }, deps, "IT2").kind).toBe("all");
+		expect(attendanceScope({ role: "hod", departmentId: "env" }, deps, "IT2").kind).toBe("departments");
+	});
 });

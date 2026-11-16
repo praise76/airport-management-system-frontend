@@ -1,4 +1,5 @@
 import { ATTENDANCE_VIEWERS } from "@/lib/attendanceScope";
+import { useRunsTerminal } from "@/hooks/runsTerminal";
 import {
 	Link,
 	Outlet,
@@ -61,6 +62,7 @@ type NavItem = {
 	icon: LucideIcon;
 	roles?: string[]; // if provided, only these roles can see
 	allowIf?: (user: Parameters<typeof canReviewStakeholders>[0]) => boolean; // ...or anyone this says yes to
+	whenRunsTerminal?: boolean; // ...or an officer who runs a terminal
 	/** Other pages that belong to this item, so it stays highlighted on them (e.g. a tab of the same area). */
 	match?: string[];
 };
@@ -151,6 +153,8 @@ const navGroups: NavGroup[] = [
 				icon: ListChecks,
 				// HR, GM, RGM and heads only; each sees their own part of the organisation.
 				roles: [...ATTENDANCE_VIEWERS],
+				// ...and officers who run a terminal (head of terminal, TOO, ADO), for that terminal.
+				whenRunsTerminal: true,
 			},
 			{
 				label: "Leave approvals",
@@ -253,6 +257,7 @@ export function AppShell(props: AppShellProps) {
 		navigate({ to: "/auth/login" });
 	};
 
+	const runsTerminal = useRunsTerminal();
 	const visibleGroups = useMemo(() => {
 		let userRoles: string[] = [];
 		if (user?.role) userRoles.push(user.role.toUpperCase());
@@ -267,11 +272,11 @@ export function AppShell(props: AppShellProps) {
 				...group,
 				items: group.items.filter((item) => {
 					if (!item.roles || item.roles.length === 0) return true;
-					return item.roles.some((r) => userRoles.includes(r)) || !!item.allowIf?.(user);
+					return item.roles.some((r) => userRoles.includes(r)) || !!item.allowIf?.(user) || (!!item.whenRunsTerminal && !!runsTerminal);
 				}),
 			}))
 			.filter((group) => group.items.length > 0);
-	}, [user]);
+	}, [user, runsTerminal]);
 
 	return (
 		<div className="grid grid-rows-[auto_1fr] grid-cols-1 lg:grid-cols-[260px_1fr] min-h-dvh bg-(--color-bg) text-(--color-text)">

@@ -1,9 +1,9 @@
 import { requireStaff } from "@/lib/access";
-import { ATTENDANCE_VIEWERS, attendanceScope } from "@/lib/attendanceScope";
+import { attendanceScope } from "@/lib/attendanceScope";
 import { useAuthStore } from "@/stores/auth";
 import { useDepartments } from "@/hooks/departments";
-import { listDepartmentStaff } from "@/api/users";
-import { useQueries } from "@tanstack/react-query";
+import { useRunsTerminal } from "@/hooks/runsTerminal";
+import { useTerminals } from "@/hooks/terminals";
 import { useMemo } from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
@@ -18,43 +18,40 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/attendance/registry")({
-  // HR, the GM, the RGM, and heads of departments, units, stations and teams only.
-  beforeLoad: requireStaff(ATTENDANCE_VIEWERS),
+  // Any signed-in staff may open it: who sees what is decided by the server (and shown in the
+  // "Showing" line). HR, the GM, the RGM and heads see their part of the organisation; an officer
+  // who runs a terminal (head of terminal, Terminal Operations Officer, Airport Duty Officer) sees
+  // that terminal; everyone else is told they have no access.
+  beforeLoad: requireStaff(),
   component: AttendanceRegistryPage,
 });
 
 function AttendanceRegistryPage() {
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  
-  const { data: records, isLoading } = useQuery({
-    queryKey: ["attendance-registry", date],
-    queryFn: async () => {
-        // Mocking the response structure based on requirements if endpoint doesn't fully exist yet, 
-        // but assuming backend provides it.
-        const { data } = await api.get<any[]>(`/attendance?date=${date}&include_roster=true`);
-        return data; 
-    }
-  });
 
-  // Each head sees their own department or unit and everything below it.
   const user = useAuthStore((s) => s.user);
   const { data: deptData } = useDepartments({ limit: 300 });
   const departments = useMemo(() => ((deptData as any)?.data ?? deptData ?? []) as any[], [deptData]);
-  const scope = attendanceScope(user as any, departments);
-  const staffQ = useQueries({
-    queries: (scope.kind === "departments" ? scope.ids : []).map((id) => ({
-      queryKey: ["department-staff", id],
-      queryFn: () => listDepartmentStaff(id),
-    })),
+  const runsTerminal = useRunsTerminal();
+  const scope = attendanceScope(user as any, departments, runsTerminal);
+  const { data: terminalList } = useTerminals();
+
+  // "" = every terminal I am allowed to see. Someone who runs a terminal sees only that one.
+  const [pickedTerminal, setPickedTerminal] = useState("");
+  const terminalCode = scope.kind === "terminal" ? scope.code : pickedTerminal;
+
+  const { data: records, isLoading } = useQuery({
+    queryKey: ["attendance-registry", date, terminalCode],
+    enabled: scope.kind !== "none",
+    queryFn: async () => {
+        // The server returns only the people this person may see (and only those at the terminal, if one is chosen).
+        const q = terminalCode ? `&terminalCode=${encodeURIComponent(terminalCode)}` : "";
+        const { data } = await api.get<any[]>(`/attendance?date=${date}&include_roster=true&limit=300${q}`);
+        return data;
+    }
   });
-  const allowed = useMemo(() => {
-    if (scope.kind !== "departments") return null;
-    return new Set(staffQ.flatMap((q) => (q.data ?? []).map((s) => s.id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope.kind, staffQ.map((q) => q.dataUpdatedAt).join(",")]);
-  const allRows = (Array.isArray(records) ? records : (records as any)?.data || []) as any[];
-  const rows =
-    scope.kind === "all" ? allRows : scope.kind === "none" ? [] : allRows.filter((r) => allowed?.has(r.staffId ?? r.user?.id));
+
+  const rows = (Array.isArray(records) ? records : (records as any)?.data || []) as any[];
 
   return (
     <div className="space-y-6">
@@ -67,7 +64,22 @@ function AttendanceRegistryPage() {
               <span className="font-medium">{scope.label}</span>
             </p>
          </div>
-         <div className="flex items-center gap-2">
+         <div className="flex flex-wrap items-center gap-2">
+            {scope.kind !== "terminal" && scope.kind !== "none" && (
+              <>
+                <span className="text-sm font-medium">Terminal:</span>
+                <select
+                  className="h-9 rounded-md border bg-background px-2 text-sm"
+                  value={pickedTerminal}
+                  onChange={(e) => setPickedTerminal(e.target.value)}
+                >
+                  <option value="">All terminals</option>
+                  {(terminalList ?? []).map((t: any) => (
+                    <option key={t.id} value={t.terminalCode}>{t.terminalName} ({t.terminalCode})</option>
+                  ))}
+                </select>
+              </>
+            )}
             <span className="text-sm font-medium">Date:</span>
             <Input 
                type="date" 
@@ -83,6 +95,7 @@ function AttendanceRegistryPage() {
             <thead className="bg-muted/50 text-muted-foreground font-medium">
                <tr>
                   <th className="p-4">Employee</th>
+                  <th className="p-4">Terminal</th>
                   <th className="p-4">Shift Name</th>
                   <th className="p-4">Scheduled</th>
                   <th className="p-4">Actual In</th>
@@ -92,10 +105,10 @@ function AttendanceRegistryPage() {
             </thead>
             <tbody className="divide-y">
                {isLoading && (
-                  <tr><td colSpan={6} className="p-8 text-center">Loading...</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center">Loading...</td></tr>
                )}
                {!isLoading && rows.length === 0 && (
-                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No records found for this date.</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{scope.kind === "none" ? scope.label : "No records found for this date."}</td></tr>
                )}
                {rows.map((record: any) => {
                   const rosterEntry = record.rosterEntry || record; 
@@ -115,6 +128,9 @@ function AttendanceRegistryPage() {
                                  <div className="text-xs text-muted-foreground">{record.staffId || user?.email}</div>
                               </div>
                            </div>
+                        </td>
+                        <td className="p-4">
+                           {record.terminalCode ? <Badge variant="secondary" className="font-mono text-xs">{record.terminalCode}</Badge> : <span className="text-muted-foreground">-</span>}
                         </td>
                         <td className="p-4">
                            {rosterEntry.shift ? (

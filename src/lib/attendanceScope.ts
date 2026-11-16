@@ -27,15 +27,26 @@ type User = Parameters<typeof getRoles>[0] & { departmentId?: string | null };
 
 export type AttendanceScope =
 	| { kind: "all"; label: string }
+	/** Runs one terminal (head of terminal, Terminal Operations Officer, Airport Duty Officer). */
+	| { kind: "terminal"; code: string; label: string }
 	| { kind: "departments"; ids: string[]; label: string }
 	| { kind: "none"; label: string };
 
 /** The departments whose staff this person may see in the registry. */
-export function attendanceScope(user: User, departments: Dept[]): AttendanceScope {
+export function attendanceScope(
+	user: User,
+	departments: Dept[],
+	/** The one terminal this person runs, if any (see placeOf in the duty board). */
+	runsTerminal?: string | null,
+): AttendanceScope {
 	const roles = getRoles(user);
 	if (roles.some((r) => ORG_WIDE.includes(r))) return { kind: "all", label: "Everyone in the organisation" };
-	if (!roles.some((r) => (ATTENDANCE_VIEWERS as readonly string[]).includes(r)))
+	if (!roles.some((r) => (ATTENDANCE_VIEWERS as readonly string[]).includes(r))) {
+		// Running a terminal is what gives an officer the registry, for that terminal only.
+		if (runsTerminal)
+			return { kind: "terminal", code: runsTerminal, label: `Everyone at ${runsTerminal}, from every department` };
 		return { kind: "none", label: "You don't have access to the attendance registry." };
+	}
 	const own = departments.find((d) => d.id === user?.departmentId);
 	if (!own) return { kind: "none", label: "Your profile has no department or unit, so there is no one to show." };
 	// The person's own department or unit and everything below it.

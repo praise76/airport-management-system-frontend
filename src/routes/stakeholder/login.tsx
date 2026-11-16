@@ -111,6 +111,18 @@ function StakeholderLoginPage() {
 							</p>
 						</div>
 
+						{typeof window !== "undefined" &&
+							new URLSearchParams(window.location.search).get("reason") ===
+								"company-suspended" && (
+								<div
+									role="alert"
+									className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+								>
+									Your company's account has been suspended, so you have been
+									signed out. Please contact FAAN to have it restored.
+								</div>
+							)}
+
 						<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 							<div className="space-y-2">
 								<Label htmlFor="email">Email Address</Label>
