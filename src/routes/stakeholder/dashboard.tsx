@@ -16,6 +16,7 @@ import {
 	Settings,
 	Shield,
 	TrendingUp,
+	Users,
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -265,6 +266,16 @@ function StakeholderDashboardPage() {
 					</div>
 					<div className="flex items-center gap-3">
 						<PortalNotifications stakeholderOrgId={org.id} />
+						<Link to="/stakeholder/users">
+							<Button
+								variant="ghost"
+								size="icon"
+								className="text-slate-400 hover:text-white"
+								aria-label="Your team"
+							>
+								<Users className="h-5 w-5" />
+							</Button>
+						</Link>
 						<Link to="/stakeholder/profile">
 							<Button
 								variant="ghost"
