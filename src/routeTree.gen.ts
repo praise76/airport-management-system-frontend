@@ -34,6 +34,7 @@ import { Route as ContractorsIndexRouteImport } from './routes/contractors/index
 import { Route as CertificationsIndexRouteImport } from './routes/certifications/index'
 import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as TerminalsImprestRouteImport } from './routes/terminals/imprest'
 import { Route as StakeholdersVerificationRouteImport } from './routes/stakeholders/verification'
 import { Route as StakeholdersPermitsRouteImport } from './routes/stakeholders/permits'
 import { Route as StakeholdersInvoicesRouteImport } from './routes/stakeholders/invoices'
@@ -209,6 +210,11 @@ const AttendanceIndexRoute = AttendanceIndexRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminalsImprestRoute = TerminalsImprestRouteImport.update({
+  id: '/terminals/imprest',
+  path: '/terminals/imprest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholdersVerificationRoute =
@@ -514,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
+  '/terminals/imprest': typeof TerminalsImprestRoute
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
@@ -590,6 +597,7 @@ export interface FileRoutesByTo {
   '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
+  '/terminals/imprest': typeof TerminalsImprestRoute
   '/admin': typeof AdminIndexRoute
   '/attendance': typeof AttendanceIndexRoute
   '/certifications': typeof CertificationsIndexRoute
@@ -669,6 +677,7 @@ export interface FileRoutesById {
   '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
+  '/terminals/imprest': typeof TerminalsImprestRoute
   '/admin/': typeof AdminIndexRoute
   '/attendance/': typeof AttendanceIndexRoute
   '/certifications/': typeof CertificationsIndexRoute
@@ -749,6 +758,7 @@ export interface FileRouteTypes {
     | '/stakeholders/invoices'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
+    | '/terminals/imprest'
     | '/admin'
     | '/attendance'
     | '/certifications'
@@ -825,6 +835,7 @@ export interface FileRouteTypes {
     | '/stakeholders/invoices'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
+    | '/terminals/imprest'
     | '/admin'
     | '/attendance'
     | '/certifications'
@@ -903,6 +914,7 @@ export interface FileRouteTypes {
     | '/stakeholders/invoices'
     | '/stakeholders/permits'
     | '/stakeholders/verification'
+    | '/terminals/imprest'
     | '/admin/'
     | '/attendance/'
     | '/certifications/'
@@ -980,6 +992,7 @@ export interface RootRouteChildren {
   StakeholdersInvoicesRoute: typeof StakeholdersInvoicesRoute
   StakeholdersPermitsRoute: typeof StakeholdersPermitsRoute
   StakeholdersVerificationRoute: typeof StakeholdersVerificationRoute
+  TerminalsImprestRoute: typeof TerminalsImprestRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AttendanceIndexRoute: typeof AttendanceIndexRoute
   CertificationsIndexRoute: typeof CertificationsIndexRoute
@@ -1191,6 +1204,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminals/imprest': {
+      id: '/terminals/imprest'
+      path: '/terminals/imprest'
+      fullPath: '/terminals/imprest'
+      preLoaderRoute: typeof TerminalsImprestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholders/verification': {
@@ -1632,6 +1652,7 @@ const rootRouteChildren: RootRouteChildren = {
   StakeholdersInvoicesRoute: StakeholdersInvoicesRoute,
   StakeholdersPermitsRoute: StakeholdersPermitsRoute,
   StakeholdersVerificationRoute: StakeholdersVerificationRoute,
+  TerminalsImprestRoute: TerminalsImprestRoute,
   AdminIndexRoute: AdminIndexRoute,
   AttendanceIndexRoute: AttendanceIndexRoute,
   CertificationsIndexRoute: CertificationsIndexRoute,

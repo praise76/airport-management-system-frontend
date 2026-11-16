@@ -39,6 +39,7 @@ import {
 	Users,
 	UsersRound,
 	X,
+	Wallet,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
@@ -190,6 +191,12 @@ const navGroups: NavGroup[] = [
 			},
 			{ label: "Stations", to: "/stations", icon: MapPinned },
 			{ label: "Terminals", to: "/terminals", icon: PlaneLanding },
+			{
+				label: "Terminal imprest",
+				to: "/terminals/imprest",
+				icon: Wallet,
+				roles: ["HOD", "RGM", "GM", "SUPER_ADMIN", "ORG_ADMIN", "AUDITOR"],
+			},
 		],
 	},
 	{

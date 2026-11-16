@@ -248,3 +248,26 @@ already filters correctly by the roster entry's `terminalId`. Please:
    clock-in. The board uses `/self-service/roster?startDate&endDate` and `/attendance/me/today` instead.
 5. Return each person's station (`dutyLocation`) on the board, so AVSEC can be shown by station inside
    each terminal.
+
+## 12. Terminal management (set up 16 Nov 2026)
+
+Structure on the live site: a **Terminal Management** department (head: the RGM) with a unit per
+terminal, each headed by its head of terminal (Terminal Manager; Domestic Terminal Manager (DTM) for
+GAT; Head of Terminal for the Presidential Terminal), whose positions `TM-<terminal>` report to the
+RGM. In **Operations**: an **ADO Office** unit (Airport Duty Officers on 24-hour shifts) and a
+**Terminal Operations** unit with a station per terminal, each headed by its Terminal Operations
+Officer (`TOO-<terminal>`). Department heads at each terminal hold `<DEPT>-HEAD-<terminal>`
+positions that report to the head of terminal, and are recorded as terminal representatives
+(`/terminals/:id/representatives`). Please:
+
+1. **The RGM can only minute to people with the role `hod`.** A head of terminal with role `manager`
+   was refused ("Invalid assignment chain") although their position reports to the RGM. We gave heads
+   of terminal the `hod` role; better to check the position chain, not the role.
+2. **Attendance by terminal.** A head of terminal should see everyone who clocked in at their terminal,
+   whatever their department. Registry rows have no terminal, so the frontend cannot do this; add the
+   terminal to each row and let `GET /attendance?terminalCode=` work for heads of terminal, TOOs and
+   the ADO office (who see every terminal).
+3. **Report an issue.** The frontend uses the terminal representatives to send a report to the
+   department head chosen, the head of terminal and (when urgent) the ADOs on duty. Representatives
+   should be kept current when people change; consider showing them on the Terminals page.
+4. **Imprest:** see docs/BACKEND_IMPREST.md.
