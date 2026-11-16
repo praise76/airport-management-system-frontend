@@ -157,6 +157,9 @@ export interface Requisition {
 	createdAt: string;
 	updatedAt: string;
 	lineItems: RequisitionLineItem[];
+	/** Only on the single-requisition response: what the signed-in person may do with it. */
+	canDecide?: boolean;
+	canIssue?: boolean;
 }
 
 export interface RequisitionApproval {

@@ -34,6 +34,10 @@ function target(n: StaffNotification): { to: string; params?: Record<string, str
 			return { to: "/swaps" };
 		case "task":
 			return { to: "/tasks" };
+		case "requisition":
+			return n.relatedEntityId
+				? { to: "/inventory/requisitions/$requisitionId", params: { requisitionId: n.relatedEntityId } }
+				: { to: "/inventory/requisitions" };
 		case "leave_application":
 			// A request waiting for me goes to the approvals list; my own decision to my page.
 			return /to review/i.test(n.subject ?? "")

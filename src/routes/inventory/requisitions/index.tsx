@@ -53,7 +53,7 @@ const STATUS_BADGE_VARIANT: Record<
 };
 
 function RequisitionsPage() {
-	const [scope, setScope] = useState<"mine" | "all">("mine");
+	const [scope, setScope] = useState<"mine" | "department" | "all">("mine");
 	const [status, setStatus] = useState<RequisitionStatus | "all">("all");
 
 	const { data: requisitions, isLoading } = useRequisitions({
@@ -96,13 +96,14 @@ function RequisitionsPage() {
 			<div className="flex flex-wrap gap-3">
 				<Select
 					value={scope}
-					onValueChange={(v) => setScope(v as "mine" | "all")}
+					onValueChange={(v) => setScope(v as "mine" | "department" | "all")}
 				>
-					<SelectTrigger className="w-40">
+					<SelectTrigger className="w-64">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="mine">My Requisitions</SelectItem>
+						<SelectItem value="department">For my decision / my department</SelectItem>
 						<SelectItem value="all">All Requisitions</SelectItem>
 					</SelectContent>
 				</Select>
