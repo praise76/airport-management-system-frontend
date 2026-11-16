@@ -39,7 +39,7 @@ import {
   useDepartmentTree,
   useRestoreDepartment,
 } from "@/hooks/departments";
-import { useUsers } from "@/hooks/users";
+import { ColleaguePicker } from "@/components/staff/ColleaguePicker";
 import { useUiStore } from "@/stores/ui";
 import { useAuthStore } from "@/stores/auth";
 import type {
@@ -97,9 +97,6 @@ function DepartmentsPage() {
   // Effective organization ID used for operations
   const organizationId = selectedOrganizationId || user?.organizationId;
 
-  // Users for HOD selection
-  const { data: usersData } = useUsers({ limit: 100 });
-  const users = usersData?.data ?? [];
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -703,18 +700,14 @@ function DepartmentsPage() {
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor={hodSelectId}>Select User</Label>
-            <Select value={hodUserId} onValueChange={setHodUserId}>
-              <SelectTrigger id={hodSelectId}>
-                <SelectValue placeholder="Select a user..." />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.firstName} {user.lastName} ({user.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Type-to-search: a plain list only ever held the first 100 people, so anyone further
+                down (with 110+ staff imported) could not be chosen as a head. */}
+            <ColleaguePicker
+              id={hodSelectId}
+              value={hodUserId || undefined}
+              onChange={(id) => setHodUserId(id ?? "")}
+              placeholder="Search by name..."
+            />
           </div>
           <DialogFooter>
             <Button
