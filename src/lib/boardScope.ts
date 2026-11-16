@@ -23,9 +23,9 @@ export type BoardScope =
 export type BoardPlace = {
 	/** The person's unit works around the airport (e.g. Wildlife and Bird Control). */
 	roaming?: boolean;
-	/** The person runs a terminal (head of terminal, Terminal Operations Officer): that terminal's code. */
+	/** The person runs a terminal (head of terminal, TOO, Airport Duty Officer): that terminal's code. */
 	runsTerminal?: string | null;
-	/** The person is in the ADO office, which covers the whole airport. */
+	/** Covers the whole airport (no such role at MMIA today; kept for completeness). */
 	airportDuty?: boolean;
 };
 

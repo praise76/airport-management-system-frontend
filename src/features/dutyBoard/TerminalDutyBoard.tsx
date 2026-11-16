@@ -76,8 +76,8 @@ export function placeOf(
 		d = departments.find((x) => x.id === d?.parentDepartmentId)
 	)
 		chain.push(d);
-	if (chain.some((d) => d.code === "OPS-ADO")) return { airportDuty: true };
-	const runs = chain.find((d) => /^(TMG|TOP)-/.test(d.code ?? ""));
+	// Heads of terminal, Terminal Operations Officers and Airport Duty Officers each run one terminal.
+	const runs = chain.find((d) => /^(TMG|TOP|ADO)-/.test(d.code ?? ""));
 	if (runs?.terminalCodes) {
 		try {
 			const codes = JSON.parse(runs.terminalCodes);
@@ -86,6 +86,16 @@ export function placeOf(
 		} catch {}
 	}
 	return { roaming: worksAroundAirport(chain[0], terminalCount) };
+}
+
+/** The Airport Duty Officers rostered at a terminal now: those on post first, else everyone rostered. */
+export function adoOnDuty(departments: DutyDepartment[]) {
+	const staff = departments
+		.flatMap((d) => d.units)
+		.filter((u) => /ADO Office/i.test(u.name))
+		.flatMap((u) => u.onDutyStaff ?? []);
+	const onPost = staff.filter((s) => s.checkedIn);
+	return (onPost.length ? onPost : staff).map((s) => s.id);
 }
 
 /** Counts for one group: rostered, on post, late, not arrived, posts short of staff. */
@@ -255,12 +265,9 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 		terminals.find((t) => t.terminalCode === scopeCode)?.terminalName,
 		place,
 	);
-	// Airport Duty Officers on duty now, to alert on urgent reports.
-	const adoIds = (all.data?.departments ?? [])
-		.flatMap((d) => d.units)
-		.filter((u) => /ADO Office/i.test(u.name))
-		.flatMap((u) => u.onDutyStaff ?? [])
-		.map((s) => s.id);
+	// The Airport Duty Officer on duty at a terminal, to alert on urgent reports there.
+	const adoIdsAt = (code: string) =>
+		adoOnDuty(groups.find((g) => g.code === code)?.departments ?? []);
 	const myId = user?.userId ?? user?.id;
 	const termOf = (code: string) =>
 		terminals.find((t) => t.terminalCode === code);
@@ -335,7 +342,7 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 								id: termOf(scope.code)!.id,
 								name: termOf(scope.code)!.terminalName,
 							}}
-							adoIds={adoIds}
+							adoIds={adoIdsAt(scope.code)}
 							myId={myId}
 						/>
 					)}
@@ -399,7 +406,7 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 								id: termOf(current.code)!.id,
 								name: termOf(current.code)!.terminalName,
 							}}
-							adoIds={adoIds}
+							adoIds={adoIdsAt(current.code)}
 							myId={myId}
 						/>
 					)}

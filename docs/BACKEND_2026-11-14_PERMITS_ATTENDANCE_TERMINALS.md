@@ -226,6 +226,7 @@ The signed-in duty board is now organised by terminal (frontend in this package)
 | RGM, GM, HR, super admin, org admin | Every terminal: a summary card per terminal, then the detail |
 | HOD, ACOS | Their department across every terminal |
 | Head of Unit, manager | Their unit across every terminal |
+| Heads of terminal, Terminal Operations Officers, Airport Duty Officers | Their own terminal, all departments, with staffing warnings |
 | Everyone else (officers, supervisors, staff) | Everyone on duty at the terminal they clocked in at today (all departments), or the terminal of today's shift |
 | Staff of a unit that works around the airport (Wildlife and Bird Control) | Every terminal |
 | Non-AVSEC junior staff | No AVSEC coverage warnings ("critical", "understaffed") |
@@ -254,7 +255,9 @@ already filters correctly by the roster entry's `terminalId`. Please:
 Structure on the live site: a **Terminal Management** department (head: the RGM) with a unit per
 terminal, each headed by its head of terminal (Terminal Manager; Domestic Terminal Manager (DTM) for
 GAT; Head of Terminal for the Presidential Terminal), whose positions `TM-<terminal>` report to the
-RGM. In **Operations**: an **ADO Office** unit (Airport Duty Officers on 24-hour shifts) and a
+RGM. In **Operations**: an **ADO Office** unit with a station per terminal (each terminal has its
+own Airport Duty Officers, fixed to that terminal, one on every 8-hour shift; there is no head of the
+ADO Office: ADOs report to the HOD Operations), and a
 **Terminal Operations** unit with a station per terminal, each headed by its Terminal Operations
 Officer (`TOO-<terminal>`). Department heads at each terminal hold `<DEPT>-HEAD-<terminal>`
 positions that report to the head of terminal, and are recorded as terminal representatives
@@ -266,8 +269,8 @@ positions that report to the head of terminal, and are recorded as terminal repr
 2. **Attendance by terminal.** A head of terminal should see everyone who clocked in at their terminal,
    whatever their department. Registry rows have no terminal, so the frontend cannot do this; add the
    terminal to each row and let `GET /attendance?terminalCode=` work for heads of terminal, TOOs and
-   the ADO office (who see every terminal).
+   Airport Duty Officers (each for their own terminal).
 3. **Report an issue.** The frontend uses the terminal representatives to send a report to the
-   department head chosen, the head of terminal and (when urgent) the ADOs on duty. Representatives
+   department head chosen, the head of terminal and (when urgent) the ADO on duty at that terminal. Representatives
    should be kept current when people change; consider showing them on the Terminals page.
 4. **Imprest:** see docs/BACKEND_IMPREST.md.

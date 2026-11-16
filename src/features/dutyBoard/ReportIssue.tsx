@@ -27,7 +27,7 @@ export type Representative = {
 
 /**
  * Who a report goes to: the department head chosen, the head of the terminal, and, when it is urgent,
- * the Airport Duty Officers on duty. Never the sender.
+ * the Airport Duty Officer on duty at that terminal. Never the sender.
  */
 export function issueRecipients(
 	reps: Representative[],
@@ -71,7 +71,8 @@ export function ReportIssue({
 		},
 		enabled: open,
 	});
-	const list = (reps.data ?? []).filter((r) => r.userId !== myId)
+	const list = (reps.data ?? [])
+		.filter((r) => r.userId !== myId)
 		.slice()
 		.sort(
 			(a, b) =>
@@ -134,7 +135,7 @@ export function ReportIssue({
 						<DialogDescription>
 							Goes to the department head you choose and to the head of the
 							terminal{head ? ` (${name(head)})` : ""}. Mark it urgent to also
-							alert the Airport Duty Officers on duty.
+							alert the Airport Duty Officer on duty at this terminal.
 						</DialogDescription>
 					</DialogHeader>
 					{chatId ? (
@@ -205,8 +206,8 @@ export function ReportIssue({
 								<span>
 									<span className="font-medium">Urgent</span>
 									<span className="block text-muted-foreground">
-										Also alerts the Airport Duty Officers on duty; everyone must
-										acknowledge it.
+										Also alerts the Airport Duty Officer on duty at this
+										terminal; everyone must acknowledge it.
 									</span>
 								</span>
 							</label>
