@@ -16,16 +16,17 @@ function MySchedulePage() {
 	const { data: myRoster, isLoading: rosterLoading } = useMyRoster();
 	const { data: todaysTeam, isLoading: teamLoading } = useTodaysRoster(); // kept for potential future use or if used in component
 
-	// Find today's shift if exists
-	const todayEntry = myRoster?.find((e) => {
-		const d = new Date(e.dutyDate);
-		const today = new Date();
-		return (
-			d.getDate() === today.getDate() &&
-			d.getMonth() === today.getMonth() &&
-			d.getFullYear() === today.getFullYear()
-		);
-	});
+	// Today's shift: the one dated today, or a night shift that started yesterday and is still
+	// running (the server only sends yesterday's shift while it is). Compare calendar dates as
+	// text: parsing "2026-11-15" as a Date reads it as UTC midnight.
+	const localDate = (offsetDays = 0) => {
+		const d = new Date();
+		d.setDate(d.getDate() + offsetDays);
+		return d.toLocaleDateString("en-CA"); // YYYY-MM-DD in the viewer's own time zone
+	};
+	const todayEntry =
+		myRoster?.find((e) => String(e.dutyDate).slice(0, 10) === localDate()) ??
+		myRoster?.find((e) => String(e.dutyDate).slice(0, 10) === localDate(-1));
 
 	return (
 		<div className="space-y-6 max-w-md mx-auto w-full">
