@@ -6,7 +6,6 @@ import {
 	useRouterState,
 } from "@tanstack/react-router";
 import {
-	Bell,
 	Building2,
 	CalendarCheck,
 	CalendarDays,
@@ -44,6 +43,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
 import { Logo } from "@/components/brand/Logo";
+import { StaffNotifications } from "@/components/layout/StaffNotifications";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
@@ -283,9 +283,7 @@ export function AppShell(props: AppShellProps) {
 				</Link>
 				<div className="ml-auto flex items-center gap-1.5">
 					<ThemeToggle className="hidden sm:inline-flex" />
-					<Button variant="ghost" size="icon" aria-label="Notifications">
-						<Bell size={18} />
-					</Button>
+					<StaffNotifications />
 					<Link to="/self-service">
 						<Button variant="ghost" size="icon" aria-label="Profile">
 							<User size={18} />
