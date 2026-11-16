@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { api } from "@/api/client";
 import { useDepartments } from "@/hooks/departments";
 import { useTerminals } from "@/hooks/terminals";
-import { boardScope, todaysTerminal } from "@/lib/boardScope";
+import { type BoardPlace, boardScope, todaysTerminal } from "@/lib/boardScope";
+import { ReportIssue } from "./ReportIssue";
 import { useAuthStore } from "@/stores/auth";
 import type { DutyBoardResponse, DutyDepartment } from "@/types/dutyBoard";
 import { UnitCard } from "./UnitCard";
@@ -51,6 +52,40 @@ export function worksAroundAirport(
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * Where a person works, from their department: the ADO office covers the whole airport; a head of
+ * terminal (Terminal Management) or a Terminal Operations Officer runs one terminal; a unit that
+ * covers every terminal works around the airport.
+ */
+export function placeOf(
+	departments: {
+		id: string;
+		code?: string;
+		terminalCodes?: string | null;
+		parentDepartmentId?: string | null;
+	}[],
+	departmentId: string | null | undefined,
+	terminalCount: number,
+): BoardPlace {
+	const chain: (typeof departments)[number][] = [];
+	for (
+		let d = departments.find((x) => x.id === departmentId);
+		d;
+		d = departments.find((x) => x.id === d?.parentDepartmentId)
+	)
+		chain.push(d);
+	if (chain.some((d) => d.code === "OPS-ADO")) return { airportDuty: true };
+	const runs = chain.find((d) => /^(TMG|TOP)-/.test(d.code ?? ""));
+	if (runs?.terminalCodes) {
+		try {
+			const codes = JSON.parse(runs.terminalCodes);
+			if (Array.isArray(codes) && codes.length === 1)
+				return { runsTerminal: codes[0] };
+		} catch {}
+	}
+	return { roaming: worksAroundAirport(chain[0], terminalCount) };
 }
 
 /** Counts for one group: rostered, on post, late, not arrived, posts short of staff. */
@@ -211,16 +246,24 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 		shifts.data ?? [],
 		terminals as any,
 	);
+	const place = placeOf(departments, user?.departmentId, terminals.length);
+	const scopeCode = place.runsTerminal ?? mine;
 	const scope = boardScope(
 		user,
 		departments,
 		mine,
-		terminals.find((t) => t.terminalCode === mine)?.terminalName,
-		worksAroundAirport(
-			departments.find((d) => d.id === user?.departmentId),
-			terminals.length,
-		),
+		terminals.find((t) => t.terminalCode === scopeCode)?.terminalName,
+		place,
 	);
+	// Airport Duty Officers on duty now, to alert on urgent reports.
+	const adoIds = (all.data?.departments ?? [])
+		.flatMap((d) => d.units)
+		.filter((u) => /ADO Office/i.test(u.name))
+		.flatMap((u) => u.onDutyStaff ?? [])
+		.map((s) => s.id);
+	const myId = user?.userId ?? user?.id;
+	const termOf = (code: string) =>
+		terminals.find((t) => t.terminalCode === code);
 	const groups = useMemo(
 		() =>
 			byTerminal(
@@ -243,7 +286,9 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 	};
 	const inAvsec = topOf(user?.departmentId)?.code === "AVSEC";
 	const hideCoverageFor =
-		(scope.kind === "terminal" || scope.kind === "airport") && !inAvsec
+		((scope.kind === "terminal" && !scope.runsIt) ||
+			scope.kind === "airport") &&
+		!inAvsec
 			? (d: DutyDepartment) => /AVSEC|Aviation Security/i.test(d.name)
 			: undefined;
 
@@ -278,11 +323,23 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 		return (
 			<div className="space-y-6">
 				{label}
-				<p className="text-slate-300">
-					{t.onPost} of {t.rostered} on post at {g.name}
-					{t.late ? `, ${t.late} late` : ""}
-					{t.notArrived ? `, ${t.notArrived} not arrived` : ""}.
-				</p>
+				<div className="flex flex-wrap items-center justify-between gap-3">
+					<p className="text-slate-300">
+						{t.onPost} of {t.rostered} on post at {g.name}
+						{t.late ? `, ${t.late} late` : ""}
+						{t.notArrived ? `, ${t.notArrived} not arrived` : ""}.
+					</p>
+					{canPing && termOf(scope.code) && (
+						<ReportIssue
+							terminal={{
+								id: termOf(scope.code)!.id,
+								name: termOf(scope.code)!.terminalName,
+							}}
+							adoIds={adoIds}
+							myId={myId}
+						/>
+					)}
+				</div>
 				<Departments
 					departments={g.departments}
 					canPing={canPing}
@@ -336,6 +393,16 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 			{current ? (
 				<section className="space-y-3">
 					<h2 className="text-xl font-semibold text-white">{current.name}</h2>
+					{canPing && termOf(current.code) && (
+						<ReportIssue
+							terminal={{
+								id: termOf(current.code)!.id,
+								name: termOf(current.code)!.terminalName,
+							}}
+							adoIds={adoIds}
+							myId={myId}
+						/>
+					)}
 					<Departments
 						departments={current.departments}
 						canPing={canPing}

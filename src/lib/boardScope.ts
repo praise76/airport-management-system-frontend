@@ -15,22 +15,39 @@ type User = Parameters<typeof getRoles>[0] & { departmentId?: string | null };
 export type BoardScope =
 	| { kind: "all"; label: string }
 	| { kind: "departments"; ids: string[]; label: string }
-	| { kind: "terminal"; code: string; label: string }
+	| { kind: "terminal"; code: string; label: string; runsIt?: boolean }
 	/** Junior staff of a unit that works around the airport (e.g. Wildlife and Bird Control). */
 	| { kind: "airport"; label: string }
 	| { kind: "none"; label: string };
+
+export type BoardPlace = {
+	/** The person's unit works around the airport (e.g. Wildlife and Bird Control). */
+	roaming?: boolean;
+	/** The person runs a terminal (head of terminal, Terminal Operations Officer): that terminal's code. */
+	runsTerminal?: string | null;
+	/** The person is in the ADO office, which covers the whole airport. */
+	airportDuty?: boolean;
+};
 
 export function boardScope(
 	user: User,
 	departments: Dept[],
 	myTerminal: string | null,
 	terminalName?: string,
-	/** The person's unit works around the airport, not at one terminal. */
-	roaming = false,
+	place: BoardPlace | boolean = {},
 ): BoardScope {
 	const roles = getRoles(user);
-	if (roles.some((r) => ALL.includes(r)))
+	const where: BoardPlace =
+		typeof place === "boolean" ? { roaming: place } : place;
+	if (roles.some((r) => ALL.includes(r)) || where.airportDuty)
 		return { kind: "all", label: "Every terminal" };
+	if (where.runsTerminal)
+		return {
+			kind: "terminal",
+			code: where.runsTerminal,
+			label: terminalName ?? where.runsTerminal,
+			runsIt: true,
+		};
 	if (
 		roles.some((r) => DEPARTMENT_HEADS.includes(r) || UNIT_HEADS.includes(r))
 	) {
@@ -44,7 +61,7 @@ export function boardScope(
 			return { kind: "departments", ids, label: `${own.name}, every terminal` };
 		}
 	}
-	if (roaming)
+	if (where.roaming)
 		return {
 			kind: "airport",
 			label: "The whole airport (your unit works around the airport)",

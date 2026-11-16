@@ -56,6 +56,27 @@ describe("boardScope", () => {
 			boardScope({ role: "officer" }, depts, null, undefined, true).kind,
 		).toBe("airport");
 	});
+	it("gives the ADO office every terminal and a head of terminal their terminal with warnings", () => {
+		expect(
+			boardScope({ role: "officer" }, depts, null, undefined, {
+				airportDuty: true,
+			}).kind,
+		).toBe("all");
+		expect(
+			boardScope(
+				{ role: "manager" },
+				depts,
+				null,
+				"Temporary Departure Terminal",
+				{ runsTerminal: "TDT" },
+			),
+		).toEqual({
+			kind: "terminal",
+			code: "TDT",
+			label: "Temporary Departure Terminal",
+			runsIt: true,
+		});
+	});
 	it("asks junior staff with no terminal today to clock in", () => {
 		expect(boardScope({ role: "officer" }, depts, null).kind).toBe("none");
 	});
