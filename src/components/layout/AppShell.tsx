@@ -280,7 +280,7 @@ export function AppShell(props: AppShellProps) {
 
 	return (
 		<div className="grid grid-rows-[auto_1fr] grid-cols-1 lg:grid-cols-[260px_1fr] min-h-dvh bg-(--color-bg) text-(--color-text)">
-			<header className="col-span-full flex items-center gap-3 px-4 py-3 border-b border-(--color-border) bg-(--color-surface) sticky top-0 z-30">
+			<header className="col-span-full h-16 flex items-center gap-3 px-4 border-b border-(--color-border) bg-(--color-surface) sticky top-0 z-30">
 				<button
 					type="button"
 					className="lg:hidden -ml-1 rounded-md p-2 hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
@@ -314,7 +314,9 @@ export function AppShell(props: AppShellProps) {
 			</header>
 
 			{/* Desktop sidebar */}
-			<aside className="row-start-2 col-start-1 border-r border-(--color-border) bg-(--color-surface) hidden lg:flex flex-col overflow-y-auto">
+			{/* The sidebar is exactly as tall as the space under the header (header is h-16) and scrolls on
+			    its own, so a long menu never makes the page itself scroll. */}
+			<aside className="row-start-2 col-start-1 border-r border-(--color-border) bg-(--color-surface) hidden lg:flex flex-col overflow-y-auto overscroll-contain lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)]">
 				<SidebarNav groups={visibleGroups} pathname={pathname} />
 			</aside>
 

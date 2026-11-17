@@ -99,9 +99,11 @@ function createApiClient(): AxiosInstance {
 				_retry?: boolean;
 			};
 			const status = error.response?.status;
-			const responseCode = (
-				error.response?.data as { code?: string } | undefined
-			)?.code;
+			// The server sends the code at the top level for some errors and under `details` for others.
+			const errorBody = error.response?.data as
+				| { code?: string; details?: { code?: string } }
+				| undefined;
+			const responseCode = errorBody?.code ?? errorBody?.details?.code;
 
 			if (status === 403 && responseCode === "PASSWORD_CHANGE_REQUIRED") {
 				redirectToPasswordChange();
