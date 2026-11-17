@@ -41,6 +41,8 @@ import {
 	UsersRound,
 	X,
 	Wallet,
+	PanelLeftClose,
+	PanelLeftOpen,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
@@ -222,8 +224,27 @@ const navGroups: NavGroup[] = [
 	},
 ];
 
+const SIDEBAR_KEY = "nams.sidebarCollapsed";
+
 export function AppShell(props: AppShellProps) {
 	const [mobileNavOpen, setMobileNavOpen] = useState(false);
+	// Desktop sidebar: full width, or a narrow rail of icons. The choice is remembered on this device.
+	const [collapsed, setCollapsed] = useState(() => {
+		try {
+			return localStorage.getItem(SIDEBAR_KEY) === "1";
+		} catch {
+			return false;
+		}
+	});
+	const toggleCollapsed = () =>
+		setCollapsed((c) => {
+			try {
+				localStorage.setItem(SIDEBAR_KEY, c ? "0" : "1");
+			} catch {
+				/* private window or blocked storage: the sidebar still toggles, it just is not remembered */
+			}
+			return !c;
+		});
 	const user = useAuthStore((s) => s.user);
 	const logout = useAuthStore((s) => s.logout);
 	const navigate = useNavigate();
@@ -279,7 +300,12 @@ export function AppShell(props: AppShellProps) {
 	}, [user, runsTerminal]);
 
 	return (
-		<div className="grid grid-rows-[auto_1fr] grid-cols-1 lg:grid-cols-[260px_1fr] min-h-dvh bg-(--color-bg) text-(--color-text)">
+		<div
+			className={cn(
+				"grid grid-rows-[auto_1fr] grid-cols-1 min-h-dvh bg-(--color-bg) text-(--color-text) transition-[grid-template-columns] duration-200",
+				collapsed ? "lg:grid-cols-[64px_1fr]" : "lg:grid-cols-[260px_1fr]",
+			)}
+		>
 			<header className="col-span-full h-16 flex items-center gap-3 px-4 border-b border-(--color-border) bg-(--color-surface) sticky top-0 z-30">
 				<button
 					type="button"
@@ -289,6 +315,16 @@ export function AppShell(props: AppShellProps) {
 					aria-expanded={mobileNavOpen}
 				>
 					<Menu size={20} />
+				</button>
+				<button
+					type="button"
+					className="hidden lg:inline-flex -ml-1 rounded-md p-2 hover:bg-[color-mix(in_oklab,var(--color-text)_8%,transparent)]"
+					onClick={toggleCollapsed}
+					aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+					aria-expanded={!collapsed}
+					title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+				>
+					{collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
 				</button>
 				<Link to="/" className="inline-flex items-center">
 					<Logo />
@@ -317,7 +353,7 @@ export function AppShell(props: AppShellProps) {
 			{/* The sidebar is exactly as tall as the space under the header (header is h-16) and scrolls on
 			    its own, so a long menu never makes the page itself scroll. */}
 			<aside className="row-start-2 col-start-1 border-r border-(--color-border) bg-(--color-surface) hidden lg:flex flex-col overflow-y-auto overscroll-contain lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)]">
-				<SidebarNav groups={visibleGroups} pathname={pathname} />
+				<SidebarNav groups={visibleGroups} pathname={pathname} collapsed={collapsed} />
 			</aside>
 
 			{/* Mobile drawer: a real overlay + slide-in panel, not a display:none toggle that
@@ -363,17 +399,24 @@ export function AppShell(props: AppShellProps) {
 function SidebarNav({
 	groups,
 	pathname,
+	collapsed = false,
 }: {
 	groups: NavGroup[];
 	pathname: string;
+	/** Icons only (the narrow desktop rail): labels move to a tooltip and a screen-reader label. */
+	collapsed?: boolean;
 }) {
 	return (
-		<nav className="p-3 space-y-5">
-			{groups.map((group) => (
+		<nav className={cn("space-y-5", collapsed ? "p-2" : "p-3")} aria-label="Main">
+			{groups.map((group, groupIndex) => (
 				<div key={group.label}>
-					<p className="px-3 mb-1.5 text-[11px] font-medium text-muted-foreground">
-						{group.label}
-					</p>
+					{collapsed ? (
+						groupIndex > 0 && <hr className="mx-2 mb-2 border-(--color-border)" aria-hidden="true" />
+					) : (
+						<p className="px-3 mb-1.5 text-[11px] font-medium text-muted-foreground">
+							{group.label}
+						</p>
+					)}
 					<div className="space-y-0.5">
 						{group.items.map((item) => {
 							const isActive =
@@ -387,15 +430,17 @@ function SidebarNav({
 								<Link
 									key={item.to}
 									to={item.to}
+									title={collapsed ? item.label : undefined}
 									className={cn(
-										"flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm border-l-2 border-transparent transition-colors",
+										"flex items-center gap-2.5 rounded-md py-1.5 text-sm border-l-2 border-transparent transition-colors",
+										collapsed ? "justify-center px-0" : "px-3",
 										isActive
 											? "border-l-(--color-primary) bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)] text-(--color-primary) font-medium"
 											: "hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] text-foreground",
 									)}
 								>
 									<Icon size={16} className="shrink-0" strokeWidth={2} />
-									<span className="truncate">{item.label}</span>
+									<span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
 								</Link>
 							);
 						})}
