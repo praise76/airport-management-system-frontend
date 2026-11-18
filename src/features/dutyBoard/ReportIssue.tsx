@@ -122,10 +122,10 @@ export function ReportIssue({
 		<>
 			<Button
 				variant="outline"
-				className="border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+				className="h-auto min-h-9 w-full max-w-full justify-start whitespace-normal border-slate-700 bg-slate-900 py-2 text-left text-slate-100 hover:bg-slate-800 hover:text-white sm:w-auto"
 				onClick={() => setOpen(true)}
 			>
-				<Megaphone className="mr-2 h-4 w-4" /> Report an issue at{" "}
+				<Megaphone className="mr-2 h-4 w-4 shrink-0" /> Report an issue at{" "}
 				{terminal.name}
 			</Button>
 			<Dialog open={open} onOpenChange={close}>

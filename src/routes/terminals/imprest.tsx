@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Loader2, Plus, Send, Wallet } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDepartments } from "@/hooks/departments";
 import { hasAnyRole, requireStaff } from "@/lib/access";
 import {
+	IMPREST_ENABLED,
 	naira,
 	retirable,
 	SPEND_CATEGORIES,
@@ -37,7 +38,10 @@ import {
 import { useAuthStore } from "@/stores/auth";
 
 export const Route = createFileRoute("/terminals/imprest")({
-	beforeLoad: requireStaff(),
+	beforeLoad: () => {
+		if (!IMPREST_ENABLED) throw redirect({ to: "/" });
+		requireStaff()();
+	},
 	component: ImprestPage,
 });
 

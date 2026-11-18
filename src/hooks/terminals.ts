@@ -14,10 +14,12 @@ export const terminalKeys = {
   performance: (id: string) => [...terminalKeys.detail(id), "performance"] as const,
 };
 
-export function useTerminals() {
+/** `enabled: false` for screens that may be open signed out; the list needs a sign-in. */
+export function useTerminals(enabled = true) {
   return useQuery({
     queryKey: terminalKeys.list(),
     queryFn: getTerminals,
+    enabled,
   });
 }
 

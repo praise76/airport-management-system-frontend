@@ -4,6 +4,7 @@ import axios, {
 	type InternalAxiosRequestConfig,
 } from "axios";
 import { useAuthStore } from "@/stores/auth";
+import { plainMessage, validationMessage } from "@/lib/friendlyError";
 
 export type ApiError = {
 	status: number;
@@ -40,6 +41,8 @@ export function fileUrl(path?: string | null): string | undefined {
 function redirectToLogin() {
 	if (typeof window === "undefined") return;
 	const { pathname, search } = window.location;
+	// Wall screens under /public are meant to be open without signing in.
+	if (pathname.startsWith("/public/")) return;
 	if (
 		/\/(auth|stakeholder)\/(login|register|forgot-password|reset-password)/.test(
 			pathname,
@@ -211,6 +214,13 @@ interface ApiErrorResponse {
 const extractErrorMessage = (error: AxiosError<ApiErrorResponse>): string => {
 	const data = error.response?.data;
 	const errors = data?.errors;
+	const fieldMap =
+		errors && typeof errors === "object" && !Array.isArray(errors)
+			? (errors as Record<string, string[] | string>)
+			: undefined;
+	// A rejected form: say which field to fix instead of a bare "Required".
+	if (fieldMap && Object.keys(fieldMap).length && error.response?.status === 400)
+		return validationMessage(fieldMap);
 	if (Array.isArray(errors) && errors.length) {
 		const first = errors[0];
 		if (typeof first === "string") return first;
@@ -237,7 +247,10 @@ export function normalizeError(err: unknown): ApiError {
 		return {
 			status: err.response?.status ?? 0,
 			code: data?.code,
-			message: extractErrorMessage(err),
+			message: plainMessage(
+				err.response?.status ?? 0,
+				extractErrorMessage(err),
+			),
 			// `details` is the structured payload some 409s carry (document checklist, roster conflicts)
 			details: data?.details ?? data?.errors,
 		};

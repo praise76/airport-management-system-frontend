@@ -61,11 +61,13 @@ function PublicDutyBoardPage() {
 	const { data, loading, error } = useDutyBoardData("all", search.terminalId);
 	const [currentTime, setCurrentTime] = useState(new Date());
 
-	const { data: terminals } = useTerminals();
-	const [settingsOpen, setSettingsOpen] = useState(false);
-	const terminalFilterId = useId();
 	const user = useAuthStore((st) => st.user);
 	const canPing = !!getAccessToken() && !!user && !isStakeholderUser(user);
+	// The terminal list needs a sign-in; a signed-out wall screen must not ask for it (the 401
+	// used to send the screen to the sign-in page).
+	const { data: terminals } = useTerminals(canPing);
+	const [settingsOpen, setSettingsOpen] = useState(false);
+	const terminalFilterId = useId();
 
 	const currentTerminal = terminals?.find((t) => t.id === search.terminalId);
 

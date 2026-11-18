@@ -1,3 +1,9 @@
+/**
+ * The imprest screens are built but the server has no imprest module yet, so they are switched off:
+ * no menu link, and the address redirects to the dashboard. Set to true once the backend ships.
+ */
+export const IMPREST_ENABLED = false;
+
 /** Naira, e.g. "₦125,000.00". */
 export const naira = (n: number) =>
 	`₦${n.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

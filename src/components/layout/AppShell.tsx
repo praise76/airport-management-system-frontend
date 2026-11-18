@@ -51,6 +51,7 @@ import { StaffNotifications } from "@/components/layout/StaffNotifications";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
+import { IMPREST_ENABLED } from "@/lib/imprest";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 
@@ -197,12 +198,16 @@ const navGroups: NavGroup[] = [
 			},
 			{ label: "Stations", to: "/stations", icon: MapPinned },
 			{ label: "Terminals", to: "/terminals", icon: PlaneLanding },
-			{
-				label: "Terminal imprest",
-				to: "/terminals/imprest",
-				icon: Wallet,
-				roles: ["HOD", "RGM", "GM", "SUPER_ADMIN", "ORG_ADMIN", "AUDITOR"],
-			},
+			...(IMPREST_ENABLED
+				? [
+						{
+							label: "Terminal imprest",
+							to: "/terminals/imprest",
+							icon: Wallet,
+							roles: ["HOD", "RGM", "GM", "SUPER_ADMIN", "ORG_ADMIN", "AUDITOR"],
+						},
+					]
+				: []),
 		],
 	},
 	{
