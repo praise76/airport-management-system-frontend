@@ -62,10 +62,16 @@ export function tally(departments: DutyDepartment[]) {
 		rostered: staff.length,
 		onPost: staff.filter((s) => s.checkedIn).length,
 		late: staff.filter((s) => s.checkedIn && s.isLate).length,
-		notArrived: staff.filter((s) => !s.checkedIn).length,
+		// Overdue only: someone whose shift began a moment ago is expected, not "not arrived".
+		notArrived: staff.filter((s) => !s.checkedIn && !s.withinGrace).length,
+		expected: staff.filter((s) => !s.checkedIn && s.withinGrace).length,
 		short: departments
 			.flatMap((d) => d.units)
-			.filter((u) => u.coverageStatus !== "adequate").length,
+			.filter(
+				(u) =>
+					u.coverageStatus === "understaffed" ||
+					u.coverageStatus === "critical",
+			).length,
 	};
 }
 
@@ -289,7 +295,8 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 					<p className="text-slate-300">
 						{t.onPost} of {t.rostered} on post at {g.name}
 						{t.late ? `, ${t.late} late` : ""}
-						{t.notArrived ? `, ${t.notArrived} not arrived` : ""}.
+						{t.notArrived ? `, ${t.notArrived} not arrived` : ""}
+						{t.expected ? `, ${t.expected} yet to clock in` : ""}.
 					</p>
 					{canPing && termOf(scope.code) && (
 						<ReportIssue
@@ -339,6 +346,7 @@ export function TerminalDutyBoard({ canPing }: { canPing: boolean }) {
 							</span>
 							<span className="mt-1 block text-xs text-slate-400">
 								{t.late} late · {t.notArrived} not arrived
+								{t.expected ? ` · ${t.expected} yet to clock in` : ""}
 								{t.short
 									? ` · ${t.short} post${t.short === 1 ? "" : "s"} short`
 									: ""}

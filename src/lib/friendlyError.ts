@@ -78,17 +78,27 @@ const PLAIN: Array<[RegExp, string]> = [
 		"You don't have permission to do this. Ask your Head of Unit if you need it.",
 	],
 	[/^not found\.?$/i, "We couldn't find that. It may have been removed."],
+	[
+		/^(route .*not found|cannot (get|post|put|patch|delete) )/i,
+		"This isn't available right now. Tell your supervisor if you need it.",
+	],
 ];
 
 /**
  * Pick the message to show. Specific server reasons that already tell the person what to do pass
  * through untouched; only the known technical wording is replaced.
  */
+export const LOAD_FAILED =
+	"We couldn't load this. Refresh to try again; if it keeps failing, tell your supervisor.";
+
 export function plainMessage(
 	status: number,
 	message: string,
 	fields?: Fields,
+	method = "post",
 ): string {
+	// "Check the form" means nothing on a list or page that is only being read.
+	if (method.toLowerCase() === "get" && status === 400) return LOAD_FAILED;
 	if (/^validation failed$/i.test(message.trim()) && fields)
 		return validationMessage(fields);
 	for (const [pattern, text] of PLAIN) if (pattern.test(message)) return text;

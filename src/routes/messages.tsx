@@ -5,7 +5,7 @@ import {
 	useNavigate,
 } from "@tanstack/react-router";
 import { Search, UsersRound } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConversationListItem } from "@/components/messaging/ConversationListItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,17 +19,27 @@ export const Route = createFileRoute("/messages")({
 });
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useConversations } from "@/hooks/messaging";
+import { useConversationPages } from "@/hooks/messaging";
 
 function MessagesLayout() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const queryClient = useQueryClient();
-	const { data: conversationsResponse, isLoading: isLoadingConversations } =
-		useConversations({ page: 1, limit: 20, type: "all" });
+	const {
+		data: conversationPages,
+		isLoading: isLoadingConversations,
+		hasNextPage,
+		isFetchingNextPage,
+		fetchNextPage,
+	} = useConversationPages("all");
 
-	const conversations = (conversationsResponse?.data?.conversations ||
-		[]) as Conversation[];
+	const conversations = useMemo(
+		() =>
+			(conversationPages?.pages ?? []).flatMap(
+				(page: any) => (page?.data?.conversations ?? []) as Conversation[],
+			),
+		[conversationPages],
+	);
 
 	const { initializeSocket, cleanupSocket } = useMessagingStore();
 	const user = useAuthStore((s) => s.user);
@@ -239,6 +249,17 @@ function MessagesLayout() {
 										/>
 									))}
 							</div>
+						)}
+						{hasNextPage && (
+							<Button
+								variant="outline"
+								size="sm"
+								className="w-full"
+								disabled={isFetchingNextPage}
+								onClick={() => fetchNextPage()}
+							>
+								{isFetchingNextPage ? "Loading…" : "Load more chats"}
+							</Button>
 						)}
 					</div>
 				</div>

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as MessagingApi from "@/api/messaging";
 import type { SendMessagePayload, ConversationListParams } from "@/api/messaging";
 import type { CreateGroupPayload } from "@/types/messaging";
@@ -17,6 +17,24 @@ export function useConversations(params?: ConversationListParams) {
   return useQuery({
     queryKey: messagingKeys.conversations(params),
     queryFn: () => MessagingApi.getConversations(params),
+  });
+}
+
+/** Page size the server allows for the chat list (max 50). */
+const CONVERSATION_PAGE = 50;
+
+/** The chat list, a page at a time: `fetchNextPage` loads the next 50 ("Load more"). */
+export function useConversationPages(type: ConversationListParams["type"] = "all") {
+  return useInfiniteQuery({
+    // Starts with "conversations" so the socket's invalidation of that prefix refreshes it.
+    queryKey: [...messagingKeys.all, "conversations", "pages", type] as const,
+    queryFn: ({ pageParam }) =>
+      MessagingApi.getConversations({ page: pageParam, limit: CONVERSATION_PAGE, type }),
+    initialPageParam: 1,
+    getNextPageParam: (last: any) => {
+      const d = last?.data;
+      return d && d.page * d.limit < d.total ? d.page + 1 : undefined;
+    },
   });
 }
 

@@ -250,6 +250,8 @@ export function normalizeError(err: unknown): ApiError {
 			message: plainMessage(
 				err.response?.status ?? 0,
 				extractErrorMessage(err),
+				undefined,
+				err.config?.method,
 			),
 			// `details` is the structured payload some 409s carry (document checklist, roster conflicts)
 			details: data?.details ?? data?.errors,

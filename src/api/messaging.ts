@@ -76,7 +76,8 @@ export async function getMessages(
   }
 ): Promise<Message[]> {
   const res = await api.get(`/messages/conversations/${conversationId}/messages`, { params });
-  return res.data.data;
+  // The server sends the newest first; a chat reads oldest at the top, newest at the bottom.
+  return [...(res.data.data as Message[])].reverse();
 }
 
 // 6. Send Message

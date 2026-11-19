@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HandoverModal } from "@/features/messaging/HandoverModal";
 import {
-	useConversations,
+	useConversation,
+	useConversationPages,
 	useMessages,
 	useSendMessage,
 } from "@/hooks/messaging";
@@ -28,13 +29,25 @@ function ConversationView() {
 		useMessages(conversationId);
 	const conversationMessages = (messagesResponse || []) as Message[];
 
-	// Fetch conversations to get details
-	const { data: conversationsResponse } = useConversations();
-	const conversations = (conversationsResponse?.data?.conversations ||
-		[]) as Conversation[];
-	const conversation = conversations.find(
-		(candidate) => candidate.id === conversationId,
-	);
+	// Details come from the chat list (shared with the sidebar). A chat further down the list than
+	// has been loaded, opened from a notification, is fetched on its own.
+	const { data: conversationPages } = useConversationPages("all");
+	const listed = (conversationPages?.pages ?? [])
+		.flatMap((page: any) => (page?.data?.conversations ?? []) as Conversation[])
+		.find((candidate) => candidate.id === conversationId);
+	const { data: fetched } = useConversation(listed ? "" : conversationId);
+	const conversation = (listed ??
+		(fetched
+			? {
+					...fetched,
+					memberCount: fetched.memberCount ?? fetched.members?.length ?? 0,
+					otherUser:
+						fetched.otherUser ??
+						(fetched.type === "direct"
+							? (fetched.members?.find((m: any) => m.userId !== user?.userId) as any)
+							: undefined),
+				}
+			: undefined)) as Conversation | undefined;
 
 	const { setActiveConversation } = useMessagingStore();
 

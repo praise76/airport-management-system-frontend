@@ -8,6 +8,8 @@ export interface DutyStaff {
   checkedIn: boolean;
   checkedInAt: string | null; // ISO Date
   isLate: boolean;
+  /** Not at post yet, but the shift only just started (15 min grace): expected, not overdue. */
+  withinGrace?: boolean;
 }
 
 export interface DutyUnit {
@@ -15,7 +17,8 @@ export interface DutyUnit {
   name: string;
   location: string;
   minStaff: number;
-  coverageStatus: 'adequate' | 'understaffed' | 'critical';
+  /** 'awaiting': the people still missing are inside their grace period, so nothing to act on yet. */
+  coverageStatus: 'adequate' | 'awaiting' | 'understaffed' | 'critical';
   onDutyStaff: DutyStaff[];
 }
 

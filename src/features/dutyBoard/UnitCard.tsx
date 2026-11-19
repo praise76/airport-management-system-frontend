@@ -21,6 +21,7 @@ export function UnitCard({
 	const statusColor =
 		{
 			adequate: "border-emerald-900/50 bg-emerald-950/10",
+			awaiting: "border-slate-800 bg-slate-900/50",
 			understaffed: "border-amber-900/50 bg-amber-950/10",
 			critical: "border-red-900/50 bg-red-950/10 coverage-critical",
 		}[shown as DutyUnit["coverageStatus"]] ||
@@ -29,6 +30,7 @@ export function UnitCard({
 	const statusText =
 		{
 			adequate: "text-emerald-400",
+			awaiting: "text-slate-400",
 			understaffed: "text-amber-400",
 			critical: "text-red-400",
 		}[shown as DutyUnit["coverageStatus"]] || "text-slate-400";
@@ -48,7 +50,7 @@ export function UnitCard({
 							variant="outline"
 							className={`shrink-0 bg-slate-950 uppercase text-[10px] tracking-wider ${statusText} border-opacity-20`}
 						>
-							{shown}
+							{shown === "awaiting" ? "Awaiting clock-in" : shown}
 						</Badge>
 					)}
 				</div>
@@ -87,7 +89,9 @@ export function UnitCard({
 													? staff.isLate
 														? "text-amber-400"
 														: "text-emerald-400"
-													: "text-slate-500"
+													: staff.withinGrace
+														? "text-slate-400"
+														: "text-amber-400"
 											}`}
 										>
 											{staff.checkedIn
@@ -99,7 +103,9 @@ export function UnitCard({
 																)
 															: ""
 													}`
-												: "Not checked in"}
+												: staff.withinGrace
+													? "Expected"
+													: "Not arrived"}
 										</p>
 									</div>
 								</div>

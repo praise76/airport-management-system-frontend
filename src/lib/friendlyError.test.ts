@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { fieldLabel, plainMessage, validationMessage } from "./friendlyError";
+import {
+	fieldLabel,
+	LOAD_FAILED,
+	plainMessage,
+	validationMessage,
+} from "./friendlyError";
 
 describe("friendlyError", () => {
 	it("turns field names into labels", () => {
@@ -39,5 +44,20 @@ describe("friendlyError", () => {
 	it("handles empty messages by status", () => {
 		expect(plainMessage(500, "")).toMatch(/our side/);
 		expect(plainMessage(403, "")).toMatch(/permission/);
+	});
+	it("never says 'check the form' for a page that is only being read", () => {
+		expect(plainMessage(400, "Validation failed", undefined, "get")).toBe(
+			LOAD_FAILED,
+		);
+		expect(plainMessage(400, "Validation failed", { id: ["Invalid uuid"] }, "GET")).toBe(
+			LOAD_FAILED,
+		);
+		// a form submit still names the field
+		expect(
+			plainMessage(400, "Validation failed", { title: ["Required"] }, "post"),
+		).toBe("Check “Title”: this is required.");
+	});
+	it("explains a missing server route", () => {
+		expect(plainMessage(404, "Route not found")).toMatch(/isn't available/);
 	});
 });

@@ -48,6 +48,21 @@ const board = (departments: ReturnType<typeof dept>[]) => ({
 	totalScheduled: 0,
 });
 
+describe("tally: shifts that only just started", () => {
+	const waiting = { ...p("w"), withinGrace: true };
+	it("counts people inside their grace period as expected, not 'not arrived'", () => {
+		const t = tally([dept("d", [unit("u", [p("a", true), waiting, p("x")])])]);
+		expect(t.expected).toBe(1);
+		expect(t.notArrived).toBe(1);
+	});
+	it("does not count an awaiting post as short", () => {
+		const u = { ...unit("u", [waiting]), coverageStatus: "awaiting" as any };
+		expect(tally([dept("d", [u])]).short).toBe(0);
+		const c = unit("c", [p("x")], "critical");
+		expect(tally([dept("d", [c])]).short).toBe(1);
+	});
+});
+
 describe("byTerminal", () => {
 	const all = board([
 		dept("avsec", [unit("scr", [p("a", true), p("b")]), unit("pat", [p("c")])]),
@@ -88,7 +103,7 @@ describe("tally", () => {
 					unit("u", [p("a", true, true), p("b", true), p("c")], "critical"),
 				]),
 			]),
-		).toEqual({ rostered: 3, onPost: 2, late: 1, notArrived: 1, short: 1 });
+		).toEqual({ rostered: 3, onPost: 2, late: 1, notArrived: 1, expected: 0, short: 1 });
 	});
 });
 

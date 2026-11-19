@@ -123,7 +123,14 @@ function Dashboard() {
 					footer={
 						unread.isLoading
 							? "Checking…"
-							: `${unread.data?.byConversation?.length ?? 0} conversations with new messages`
+							: (() => {
+									const n = (unread.data?.byConversation ?? []).filter(
+										(c: any) => (c.unreadCount ?? 0) > 0,
+									).length;
+									return n === 0
+										? "No conversations with new messages"
+										: `${n} ${n === 1 ? "conversation" : "conversations"} with new messages`;
+								})()
 					}
 					linkText="Go to messaging"
 					linkTo="/messages"

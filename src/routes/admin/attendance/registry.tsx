@@ -125,7 +125,7 @@ function AttendanceRegistryPage() {
                               </Avatar>
                               <div>
                                  <div className="font-medium">{user?.firstName} {user?.lastName}</div>
-                                 <div className="text-xs text-muted-foreground">{record.staffId || user?.email}</div>
+                                 <div className="text-xs text-muted-foreground">{user?.employeeId || user?.email}</div>
                               </div>
                            </div>
                         </td>

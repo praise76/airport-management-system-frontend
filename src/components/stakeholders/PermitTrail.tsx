@@ -53,6 +53,9 @@ function stepLine(step: PermitTrailStep): string {
 		case "submitted":
 			return office ? `Submitted to ${office}` : "Submitted";
 		case "forwarded":
+			// An admin correction, not someone forwarding it: the minute says what was changed.
+			if (step.minute?.startsWith('Re-pointed from "'))
+				return office ? `Corrected: moved to ${office}` : "Corrected";
 			return office ? `Forwarded to ${office}` : "Forwarded";
 		case "returned":
 			// A person handing it back to the head of their own office.

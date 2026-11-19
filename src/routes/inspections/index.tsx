@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { getAccessToken } from '@/utils/auth'
+import { INSPECTIONS_ENABLED } from '@/lib/features'
 import { useInspections, useInspectionTemplates, useCreateInspection, useSubmitInspection } from '@/hooks/inspections'
 import type { Inspection, InspectionTemplate, InspectionResponse, InspectionStatus } from '@/types/inspection'
 import { useState } from 'react'
@@ -7,6 +8,9 @@ import { format } from 'date-fns'
 
 export const Route = createFileRoute('/inspections/')({
   beforeLoad: () => {
+    // The server has no list route for inspections (GET /inspections and /inspections/my), so the
+    // page would wait forever. Off until it does; the menu link is already hidden.
+    if (!INSPECTIONS_ENABLED) throw redirect({ to: '/' })
     const token = getAccessToken()
     if (!token && typeof window !== 'undefined') throw redirect({ to: '/auth/login' })
   },
