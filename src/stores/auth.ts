@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { LAST_ACTIVITY_KEY, writeLastActivity } from "@/lib/idle";
 
 const canUseLocalStorage =
 	typeof localStorage !== "undefined" &&
@@ -54,6 +55,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		return !!get().accessToken;
 	},
 	login: ({ accessToken, refreshToken, user }) => {
+		// A fresh sign-in starts the idle clock again (see lib/idle).
+		writeLastActivity(localStorage, Date.now());
 		localStorage.setItem("accessToken", accessToken);
 		localStorage.setItem("refreshToken", refreshToken);
 		localStorage.setItem("user", JSON.stringify(user));
@@ -65,6 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		set({ accessToken, refreshToken });
 	},
 	logout: () => {
+		localStorage.removeItem(LAST_ACTIVITY_KEY);
 		localStorage.removeItem("accessToken");
 		localStorage.removeItem("refreshToken");
 		localStorage.removeItem("user");

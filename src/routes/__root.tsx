@@ -6,6 +6,7 @@ import {
   redirect,
   useRouterState,
 } from "@tanstack/react-router";
+import { useIdleSignOut } from "@/hooks/useIdleSignOut";
 import { isStakeholderUser } from "@/lib/access";
 import { useAuthStore } from "@/stores/auth";
 import { getAccessToken } from "@/utils/auth";
@@ -76,6 +77,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
   const [commandOpen, setCommandOpen] = useState(false);
+  // Sign out after 30 minutes without activity (staff app and partner portal).
+  useIdleSignOut();
   const router = useRouterState();
 
   // Check if this is an auth route or a stakeholder portal route
