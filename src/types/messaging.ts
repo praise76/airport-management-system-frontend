@@ -83,6 +83,10 @@ export interface Message {
   parentMessageId?: string | null;
   replyCount: number;
   priority: MessagePriority;
+  /** Set on an emergency alert: everyone in the chat is asked to acknowledge it. */
+  requiresAcknowledgment?: boolean;
+  /** How many people have acknowledged it so far. */
+  acknowledgmentCount?: number;
   reactionCount: number;
   reactions?: MessageReaction[];
   isEdited: boolean;
@@ -121,4 +125,14 @@ export interface MessageReadPayload {
 export interface OnlineStatusPayload {
   userId: string;
   isOnline: boolean;
+}
+
+/** One person's acknowledgment of an alert (GET /messages/:id/acknowledgments). */
+export interface MessageAcknowledgment {
+  id: string;
+  userId: string;
+  acknowledgedAt: string;
+  response?: string;
+  firstName?: string;
+  lastName?: string;
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ClipboardCheck, Loader2, Send } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Loader2, Send, Siren } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { MessageBubble } from "@/components/messaging/MessageBubble";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,8 @@ import {
 	useMessages,
 	useSendMessage,
 } from "@/hooks/messaging";
+import { canSendAlert } from "@/lib/acknowledgments";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useMessagingStore } from "@/stores/messages";
 import type { Conversation, Message } from "@/types/messaging";
@@ -44,7 +46,9 @@ function ConversationView() {
 					otherUser:
 						fetched.otherUser ??
 						(fetched.type === "direct"
-							? (fetched.members?.find((m: any) => m.userId !== user?.userId) as any)
+							? (fetched.members?.find(
+									(m: any) => m.userId !== user?.userId,
+								) as any)
 							: undefined),
 				}
 			: undefined)) as Conversation | undefined;
@@ -57,6 +61,9 @@ function ConversationView() {
 	const [inputValue, setInputValue] = useState("");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const [handoverOpen, setHandoverOpen] = useState(false);
+	// An emergency alert: critical, and everyone in the chat must acknowledge it.
+	const [alertMode, setAlertMode] = useState(false);
+	const mayAlert = canSendAlert(user);
 
 	useEffect(() => {
 		setActiveConversation(conversationId);
@@ -75,9 +82,18 @@ function ConversationView() {
 		const content = inputValue;
 		setInputValue("");
 
+		const asAlert = alertMode && mayAlert;
+		setAlertMode(false);
 		sendMessageMutation.mutate({
 			conversationId,
-			payload: { content, messageType: "text" },
+			payload: asAlert
+				? {
+						content,
+						messageType: "emergency",
+						priority: "critical",
+						requiresAcknowledgment: true,
+					}
+				: { content, messageType: "text" },
 		});
 	};
 
@@ -149,6 +165,7 @@ function ConversationView() {
 							key={msg.id}
 							message={msg}
 							isSelf={msg.senderId === user?.userId}
+							currentUserId={user?.userId}
 						/>
 					))
 				)}
@@ -157,7 +174,27 @@ function ConversationView() {
 
 			{/* Input */}
 			<div className="p-4 bg-(--color-surface) border-t border-(--color-border)">
+				{alertMode && (
+					<output className="mb-2 block rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+						Emergency alert: sent as critical, and everyone in this chat is
+						asked to acknowledge it. You will see who has and who hasn't.
+					</output>
+				)}
 				<form onSubmit={handleSend} className="flex items-center gap-2">
+					{mayAlert && (
+						<Button
+							type="button"
+							variant={alertMode ? "destructive" : "outline"}
+							size="sm"
+							className="shrink-0 gap-1"
+							aria-pressed={alertMode}
+							title="Send as an emergency alert that everyone must acknowledge"
+							onClick={() => setAlertMode((on) => !on)}
+						>
+							<Siren className="h-4 w-4" />
+							Alert
+						</Button>
+					)}
 					{isHandoverChannel && (
 						<Button
 							type="button"
@@ -174,8 +211,16 @@ function ConversationView() {
 					<Input
 						value={inputValue}
 						onChange={(e) => setInputValue(e.target.value)}
-						placeholder="Type a message..."
-						className="flex-1 rounded-full"
+						placeholder={
+							alertMode
+								? "Emergency alert to everyone in this chat…"
+								: "Type a message..."
+						}
+						aria-label={alertMode ? "Emergency alert message" : "Message"}
+						className={cn(
+							"flex-1 rounded-full",
+							alertMode && "border-red-400 focus-visible:ring-red-400",
+						)}
 					/>
 					<Button
 						type="submit"

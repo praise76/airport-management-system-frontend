@@ -10,6 +10,7 @@ export const messagingKeys = {
   conversation: (id: string) => [...messagingKeys.all, "conversation", id] as const,
   messages: (conversationId: string, params?: any) => [...messagingKeys.all, "messages", conversationId, params] as const,
   unread: () => [...messagingKeys.all, "unread"] as const,
+  acknowledgments: (messageId: string) => [...messagingKeys.all, "acknowledgments", messageId] as const,
 };
 
 // Conversations
@@ -115,4 +116,26 @@ export function useUnreadCounts() {
         queryFn: MessagingApi.getUnreadCounts,
         refetchInterval: 30000, 
     });
+}
+
+/** Who has acknowledged an alert. Refreshed every 30 seconds while the chat is open. */
+export function useAcknowledgments(messageId: string, enabled = true) {
+  return useQuery({
+    queryKey: messagingKeys.acknowledgments(messageId),
+    queryFn: () => MessagingApi.getAcknowledgments(messageId),
+    enabled: enabled && !!messageId,
+    refetchInterval: 30000,
+  });
+}
+
+export function useAcknowledgeMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (messageId: string) => MessagingApi.acknowledgeMessage(messageId, "acknowledged"),
+    onSuccess: (_, messageId) => {
+      qc.invalidateQueries({ queryKey: messagingKeys.acknowledgments(messageId) });
+      toast.success("Acknowledged");
+    },
+    onError: (err: any) => toast.error(err.message || "Couldn't acknowledge. Try again."),
+  });
 }

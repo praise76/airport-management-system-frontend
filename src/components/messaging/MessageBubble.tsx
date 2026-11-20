@@ -3,17 +3,21 @@ import { Check, CheckCheck, FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/types/messaging";
+import { AcknowledgmentPanel } from "./AcknowledgmentPanel";
 
 interface MessageBubbleProps {
 	message: Message;
 	isSelf: boolean;
 	showAvatar?: boolean;
+	/** The signed-in user, so an alert can show "You acknowledged". */
+	currentUserId?: string;
 }
 
 export function MessageBubble({
 	message,
 	isSelf,
 	showAvatar = true,
+	currentUserId,
 }: MessageBubbleProps) {
 	const isEmergency = message.messageType === "emergency";
 	const isHandover = message.messageType === "handover";
@@ -60,7 +64,10 @@ export function MessageBubble({
 					{/* Emergency Badge */}
 					{isEmergency && (
 						<div className="text-xs font-bold text-red-600 mb-1 flex items-center gap-1">
-							🚨 CRITICAL ALERT
+							🚨{" "}
+							{message.requiresAcknowledgment
+								? "EMERGENCY ALERT · PLEASE ACKNOWLEDGE"
+								: "CRITICAL ALERT"}
 						</div>
 					)}
 
@@ -159,6 +166,14 @@ export function MessageBubble({
 								</a>
 							))}
 						</div>
+					)}
+
+					{message.requiresAcknowledgment && (
+						<AcknowledgmentPanel
+							message={message}
+							currentUserId={currentUserId}
+							isSelf={isSelf}
+						/>
 					)}
 
 					{/* Metadata: Time & Status */}

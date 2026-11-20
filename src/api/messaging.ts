@@ -4,6 +4,7 @@ import type {
   Message,
   CreateGroupPayload,
   User,
+  MessageAcknowledgment,
 } from "@/types/messaging";
 
 export interface PaginationParams {
@@ -130,6 +131,12 @@ export async function unpinMessage(messageId: string): Promise<void> {
 export async function acknowledgeMessage(messageId: string, response: string): Promise<any> {
   const res = await api.post(`/messages/${messageId}/acknowledge`, { response });
   return res.data.data;
+}
+
+/** Who has acknowledged an alert. Readable by everyone in the chat. */
+export async function getAcknowledgments(messageId: string): Promise<MessageAcknowledgment[]> {
+  const res = await api.get(`/messages/${messageId}/acknowledgments`);
+  return (res.data?.data ?? []) as MessageAcknowledgment[];
 }
 
 // 14. Add/Remove Group Member
