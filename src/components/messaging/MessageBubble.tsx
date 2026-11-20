@@ -57,8 +57,9 @@ export function MessageBubble({
 						isSelf
 							? "bg-(--color-primary) text-(--color-primary-foreground) rounded-tr-sm"
 							: "bg-(--color-surface) border border-(--color-border) rounded-tl-sm",
+						// Your own alert too: dark text on the light red, not the white of your other messages.
 						isEmergency &&
-							"bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800",
+							"bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-950 dark:text-red-50",
 					)}
 				>
 					{/* Emergency Badge */}
@@ -180,7 +181,7 @@ export function MessageBubble({
 					<div
 						className={cn(
 							"flex items-center justify-end gap-1 mt-1 text-[10px] opacity-70",
-							isSelf
+							isSelf && !isEmergency
 								? "text-white/80"
 								: "text-[color-mix(in_oklab,var(--color-text)_50%,transparent)]",
 						)}
