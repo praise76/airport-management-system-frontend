@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { checkIn } from "@/api/attendance";
 import { getTodaysRoster } from "@/api/roster";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +53,14 @@ import {
 import { label } from "@/lib/labels";
 import { CheckInGuide } from "@/features/attendance/CheckInGuide";
 import { checkInSteps } from "@/lib/today";
+import {
+	isRetryable,
+	offlineNote,
+	pendingCheckIns,
+	queueCheckIn,
+	removeQueuedCheckIn,
+} from "@/lib/offlineCheckIn";
+import { useAuthStore } from "@/stores/auth";
 
 // Sign-in is checked for every page in __root.tsx.
 export const Route = createFileRoute("/attendance/")({
@@ -106,6 +115,10 @@ function AttendancePage() {
 		null,
 	);
 	const terminalId = useId();
+	const authUser = useAuthStore((s) => s.user);
+	const myId = authUser?.userId ?? authUser?.id;
+	// Check-ins pressed with no connection, waiting on this phone (test pack 31).
+	const [queued, setQueued] = useState(() => pendingCheckIns(myId));
 
 	const activeZones = useMemo(
 		() => (zones ?? []).filter((z) => z.isActive !== false),
@@ -117,6 +130,48 @@ function AttendancePage() {
 	// automatic action changed it), so refetch the day's status.
 	const refreshStatus = () =>
 		queryClient.invalidateQueries({ queryKey: ["attendance"] });
+
+	// Send check-ins kept while offline as soon as the connection is back (and when the page opens).
+	useEffect(() => {
+		if (!myId) return;
+		let running = false;
+		const flush = async () => {
+			if (running || (typeof navigator !== "undefined" && navigator.onLine === false)) return;
+			running = true;
+			try {
+				for (const item of pendingCheckIns(myId)) {
+					const at = format(new Date(item.capturedAt), "HH:mm");
+					try {
+						await checkIn({
+							lat: item.lat,
+							lng: item.lng,
+							terminalCode: item.terminalCode,
+							clockInMethod: "geofence",
+							deviceId: item.deviceId,
+							notes: offlineNote(item.capturedAt, new Date()),
+						});
+						removeQueuedCheckIn(item.id);
+						toast.success(`Your check-in from ${at} has been sent.`);
+					} catch (error) {
+						if (isRetryable(error)) break;
+						removeQueuedCheckIn(item.id);
+						const reason = (error as { message?: string })?.message;
+						setLastError(
+							`Your check-in from ${at}, saved while offline, wasn't accepted${reason ? `: ${reason}` : "."}`,
+						);
+						setErrorWasCheckedIn(false);
+					}
+				}
+			} finally {
+				running = false;
+				setQueued(pendingCheckIns(myId));
+				queryClient.invalidateQueries({ queryKey: ["attendance"] });
+			}
+		};
+		flush();
+		window.addEventListener("online", flush);
+		return () => window.removeEventListener("online", flush);
+	}, [myId, queryClient]);
 
 	// Read the location as soon as the page opens, then every 30 seconds.
 	const readLocation = useCallback(async () => {
@@ -167,6 +222,38 @@ function AttendancePage() {
 	const handleCheckIn = async () => {
 		setBusy(true);
 		setLastError(null);
+		// No connection: keep the check-in on the phone with the time it was pressed, rather than
+		// waiting and sending it later with the reconnect time.
+		if (myId && typeof navigator !== "undefined" && navigator.onLine === false) {
+			try {
+				const position = await readLocation().catch(() => null);
+				const lat = position?.coords.latitude ?? fix?.lat;
+				const lng = position?.coords.longitude ?? fix?.lng;
+				if (lat === undefined || lng === undefined) {
+					setLastError(
+						"You're offline and your location can't be read. Move to an open spot and try again.",
+					);
+					setErrorWasCheckedIn(false);
+					return;
+				}
+				const item = queueCheckIn({
+					userId: myId,
+					lat,
+					lng,
+					terminalCode: terminalCode || undefined,
+					deviceId: getDeviceId(),
+					capturedAt: new Date().toISOString(),
+				});
+				setQueued(pendingCheckIns(myId));
+				toast.info(
+					`You're offline. Your check-in at ${format(new Date(item.capturedAt), "HH:mm")} is saved on this phone and will be sent when you're back online.`,
+					{ duration: 10_000 },
+				);
+			} finally {
+				setBusy(false);
+			}
+			return;
+		}
 		try {
 			const position = await readLocation();
 			const result = await checkInMutation.mutateAsync({
@@ -329,6 +416,13 @@ function AttendancePage() {
 
 					{/* Status and check-in */}
 					<div className="border rounded-lg p-6 space-y-4">
+						{queued.length > 0 && (
+							<output className="block rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+								Your check-in at {format(new Date(queued[0].capturedAt), "HH:mm")} is
+								saved on this phone. It will be sent, with that time, when you're back
+								online.
+							</output>
+						)}
 						<div className="flex flex-wrap items-center gap-2">
 							<h2 className="font-semibold">Today's status</h2>
 							<StatusPill status={displayStatus} />
