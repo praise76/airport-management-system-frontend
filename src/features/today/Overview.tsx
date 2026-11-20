@@ -17,6 +17,8 @@ import { useCertificationTypes } from "@/hooks/certifications";
 import { useDocuments } from "@/hooks/documents";
 import { useUnreadCounts } from "@/hooks/messaging";
 import { label } from "@/lib/labels";
+import { canRegisterIncoming } from "@/lib/registerAccess";
+import { useAuthStore } from "@/stores/auth";
 
 /** The airport-wide figures and latest documents: for people who oversee the operation, below their Today. */
 export function Overview() {
@@ -25,12 +27,17 @@ export function Overview() {
 	const certificationTypes = useCertificationTypes();
 	const unread = useUnreadCounts();
 
+	const role = useAuthStore((state) => state.user?.role);
 	const quickLinks = [
-		{
-			label: "Register Document",
-			to: "/documents/new",
-			icon: <FileText className="h-4 w-4" />,
-		},
+		...(canRegisterIncoming(role)
+			? [
+					{
+						label: "Register Document",
+						to: "/documents/new",
+						icon: <FileText className="h-4 w-4" />,
+					},
+				]
+			: []),
 		{
 			label: "Log Attendance",
 			to: "/attendance",

@@ -192,6 +192,14 @@ function UsersPage() {
                 >
                   <td className="px-6 py-4 font-medium">
                     {user.firstName} {user.lastName}
+                    {user.headOf && user.headOf.length > 0 && (
+                      <div
+                        className="mt-0.5 text-xs font-normal text-muted-foreground"
+                        title="Documents for this department go to this person. Change it under Departments."
+                      >
+                        Head of {user.headOf.map((d) => d.name).join(", ")}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">
                     {user.email}

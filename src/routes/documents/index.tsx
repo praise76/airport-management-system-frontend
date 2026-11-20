@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { fileUrl } from "@/api/client";
 import { label } from "@/lib/labels";
+import { canRegisterIncoming } from "@/lib/registerAccess";
 import { useAuthStore } from "@/stores/auth";
 import { useDocuments, useInternalBroadcast } from "@/hooks/documents";
 import type { DocumentDirection } from "@/types/document";
@@ -101,12 +102,14 @@ function DocumentsPage() {
         <div className="flex flex-wrap gap-2">
           <SendThroughHodDialog />
           <InternalBroadcastDialog />
-          <Link to="/documents/new">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Register Document
-            </Button>
-          </Link>
+          {canRegisterIncoming(role) && (
+            <Link to="/documents/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Register Document
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -196,14 +199,16 @@ function DocumentsPage() {
           <p className="text-sm text-muted-foreground mb-4">
             {status || documentType || direction
               ? "Try adjusting your filters"
-              : "Get started by registering your first document"}
+              : canRegisterIncoming(role) ? "Get started by registering your first document" : "Nothing here yet"}
           </p>
-          <Link to="/documents/new">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Register Document
-            </Button>
-          </Link>
+          {canRegisterIncoming(role) && (
+            <Link to="/documents/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Register Document
+              </Button>
+            </Link>
+          )}
         </div>
       )}
 
