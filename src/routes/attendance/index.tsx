@@ -149,6 +149,7 @@ function AttendancePage() {
 							clockInMethod: "geofence",
 							deviceId: item.deviceId,
 							notes: offlineNote(item.capturedAt, new Date()),
+							capturedAt: item.capturedAt,
 						});
 						removeQueuedCheckIn(item.id);
 						toast.success(`Your check-in from ${at} has been sent.`);

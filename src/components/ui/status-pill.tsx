@@ -60,6 +60,7 @@ const statusConfig: Record<
   CHECKED_OUT: { variant: "secondary", label: "Checked Out" },
   clocked_out: { variant: "secondary", label: "Checked Out" },
   ABSENT: { variant: "destructive", label: "Absent" },
+  NO_SHOW: { variant: "destructive", label: "Not clocked in" },
   ON_LEAVE: { variant: "info", label: "On Leave" },
   not_checked_in: { variant: "secondary", label: "Not checked in yet" },
   late_not_checked_in: { variant: "warning", label: "Shift started, not checked in" },
