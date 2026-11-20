@@ -43,6 +43,8 @@ import {
 	Wallet,
 	PanelLeftClose,
 	PanelLeftOpen,
+	MoreHorizontal,
+	ChevronDown,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ActingHODBanner } from "@/components/acting/ActingHODBanner";
@@ -52,6 +54,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ROLE_GROUPS, canReviewStakeholders } from "@/lib/access";
 import { IMPREST_ENABLED } from "@/lib/imprest";
+import { profileOf, splitNav } from "@/lib/navProfile";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 
@@ -82,7 +85,7 @@ const navGroups: NavGroup[] = [
 	{
 		label: "Overview",
 		items: [
-			{ label: "Dashboard", to: "/", icon: LayoutDashboard },
+			{ label: "Today", to: "/", icon: LayoutDashboard },
 			{ label: "My schedule", to: "/roster/my-shifts", icon: CalendarDays },
 			{ label: "Self service", to: "/self-service", icon: UserCog },
 		],
@@ -304,6 +307,15 @@ export function AppShell(props: AppShellProps) {
 			.filter((group) => group.items.length > 0);
 	}, [user, runsTerminal]);
 
+	// The short menu for this person, with everything else they may open under "More".
+	const { shortGroups, moreGroups } = useMemo(() => {
+		const { primary, more } = splitNav<NavItem, NavGroup>(visibleGroups, profileOf(user, !!runsTerminal));
+		return {
+			shortGroups: primary.length ? [{ label: "", items: primary }] : [],
+			moreGroups: more,
+		};
+	}, [visibleGroups, user, runsTerminal]);
+
 	return (
 		<div
 			className={cn(
@@ -358,7 +370,13 @@ export function AppShell(props: AppShellProps) {
 			{/* The sidebar is exactly as tall as the space under the header (header is h-16) and scrolls on
 			    its own, so a long menu never makes the page itself scroll. */}
 			<aside className="row-start-2 col-start-1 border-r border-(--color-border) bg-(--color-surface) hidden lg:flex flex-col overflow-y-auto overscroll-contain lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)]">
-				<SidebarNav groups={visibleGroups} pathname={pathname} collapsed={collapsed} />
+				<SidebarNav
+					groups={shortGroups}
+					more={moreGroups}
+					pathname={pathname}
+					collapsed={collapsed}
+					onExpand={toggleCollapsed}
+				/>
 			</aside>
 
 			{/* Mobile drawer: a real overlay + slide-in panel, not a display:none toggle that
@@ -386,7 +404,7 @@ export function AppShell(props: AppShellProps) {
 							</button>
 						</div>
 						<div className="flex-1 overflow-y-auto">
-							<SidebarNav groups={visibleGroups} pathname={pathname} />
+							<SidebarNav groups={shortGroups} more={moreGroups} pathname={pathname} />
 						</div>
 					</div>
 				</div>
@@ -401,57 +419,121 @@ export function AppShell(props: AppShellProps) {
 	);
 }
 
+const isItemActive = (item: NavItem, pathname: string) =>
+	item.to === "/"
+		? pathname === "/"
+		: [item.to, ...(item.match ?? [])].some(
+				(to) => pathname === to || pathname.startsWith(`${to}/`),
+			);
+
+function NavLink({
+	item,
+	pathname,
+	collapsed,
+}: {
+	item: NavItem;
+	pathname: string;
+	collapsed: boolean;
+}) {
+	const Icon = item.icon;
+	return (
+		<Link
+			to={item.to}
+			title={collapsed ? item.label : undefined}
+			className={cn(
+				"flex items-center gap-2.5 rounded-md py-2 text-sm border-l-2 border-transparent transition-colors",
+				collapsed ? "justify-center px-0" : "px-3",
+				isItemActive(item, pathname)
+					? "border-l-(--color-primary) bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)] text-(--color-primary) font-medium"
+					: "hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] text-foreground",
+			)}
+		>
+			<Icon size={16} className="shrink-0" strokeWidth={2} />
+			<span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
+		</Link>
+	);
+}
+
+/**
+ * The short menu, then "More": everything else this person may open, grouped as before and folded
+ * away until asked for. It opens by itself when the page they are on lives in it.
+ */
 function SidebarNav({
 	groups,
+	more = [],
 	pathname,
 	collapsed = false,
+	onExpand,
 }: {
 	groups: NavGroup[];
+	more?: NavGroup[];
 	pathname: string;
 	/** Icons only (the narrow desktop rail): labels move to a tooltip and a screen-reader label. */
 	collapsed?: boolean;
+	/** In the narrow rail, "More" opens the full sidebar. */
+	onExpand?: () => void;
 }) {
+	const moreCount = more.reduce((n, g) => n + g.items.length, 0);
+	const onMorePage = more.some((g) => g.items.some((item) => isItemActive(item, pathname)));
+	const [moreOpen, setMoreOpen] = useState(false);
+	const showMore = moreOpen || onMorePage;
 	return (
 		<nav className={cn("space-y-5", collapsed ? "p-2" : "p-3")} aria-label="Main">
-			{groups.map((group, groupIndex) => (
-				<div key={group.label}>
-					{collapsed ? (
-						groupIndex > 0 && <hr className="mx-2 mb-2 border-(--color-border)" aria-hidden="true" />
-					) : (
-						<p className="px-3 mb-1.5 text-[11px] font-medium text-muted-foreground">
-							{group.label}
-						</p>
-					)}
-					<div className="space-y-0.5">
-						{group.items.map((item) => {
-							const isActive =
-								item.to === "/"
-									? pathname === "/"
-									: [item.to, ...(item.match ?? [])].some(
-											(to) => pathname === to || pathname.startsWith(`${to}/`),
-										);
-							const Icon = item.icon;
-							return (
-								<Link
-									key={item.to}
-									to={item.to}
-									title={collapsed ? item.label : undefined}
-									className={cn(
-										"flex items-center gap-2.5 rounded-md py-1.5 text-sm border-l-2 border-transparent transition-colors",
-										collapsed ? "justify-center px-0" : "px-3",
-										isActive
-											? "border-l-(--color-primary) bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)] text-(--color-primary) font-medium"
-											: "hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)] text-foreground",
-									)}
-								>
-									<Icon size={16} className="shrink-0" strokeWidth={2} />
-									<span className={cn("truncate", collapsed && "sr-only")}>{item.label}</span>
-								</Link>
-							);
-						})}
-					</div>
+			{groups.map((group) => (
+				<div key={group.label || "short"} className="space-y-0.5">
+					{group.items.map((item) => (
+						<NavLink key={item.to} item={item} pathname={pathname} collapsed={collapsed} />
+					))}
 				</div>
 			))}
+			{moreCount > 0 &&
+				(collapsed ? (
+					<button
+						type="button"
+						onClick={onExpand}
+						title={`More (${moreCount})`}
+						className="flex w-full items-center justify-center rounded-md py-2 text-muted-foreground hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)]"
+					>
+						<MoreHorizontal size={16} />
+						<span className="sr-only">More ({moreCount})</span>
+					</button>
+				) : (
+					<div>
+						<button
+							type="button"
+							onClick={() => setMoreOpen((o) => !o)}
+							aria-expanded={showMore}
+							className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-[color-mix(in_oklab,var(--color-text)_6%,transparent)]"
+						>
+							<ChevronDown
+								size={16}
+								className={cn("shrink-0 transition-transform", showMore && "rotate-180")}
+							/>
+							<span>{showMore ? "Show less" : `More (${moreCount})`}</span>
+						</button>
+						{showMore && (
+							<div className="mt-3 space-y-4">
+								{more.map((group) => (
+									<div key={group.label}>
+										<p className="px-3 mb-1.5 text-[11px] font-medium text-muted-foreground">
+											{group.label}
+										</p>
+										<div className="space-y-0.5">
+											{group.items.map((item) => (
+												<NavLink
+													key={item.to}
+													item={item}
+													pathname={pathname}
+													collapsed={false}
+												/>
+											))}
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				))}
 		</nav>
 	);
 }

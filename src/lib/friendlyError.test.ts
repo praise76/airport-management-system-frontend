@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	SERVER_PROBLEM,
 	fieldLabel,
 	LOAD_FAILED,
 	plainMessage,
@@ -59,5 +60,10 @@ describe("friendlyError", () => {
 	});
 	it("explains a missing server route", () => {
 		expect(plainMessage(404, "Route not found")).toMatch(/isn't available/);
+	});
+	it("never shows a server's own wording for a 5xx", () => {
+		for (const m of ["Internal error", "Internal server error", "relation \"x\" does not exist", ""])
+			expect(plainMessage(500, m)).toBe(SERVER_PROBLEM);
+		expect(plainMessage(503, "Service Unavailable")).toBe(SERVER_PROBLEM);
 	});
 });

@@ -56,6 +56,12 @@ export function validationMessage(fields?: Fields): string {
 	return more > 0 ? `${text} ${more} more to check.` : text;
 }
 
+export const SERVER_PROBLEM =
+	"Something went wrong on our side. Try again in a moment; if it keeps happening, tell your supervisor.";
+
+export const LOAD_FAILED =
+	"We couldn't load this. Refresh to try again; if it keeps failing, tell your supervisor.";
+
 const PLAIN: Array<[RegExp, string]> = [
 	[
 		/invalid assignment chain/i,
@@ -65,10 +71,7 @@ const PLAIN: Array<[RegExp, string]> = [
 		/^validation failed$/i,
 		"Some details are missing or not valid. Check the form and try again.",
 	],
-	[
-		/^(internal server error|something went wrong)\.?$/i,
-		"Something went wrong on our side. Try again in a moment; if it keeps happening, tell your supervisor.",
-	],
+	[/^(internal( server)? error|something went wrong)\.?$/i, SERVER_PROBLEM],
 	[
 		/^(unauthorized|unauthorised)\.?$/i,
 		"Your session has ended. Sign in again to carry on.",
@@ -88,23 +91,21 @@ const PLAIN: Array<[RegExp, string]> = [
  * Pick the message to show. Specific server reasons that already tell the person what to do pass
  * through untouched; only the known technical wording is replaced.
  */
-export const LOAD_FAILED =
-	"We couldn't load this. Refresh to try again; if it keeps failing, tell your supervisor.";
-
 export function plainMessage(
 	status: number,
 	message: string,
 	fields?: Fields,
 	method = "post",
 ): string {
+	// Whatever the server calls a 5xx ("Internal error", a database message), it is not something
+	// the person can act on: say it is on our side and what to do.
+	if (status >= 500) return SERVER_PROBLEM;
 	// "Check the form" means nothing on a list or page that is only being read.
 	if (method.toLowerCase() === "get" && status === 400) return LOAD_FAILED;
 	if (/^validation failed$/i.test(message.trim()) && fields)
 		return validationMessage(fields);
 	for (const [pattern, text] of PLAIN) if (pattern.test(message)) return text;
 	if (!message.trim()) {
-		if (status >= 500)
-			return "Something went wrong on our side. Try again in a moment.";
 		if (status === 403) return "You don't have permission to do this.";
 		if (status === 404) return "We couldn't find that.";
 	}

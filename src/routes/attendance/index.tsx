@@ -5,14 +5,12 @@ import { format, isAfter, parse } from "date-fns";
 import {
 	AlertTriangle,
 	Calendar,
-	CheckCircle2,
 	Clock,
 	Loader2,
 	LogIn,
 	LogOut,
 	MapPin,
 	MapPinned,
-	Navigation,
 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +50,8 @@ import {
 	nearestZone,
 } from "@/lib/geo";
 import { label } from "@/lib/labels";
+import { CheckInGuide } from "@/features/attendance/CheckInGuide";
+import { checkInSteps } from "@/lib/today";
 
 // Sign-in is checked for every page in __root.tsx.
 export const Route = createFileRoute("/attendance/")({
@@ -241,7 +241,6 @@ function AttendancePage() {
 				? "late_not_checked_in"
 				: "not_checked_in";
 
-	const insideZone = !!locStatus?.inside;
 	// QA finding ATT-01: the button stayed active (and the server accepted the check-in) while the
 	// page itself said "Move closer to check in". Block it once we know the person is outside.
 	// The server must enforce this too; this only stops the obvious case on screen.
@@ -268,11 +267,27 @@ function AttendancePage() {
 	}, [serverCheckedIn, isCheckedIn, queryClient]);
 
 	// An error belongs to the state it happened in; once the status has changed it no longer applies.
-	const visibleError =
-		(lastError !== null && errorWasCheckedIn === isCheckedIn ? lastError : null) ?? wrongZoneMessage;
+	const actionError =
+		lastError !== null && errorWasCheckedIn === isCheckedIn ? lastError : null;
+	const visibleError = actionError ?? wrongZoneMessage;
+
+	// The steps a person works through before the button, one-handed on a phone.
+	const guide = checkInSteps({
+		locationOn: !!fix && !locationProblem,
+		locationProblem,
+		inside: locStatus ? locStatus.inside !== false : null,
+		placeName: locStatus?.zone?.name,
+		nearestText:
+			nearest && nearest.metresAway > 0
+				? `You're about ${nearest.metresAway} m from ${nearest.zone.name}. Walk closer, then try again.`
+				: undefined,
+		wrongZoneMessage,
+		terminalChosen: !!terminalCode,
+		terminalNeeded: (terminals?.length ?? 0) > 0,
+	});
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 pb-24 sm:pb-0">
 			<div>
 				<h1 className="text-2xl font-semibold">Attendance</h1>
 				<p className="text-sm text-muted-foreground mt-1">
@@ -328,12 +343,10 @@ function AttendancePage() {
 
 						{!loadingToday && canCheckIn && (
 							<div className="space-y-4">
-								<LocationStatus
-									fix={fix}
-									problem={locationProblem}
-									inside={insideZone}
-									insideName={locStatus?.zone?.name}
-									nearest={nearest}
+								<CheckInGuide
+									steps={guide.steps}
+									ready={guide.ready}
+									next={guide.next}
 									onRetry={() => readLocation().catch(() => {})}
 								/>
 
@@ -377,14 +390,15 @@ function AttendancePage() {
 									)}
 								</div>
 
-								{visibleError && <ErrorBox message={visibleError} />}
+								{actionError && <ErrorBox message={actionError} />}
 
+								<StickyAction>
 								<Button
 									onClick={handleCheckIn}
 									disabled={busy || checkInMutation.isPending || knownOutside || wrongZone}
 									title={knownOutside ? "Move inside your check-in zone first" : wrongZone ? "You're not at your rostered post" : undefined}
 									size="lg"
-									className="w-full sm:w-auto"
+									className="h-14 w-full text-base sm:h-11 sm:w-auto sm:text-sm"
 								>
 									{busy ? (
 										<Loader2 className="h-5 w-5 animate-spin" />
@@ -397,6 +411,7 @@ function AttendancePage() {
 											? "Check in again"
 											: "Check in"}
 								</Button>
+								</StickyAction>
 							</div>
 						)}
 
@@ -422,11 +437,13 @@ function AttendancePage() {
 								)}
 								{visibleError && <ErrorBox message={visibleError} />}
 								{isCheckedIn && (
+									<StickyAction>
 									<Button
 										onClick={handleCheckOut}
 										disabled={busy || checkOutMutation.isPending}
 										variant="outline"
-										className="w-full"
+										size="lg"
+										className="h-14 w-full text-base sm:h-11 sm:text-sm"
 									>
 										{busy ? (
 											<Loader2 className="h-4 w-4 animate-spin" />
@@ -435,6 +452,7 @@ function AttendancePage() {
 										)}
 										{busy ? "Checking your location…" : "Check out"}
 									</Button>
+									</StickyAction>
 								)}
 							</div>
 						)}
@@ -544,64 +562,14 @@ function AttendancePage() {
 	);
 }
 
-function LocationStatus({
-	fix,
-	problem,
-	inside,
-	insideName,
-	nearest,
-	onRetry,
-}: {
-	fix: Fix | null;
-	problem: string | null;
-	inside: boolean;
-	insideName?: string;
-	nearest: ReturnType<typeof nearestZone>;
-	onRetry: () => void;
-}) {
-	if (problem) {
-		return (
-			<div className="flex flex-wrap items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-				<AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-				<span className="flex-1">{problem}</span>
-				<Button size="sm" variant="outline" onClick={onRetry}>
-					Try again
-				</Button>
-			</div>
-		);
-	}
-	if (!fix) {
-		return (
-			<div className="flex items-center gap-2 text-sm text-muted-foreground">
-				<Loader2 className="h-4 w-4 animate-spin" /> Finding your location…
-			</div>
-		);
-	}
-	if (inside) {
-		return (
-			<div className="flex items-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
-				<CheckCircle2 className="h-4 w-4 shrink-0" />
-				You're at {insideName ?? "a check-in zone"}. You can check in.
-			</div>
-		);
-	}
+/**
+ * On a phone the check-in and check-out buttons sit at the bottom of the screen, where a thumb
+ * reaches them one-handed, above the home bar. From the sm breakpoint they sit in the page.
+ */
+function StickyAction({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="flex items-start gap-2 rounded-md border p-3 text-sm">
-			<Navigation className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-			<div>
-				{nearest && nearest.metresAway > 0 ? (
-					<>
-						You're about <b>{nearest.metresAway} m</b> from {nearest.zone.name}.
-						Move closer to check in.
-					</>
-				) : (
-					"Checking whether you're inside a check-in zone…"
-				)}
-				<div className="text-xs text-muted-foreground mt-1">
-					Location accurate to about {fix.accuracy} m · updated{" "}
-					{format(fix.at, "HH:mm:ss")}
-				</div>
-			</div>
+		<div className="fixed inset-x-0 bottom-0 z-20 border-t bg-(--color-surface) p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
+			{children}
 		</div>
 	);
 }
