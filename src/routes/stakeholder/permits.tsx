@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
 	Plus,
 	Search,
@@ -54,6 +54,7 @@ import {
 import type { StakeholderPermit, PermitStatus, AccessLevel } from "@/types/stakeholder-portal";
 
 import { useAuthStore } from "@/stores/auth";
+import { clearDraft, draftKey, loadDraft, saveDraft } from "@/lib/formDraft";
 
 export const Route = createFileRoute("/stakeholder/permits")({
 	component: PermitsPage,
@@ -116,6 +117,17 @@ function getStatusBadge(status: PermitStatus) {
 	);
 }
 
+type PermitDraft = {
+	people: PermitPerson[];
+	formData: {
+		permitType: string;
+		validFrom: string;
+		validUntil: string;
+		accessLevel: AccessLevel | "";
+	};
+	sponsor: string;
+};
+
 function PermitsPage() {
 	const { user } = useAuthStore();
 	const orgId = user?.organizationId || "";
@@ -129,18 +141,26 @@ function PermitsPage() {
 
 	// Form state
 	const blankPerson = (): PermitPerson => ({ personName: "", personDesignation: "" });
+	// An unfinished application is kept on this device (test pack 53: lost when the phone went
+	// offline or the page reloaded), and cleared once it is sent.
+	const draftId = draftKey("permit-application", orgId);
+	const [draft] = useState(() => loadDraft<PermitDraft>(draftId));
 	// One application can cover several people; each gets their own permit.
-	const [people, setPeople] = useState<PermitPerson[]>([blankPerson()]);
+	const [people, setPeople] = useState<PermitPerson[]>(
+		draft?.people?.length ? draft.people : [blankPerson()],
+	);
 	const named = cleanPeople(people);
 	const duplicates = duplicateNames(named);
 	const setPerson = (i: number, patch: Partial<PermitPerson>) =>
 		setPeople((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
-	const [formData, setFormData] = useState({
-		permitType: "",
-		validFrom: "",
-		validUntil: "",
-		accessLevel: "" as AccessLevel | "",
-	});
+	const [formData, setFormData] = useState(
+		draft?.formData ?? {
+			permitType: "",
+			validFrom: "",
+			validUntil: "",
+			accessLevel: "" as AccessLevel | "",
+		},
+	);
 
 	// Data fetching
 	const { data: permitsData, isLoading } = useStakeholderPermits(orgId, {
@@ -151,7 +171,15 @@ function PermitsPage() {
 	const { data: company } = useStakeholderOrg(orgId);
 	const isContractor = company?.stakeholderType === "contractor";
 	const sponsors = useSponsorDepartments(isContractor);
-	const [sponsor, setSponsor] = useState("");
+	const [sponsor, setSponsor] = useState(draft?.sponsor ?? "");
+	useEffect(() => {
+		const typed =
+			people.some((p) => p.personName.trim() || p.personDesignation?.trim()) ||
+			Object.values(formData).some(Boolean) ||
+			!!sponsor.trim();
+		if (typed) saveDraft<PermitDraft>(draftId, { people, formData, sponsor });
+		else clearDraft(draftId);
+	}, [draftId, people, formData, sponsor]);
 	const sponsorName = sponsors.data?.find((d) => d.id === sponsor)?.name ?? sponsor;
 
 	const permits = permitsData?.data ?? [];
@@ -219,6 +247,8 @@ function PermitsPage() {
 		setShowCreateDialog(false);
 		setPeople([blankPerson()]);
 		setFormData({ permitType: "", validFrom: "", validUntil: "", accessLevel: "" });
+		setSponsor("");
+		clearDraft(draftId);
 	};
 
 	return (
@@ -438,7 +468,8 @@ function PermitsPage() {
 							Apply for Access Permit
 						</DialogTitle>
 						<DialogDescription className="text-slate-400">
-							Submit a new permit application for personnel access
+							Submit a new permit application for personnel access. What you
+							type is kept on this device until you submit it.
 						</DialogDescription>
 					</DialogHeader>
 
