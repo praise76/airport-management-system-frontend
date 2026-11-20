@@ -82,6 +82,14 @@ const PLAIN: Array<[RegExp, string]> = [
 	],
 	[/^not found\.?$/i, "We couldn't find that. It may have been removed."],
 	[
+		/^not a member of this conversation\.?$/i,
+		"You aren't in this chat. A station chat opens to you when you check in at that station.",
+	],
+	[
+		/^not authori[sz]ed to add members\.?$/i,
+		"Only the chat's admins can add people to it.",
+	],
+	[
 		/^(route .*not found|cannot (get|post|put|patch|delete) )/i,
 		"This isn't available right now. Tell your supervisor if you need it.",
 	],

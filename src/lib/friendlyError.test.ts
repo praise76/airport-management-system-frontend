@@ -66,4 +66,12 @@ describe("friendlyError", () => {
 			expect(plainMessage(500, m)).toBe(SERVER_PROBLEM);
 		expect(plainMessage(503, "Service Unavailable")).toBe(SERVER_PROBLEM);
 	});
+	it("explains being refused from a chat", () => {
+		expect(plainMessage(403, "Not a member of this conversation")).toMatch(
+			/check in at that station/,
+		);
+		expect(plainMessage(403, "Not authorized to add members")).toMatch(
+			/admins/,
+		);
+	});
 });
