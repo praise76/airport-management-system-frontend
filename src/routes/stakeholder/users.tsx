@@ -9,6 +9,7 @@ import {
 	useCreateStakeholderUser,
 	useStakeholderOrg,
 	useStakeholderUsers,
+	useUpdateStakeholderUser,
 } from "@/hooks/stakeholder-portal";
 import { useAuthStore } from "@/stores/auth";
 import type { StakeholderUserRole } from "@/types/stakeholder-portal";
@@ -43,6 +44,7 @@ function StakeholderUsersPage() {
 	const { data: org, isLoading: loadingOrg } = useStakeholderOrg(orgId);
 	const { data: people = [], isLoading } = useStakeholderUsers(orgId);
 	const create = useCreateStakeholderUser(orgId);
+	const update = useUpdateStakeholderUser(orgId);
 
 	const [adding, setAdding] = useState(false);
 	const [form, setForm] = useState(EMPTY);
@@ -201,13 +203,32 @@ function StakeholderUsersPage() {
 										{ROLE_LABEL[p.role] ?? p.role}
 									</Badge>
 									{!p.isActive && <Badge variant="outline" className="border-red-400/40 text-red-300">Deactivated</Badge>}
+									{isAdmin && p.id !== user?.id && (
+										<Button
+											type="button"
+											size="sm"
+											variant="ghost"
+											className={p.isActive ? "text-red-300 hover:text-red-200" : "text-slate-300"}
+											disabled={update.isPending}
+											onClick={() => {
+												if (
+													p.isActive &&
+													!window.confirm(`Remove ${p.firstName} ${p.lastName}? They will be signed out and will not be able to sign in again.`)
+												)
+													return;
+												update.mutate({ userId: p.id, input: { isActive: !p.isActive } });
+											}}
+										>
+											{p.isActive ? "Remove" : "Restore"}
+										</Button>
+									)}
 								</div>
 							</div>
 						))
 					)}
 				</div>
 				{!isAdmin && (
-					<p className="text-xs text-slate-400">Only an administrator of your company can add users.</p>
+					<p className="text-xs text-slate-400">Only an administrator of your company can add or remove users.</p>
 				)}
 			</div>
 		</div>
