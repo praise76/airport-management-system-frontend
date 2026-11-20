@@ -32,3 +32,9 @@ export async function getAuditActions(id: string): Promise<AuditAction[]> {
   const res = await api.get(`/acting-hod/assignments/${id}/actions`);
   return (res.data?.data ?? res.data) as AuditAction[];
 }
+
+/** One delegation: who covers whom, and from when to when. */
+export async function getActingAssignment(id: string): Promise<ActingAssignment> {
+  const res = await api.get(`/acting-hod/assignments/${id}`);
+  return (res.data?.data ?? res.data) as ActingAssignment;
+}
