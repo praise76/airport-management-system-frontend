@@ -25,6 +25,9 @@ export const Route = createFileRoute("/messages/$conversationId")({
 function ConversationView() {
 	const { conversationId } = Route.useParams();
 	const user = useAuthStore((s) => s.user);
+	// Staff sign-in stores the id as `id`, the portal as `userId`; without both, your own
+	// messages looked like everyone else's.
+	const myId = user?.userId ?? user?.id;
 
 	// Fetch messages with React Query
 	const { data: messagesResponse, isLoading: isLoadingMessages } =
@@ -46,9 +49,7 @@ function ConversationView() {
 					otherUser:
 						fetched.otherUser ??
 						(fetched.type === "direct"
-							? (fetched.members?.find(
-									(m: any) => m.userId !== user?.userId,
-								) as any)
+							? (fetched.members?.find((m: any) => m.userId !== myId) as any)
 							: undefined),
 				}
 			: undefined)) as Conversation | undefined;
@@ -164,8 +165,8 @@ function ConversationView() {
 						<MessageBubble
 							key={msg.id}
 							message={msg}
-							isSelf={msg.senderId === user?.userId}
-							currentUserId={user?.userId}
+							isSelf={!!myId && msg.senderId === myId}
+							currentUserId={myId}
 						/>
 					))
 				)}
