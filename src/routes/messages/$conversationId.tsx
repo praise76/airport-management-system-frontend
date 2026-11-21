@@ -110,20 +110,30 @@ function ConversationView() {
 		: conversation.type === "direct"
 			? "Direct message"
 			: [
-					conversation.settings?.isStationChannel
-						? `${conversation.settings.shiftType ?? "Current"} shift channel`
-						: conversation.settings?.isStationMasterChannel
-							? "Station channel, all shifts"
-							: conversation.type === "unit" ||
-									conversation.type === "department"
-								? "Unit channel"
-								: "Group",
+					conversation.settings?.isEmergencyAlertGroup
+						? "Emergency alerts · can't be muted or left"
+						: conversation.settings?.isShiftGroup
+							? "Shift group · while you are checked in"
+							: conversation.settings?.isTeamChat
+								? "Team chat · while you are checked in"
+								: conversation.settings?.isStationChannel
+									? `${conversation.settings.shiftType ?? "Current"} shift channel`
+									: conversation.settings?.isStationMasterChannel
+										? "Station channel, all shifts"
+										: conversation.type === "unit" ||
+												conversation.type === "department"
+											? "Unit channel"
+											: "Group",
 					conversation.memberCount
 						? `${conversation.memberCount} members`
 						: null,
 				]
 					.filter(Boolean)
 					.join(" · ");
+	// An alert group takes posts from supervisors and heads only; the server says so, this just avoids offering the box.
+	const mustWatchOnly =
+		Boolean(conversation?.settings?.isEmergencyAlertGroup) &&
+		!canSendAlert(user);
 	const isHandoverChannel =
 		conversation?.type === "unit" &&
 		Boolean(
@@ -181,61 +191,69 @@ function ConversationView() {
 						asked to acknowledge it. You will see who has and who hasn't.
 					</output>
 				)}
-				<form onSubmit={handleSend} className="flex items-center gap-2">
-					{mayAlert && (
-						<Button
-							type="button"
-							variant={alertMode ? "destructive" : "outline"}
-							size="sm"
-							className="shrink-0 gap-1"
-							aria-pressed={alertMode}
-							title="Send as an emergency alert that everyone must acknowledge"
-							onClick={() => setAlertMode((on) => !on)}
-						>
-							<Siren className="h-4 w-4" />
-							Alert
-						</Button>
-					)}
-					{isHandoverChannel && (
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							className="shrink-0 gap-1"
-							title="Send a handover report to the next shift"
-							onClick={() => setHandoverOpen(true)}
-						>
-							<ClipboardCheck className="h-4 w-4" />
-							Handover
-						</Button>
-					)}
-					<Input
-						value={inputValue}
-						onChange={(e) => setInputValue(e.target.value)}
-						placeholder={
-							alertMode
-								? "Emergency alert to everyone in this chat…"
-								: "Type a message..."
-						}
-						aria-label={alertMode ? "Emergency alert message" : "Message"}
-						className={cn(
-							"flex-1 rounded-full",
-							alertMode && "border-red-400 focus-visible:ring-red-400",
+				{conversation?.membership?.canPost === false || mustWatchOnly ? (
+					<p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+						{conversation?.settings?.isEmergencyAlertGroup
+							? "Only supervisors and heads post here. You will see every alert, and you can acknowledge each one."
+							: "You can read this chat but not post in it."}
+					</p>
+				) : (
+					<form onSubmit={handleSend} className="flex items-center gap-2">
+						{mayAlert && (
+							<Button
+								type="button"
+								variant={alertMode ? "destructive" : "outline"}
+								size="sm"
+								className="shrink-0 gap-1"
+								aria-pressed={alertMode}
+								title="Send as an emergency alert that everyone must acknowledge"
+								onClick={() => setAlertMode((on) => !on)}
+							>
+								<Siren className="h-4 w-4" />
+								Alert
+							</Button>
 						)}
-					/>
-					<Button
-						type="submit"
-						size="icon"
-						disabled={!inputValue.trim() || sendMessageMutation.isPending}
-						className="rounded-full"
-					>
-						{sendMessageMutation.isPending ? (
-							<Loader2 className="h-4 w-4 animate-spin" />
-						) : (
-							<Send className="h-4 w-4" />
+						{isHandoverChannel && (
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								className="shrink-0 gap-1"
+								title="Send a handover report to the next shift"
+								onClick={() => setHandoverOpen(true)}
+							>
+								<ClipboardCheck className="h-4 w-4" />
+								Handover
+							</Button>
 						)}
-					</Button>
-				</form>
+						<Input
+							value={inputValue}
+							onChange={(e) => setInputValue(e.target.value)}
+							placeholder={
+								alertMode
+									? "Emergency alert to everyone in this chat…"
+									: "Type a message..."
+							}
+							aria-label={alertMode ? "Emergency alert message" : "Message"}
+							className={cn(
+								"flex-1 rounded-full",
+								alertMode && "border-red-400 focus-visible:ring-red-400",
+							)}
+						/>
+						<Button
+							type="submit"
+							size="icon"
+							disabled={!inputValue.trim() || sendMessageMutation.isPending}
+							className="rounded-full"
+						>
+							{sendMessageMutation.isPending ? (
+								<Loader2 className="h-4 w-4 animate-spin" />
+							) : (
+								<Send className="h-4 w-4" />
+							)}
+						</Button>
+					</form>
+				)}
 			</div>
 
 			<HandoverModal

@@ -34,10 +34,15 @@ export interface Conversation {
   isActive: boolean;
   settings?: {
     isStationChannel?: boolean;
-    whoCanPost?: 'everyone' | 'admins';
+    whoCanPost?: 'everyone' | 'admins' | 'supervisors';
     allowFileSharing?: boolean;
     // New fields for Enhanced Chat
     isStationMasterChannel?: boolean;
+    /** Emergency alert group: every person in the department, can't be muted or left; supervisors and heads post. */
+    isEmergencyAlertGroup?: boolean;
+    /** Day or Night shift group, and team chat: people are in them while checked in. */
+    isShiftGroup?: boolean;
+    isTeamChat?: boolean;
     shiftType?: string; // e.g. "Morning", "Afternoon", "Night"
     channelCode?: string; // e.g. "AVSEC-PC-T1-GATE1-MORNING"
   };
