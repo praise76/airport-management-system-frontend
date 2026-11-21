@@ -2,13 +2,14 @@ import { SendThroughHodDialog } from "@/features/documents/components/MemoThroug
 import { DocumentsTabs } from "@/components/layout/areas";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, Plus, Paperclip, Radio } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { fileUrl } from "@/api/client";
 import { label } from "@/lib/labels";
 import { canRegisterIncoming } from "@/lib/registerAccess";
 import { useAuthStore } from "@/stores/auth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useDocuments, useInternalBroadcast } from "@/hooks/documents";
 import type { DocumentDirection } from "@/types/document";
 import {
@@ -78,6 +79,13 @@ function DocumentsPage() {
       : "personal",
   );
   const [page, setPage] = useState(1);
+
+  // Someone acting for a head sees that head's department's documents: start on the department view
+  // when the delegation turns out to be active (it is looked up after the page opens).
+  const { isActing } = usePermissions();
+  useEffect(() => {
+    if (isActing) setScope("department");
+  }, [isActing]);
 
   const { data, isLoading, error } = useDocuments({
     page,
