@@ -18,6 +18,7 @@ import {
 	getStationsByUnit,
 	listUnits,
 } from "@/api/departments";
+import type { Department } from "@/types/department";
 
 export function useDepartments(params: ListDepartmentsParams = {}) {
 	return useQuery({
@@ -189,5 +190,23 @@ export function useUnits(params: { departmentId?: string } = {}) {
 	return useQuery({
 		queryKey: ["units", params],
 		queryFn: () => listUnits(params),
+	});
+}
+
+/** Every department, unit and station in one flat list (for working out where a person sits). */
+export function useAllDepartments() {
+	return useQuery({
+		queryKey: ["departments", "all-flat"],
+		queryFn: async () => {
+			const res = await listDepartments({ limit: 500 });
+			const body = (res as unknown as { data?: unknown }).data ?? res;
+			const list = Array.isArray(body)
+				? body
+				: ((body as { items?: unknown[]; data?: unknown[] })?.items ??
+					(body as { data?: unknown[] })?.data ??
+					[]);
+			return list as Department[];
+		},
+		staleTime: 5 * 60_000,
 	});
 }

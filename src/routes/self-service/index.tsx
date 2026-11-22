@@ -1,5 +1,7 @@
 import { TeamRoster } from "@/features/roster/components/TeamRoster";
 import { annualLeaveDaysForGrade, gradeLabel } from "@/lib/leavePolicy";
+import { orgPlace } from "@/lib/orgPlace";
+import { useAllDepartments } from "@/hooks/departments";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   User,
@@ -181,6 +183,7 @@ function SelfServicePage() {
   const [isApplyLeaveModalOpen, setIsApplyLeaveModalOpen] = useState(false);
 
   const profileQuery = useMyProfile();
+  const departmentsQuery = useAllDepartments();
   const leaveQuery = useMyLeaveBalances();
   const applicationsQuery = useMyApplications();
   const rosterQuery = useMyRoster();
@@ -218,6 +221,7 @@ function SelfServicePage() {
   }
 
   const profile = profileQuery.data;
+  const place = orgPlace(profile?.departmentId, departmentsQuery.data);
 
   return (
     <div className="space-y-6">
@@ -290,6 +294,22 @@ function SelfServicePage() {
                   className="bg-muted/30"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Input value={place.department ?? "-"} readOnly className="bg-muted/30" />
+              </div>
+              {place.unit && (
+                <div className="space-y-2">
+                  <Label>Unit</Label>
+                  <Input value={place.unit} readOnly className="bg-muted/30" />
+                </div>
+              )}
+              {place.station && (
+                <div className="space-y-2">
+                  <Label>Station</Label>
+                  <Input value={place.station} readOnly className="bg-muted/30" />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Input value={profile?.role} readOnly className="bg-muted/30" />

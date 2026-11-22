@@ -1,6 +1,8 @@
 import { requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useStaff, useDeactivateStaff } from "@/hooks/staff";
+import { useAllDepartments } from "@/hooks/departments";
+import { orgPlace, unitAndStation } from "@/lib/orgPlace";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, Edit, UserX, Search, FileSpreadsheet } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -36,6 +38,12 @@ export const Route = createFileRoute("/admin/staff/")({
 function StaffListPage() {
   const navigate = useNavigate();
   const { data: staff, isLoading } = useStaff();
+  const { data: allDepts } = useAllDepartments();
+  // The department is always the top-level one; a unit or station is shown in its own column.
+  const placeOf = (m: { departmentId?: string | null; department?: { name?: string } | null }) => {
+    const p = orgPlace(m.departmentId, allDepts);
+    return { department: p.department ?? m.department?.name, rest: unitAndStation(p) };
+  };
   const deactivateMutation = useDeactivateStaff();
   const [showImport, setShowImport] = useState(false);
 
@@ -48,21 +56,23 @@ function StaffListPage() {
   const [showInactive, setShowInactive] = useState(false);
   const departments = useMemo(
     () =>
-      [...new Set((staff ?? []).map((m) => m.department?.name).filter(Boolean) as string[])].sort(),
-    [staff],
+      [...new Set((staff ?? []).map((m) => placeOf(m).department).filter(Boolean) as string[])].sort(),
+    // biome-ignore lint/correctness/useExhaustiveDependencies: placeOf only reads allDepts
+    [staff, allDepts],
   );
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return (staff ?? []).filter(
       (m) =>
         (showInactive || m.isActive) &&
-        (!dept || m.department?.name === dept) &&
+        (!dept || placeOf(m).department === dept) &&
         (!needle ||
           `${m.firstName} ${m.lastName} ${m.email} ${m.employeeId ?? ""}`
             .toLowerCase()
             .includes(needle)),
     );
-  }, [staff, q, dept, showInactive]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: placeOf only reads allDepts
+  }, [staff, q, dept, showInactive, allDepts]);
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -136,6 +146,7 @@ function StaffListPage() {
                 <TableHead>Employee ID</TableHead>
                 <TableHead>Grade</TableHead>
                 <TableHead>Department</TableHead>
+                <TableHead>Unit / station</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -143,7 +154,7 @@ function StaffListPage() {
             <TableBody>
               {shown.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                     No staff match.
                   </TableCell>
                 </TableRow>
@@ -159,7 +170,8 @@ function StaffListPage() {
                   </TableCell>
                   <TableCell>{member.employeeId || "-"}</TableCell>
                   <TableCell>{member.gradeLevel ? `GL ${member.gradeLevel}` : "-"}</TableCell>
-                  <TableCell>{member.department?.name || "-"}</TableCell>
+                  <TableCell>{placeOf(member).department || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground">{placeOf(member).rest || "-"}</TableCell>
                   <TableCell>
                     <Badge
                       variant={member.isActive ? "default" : "destructive"}
