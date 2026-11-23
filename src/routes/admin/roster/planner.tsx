@@ -49,6 +49,7 @@ import { RosterEntry } from "@/features/roster/types";
 import { toast } from "sonner";
 import { byCrew, useCrewMap } from "@/features/roster/useCrewMap";
 import { RosterSectionNav } from "@/features/roster/components/RosterSectionNav";
+import { CoverForToday } from "@/features/roster/cover/CoverForToday";
 
 export const Route = createFileRoute("/admin/roster/planner")({
   beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
@@ -276,6 +277,16 @@ function RosterPlannerPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <ShiftManager unitDepartmentId={selectedRoster.unitDepartmentId} />
+            {selectedRoster.approvalStatus !== "draft" && (
+              <CoverForToday
+                rosterId={selectedRoster.id}
+                entries={(selectedRoster.entries ?? []) as RosterEntry[]}
+                nameOf={(id) => {
+                  const p = rosterStaff.staff.find((u) => u.id === id) ?? ((selectedRoster.entries ?? []) as { staffId: string; staff?: { firstName?: string; lastName?: string } }[]).find((e) => e.staffId === id)?.staff;
+                  return p ? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() : "Unknown";
+                }}
+              />
+            )}
 
             {selectedRoster.approvalStatus === "draft" && (
               <Button

@@ -64,7 +64,7 @@ export function StationCheckIn({ stationId, stationName }: StationCheckInProps) 
               <MapPin className="h-5 w-5 text-primary" />
               {stationName}
             </CardTitle>
-            <CardDescription>AVSEC Manning & Post Control</CardDescription>
+            <CardDescription>Check in when you start at this post</CardDescription>
           </div>
           <Badge variant={StaffingCount(staffing?.length)}>
             {staffing?.length || 0} Active

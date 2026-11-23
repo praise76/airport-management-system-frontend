@@ -55,6 +55,7 @@ import { Route as StakeholderDashboardRouteImport } from './routes/stakeholder/d
 import { Route as StakeholderActivitiesRouteImport } from './routes/stakeholder/activities'
 import { Route as RosterMyShiftsRouteImport } from './routes/roster/my-shifts'
 import { Route as RosterGenerateRouteImport } from './routes/roster/generate'
+import { Route as RosterDailyTotalsRouteImport } from './routes/roster/daily-totals'
 import { Route as PublicDutyBoardRouteImport } from './routes/public/duty-board'
 import { Route as OrganizationsNewRouteImport } from './routes/organizations/new'
 import { Route as OrganizationsOrgIdRouteImport } from './routes/organizations/$orgId'
@@ -322,6 +323,11 @@ const RosterGenerateRoute = RosterGenerateRouteImport.update({
   path: '/roster/generate',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RosterDailyTotalsRoute = RosterDailyTotalsRouteImport.update({
+  id: '/roster/daily-totals',
+  path: '/roster/daily-totals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PublicDutyBoardRoute = PublicDutyBoardRouteImport.update({
   id: '/public/duty-board',
   path: '/public/duty-board',
@@ -500,6 +506,7 @@ export interface FileRoutesByFullPath {
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
   '/public/duty-board': typeof PublicDutyBoardRoute
+  '/roster/daily-totals': typeof RosterDailyTotalsRoute
   '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
@@ -577,6 +584,7 @@ export interface FileRoutesByTo {
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
   '/public/duty-board': typeof PublicDutyBoardRoute
+  '/roster/daily-totals': typeof RosterDailyTotalsRoute
   '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
@@ -657,6 +665,7 @@ export interface FileRoutesById {
   '/organizations/$orgId': typeof OrganizationsOrgIdRouteWithChildren
   '/organizations/new': typeof OrganizationsNewRoute
   '/public/duty-board': typeof PublicDutyBoardRoute
+  '/roster/daily-totals': typeof RosterDailyTotalsRoute
   '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
@@ -738,6 +747,7 @@ export interface FileRouteTypes {
     | '/organizations/$orgId'
     | '/organizations/new'
     | '/public/duty-board'
+    | '/roster/daily-totals'
     | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
@@ -815,6 +825,7 @@ export interface FileRouteTypes {
     | '/organizations/$orgId'
     | '/organizations/new'
     | '/public/duty-board'
+    | '/roster/daily-totals'
     | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
@@ -894,6 +905,7 @@ export interface FileRouteTypes {
     | '/organizations/$orgId'
     | '/organizations/new'
     | '/public/duty-board'
+    | '/roster/daily-totals'
     | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
@@ -972,6 +984,7 @@ export interface RootRouteChildren {
   OrganizationsOrgIdRoute: typeof OrganizationsOrgIdRouteWithChildren
   OrganizationsNewRoute: typeof OrganizationsNewRoute
   PublicDutyBoardRoute: typeof PublicDutyBoardRoute
+  RosterDailyTotalsRoute: typeof RosterDailyTotalsRoute
   RosterGenerateRoute: typeof RosterGenerateRoute
   RosterMyShiftsRoute: typeof RosterMyShiftsRoute
   StakeholderActivitiesRoute: typeof StakeholderActivitiesRoute
@@ -1353,6 +1366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RosterGenerateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/roster/daily-totals': {
+      id: '/roster/daily-totals'
+      path: '/roster/daily-totals'
+      fullPath: '/roster/daily-totals'
+      preLoaderRoute: typeof RosterDailyTotalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/public/duty-board': {
       id: '/public/duty-board'
       path: '/public/duty-board'
@@ -1632,6 +1652,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrganizationsOrgIdRoute: OrganizationsOrgIdRouteWithChildren,
   OrganizationsNewRoute: OrganizationsNewRoute,
   PublicDutyBoardRoute: PublicDutyBoardRoute,
+  RosterDailyTotalsRoute: RosterDailyTotalsRoute,
   RosterGenerateRoute: RosterGenerateRoute,
   RosterMyShiftsRoute: RosterMyShiftsRoute,
   StakeholderActivitiesRoute: StakeholderActivitiesRoute,

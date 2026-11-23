@@ -4,6 +4,7 @@ import {
 	FileText,
 	IdCard,
 	Receipt,
+	Sigma,
 	Users,
 } from "lucide-react";
 import { AreaTabs } from "./AreaTabs";
@@ -50,6 +51,7 @@ export const RosterTabs = () => (
 		tabs={[
 			{ to: "/admin/roster/planner", label: "Rosters", icon: CalendarRange },
 			{ to: "/roster/patterns", label: "Patterns & teams", icon: Users },
+			{ to: "/roster/daily-totals", label: "Daily totals", icon: Sigma },
 		]}
 	/>
 );
