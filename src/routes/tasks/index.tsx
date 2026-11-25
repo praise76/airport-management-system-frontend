@@ -51,7 +51,12 @@ function Page() {
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
   });
-  const tasks = tasksData?.data || [];
+  // Newest first: the server returns the oldest first, so a new task landed at the bottom.
+  const tasks = [...(tasksData?.data || [])].sort((a, b) =>
+    String((b as { createdAt?: string }).createdAt ?? "").localeCompare(
+      String((a as { createdAt?: string }).createdAt ?? ""),
+    ),
+  );
 
   return (
     <div className="space-y-6">

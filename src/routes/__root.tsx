@@ -63,6 +63,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     }
   },
   component: RootComponent,
+  notFoundComponent: NotFoundPage,
   errorComponent: ({ error }) => {
     return (
       <div className="p-6">
@@ -74,6 +75,31 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     );
   },
 });
+
+/** A clear page for an address that does not exist, with a way back (the portal showed a bare "Not Found"). */
+function NotFoundPage() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const portal = isPortalPath(path);
+  const home = portal ? "/stakeholder/dashboard" : "/";
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center p-6">
+      <div className="max-w-md text-center space-y-3">
+        <p className="text-sm font-medium text-muted-foreground">404</p>
+        <h1 className="text-2xl font-semibold">This page doesn't exist</h1>
+        <p className="text-sm text-muted-foreground">
+          The address may be mistyped, or the page has moved.
+          {portal ? " Use the portal menu to find what you need." : " Use the menu to find what you need."}
+        </p>
+        <a
+          href={home}
+          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          {portal ? "Back to the portal" : "Back to Today"}
+        </a>
+      </div>
+    </div>
+  );
+}
 
 function RootComponent() {
   const [commandOpen, setCommandOpen] = useState(false);

@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ConversationListItem } from "@/components/messaging/ConversationListItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAllDepartments } from "@/hooks/departments";
+import { avsecCodes, showChat } from "@/lib/chatRules";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth";
 import { useMessagingStore } from "@/stores/messages";
@@ -33,12 +35,19 @@ function MessagesLayout() {
 		fetchNextPage,
 	} = useConversationPages("all");
 
+	// Station channels are for AVSEC only, and check-in's extra unit chat duplicates the
+	// permanent unit group: hide them until the server stops creating them (see chatRules).
+	const { data: departments } = useAllDepartments();
+	const avsec = useMemo(
+		() => (departments ? avsecCodes(departments) : null),
+		[departments],
+	);
 	const conversations = useMemo(
 		() =>
-			(conversationPages?.pages ?? []).flatMap(
-				(page: any) => (page?.data?.conversations ?? []) as Conversation[],
-			),
-		[conversationPages],
+			(conversationPages?.pages ?? [])
+				.flatMap((page: any) => (page?.data?.conversations ?? []) as Conversation[])
+				.filter((c) => showChat(c as { settings?: Record<string, unknown> }, avsec)),
+		[conversationPages, avsec],
 	);
 
 	const { initializeSocket, cleanupSocket } = useMessagingStore();
@@ -68,6 +77,7 @@ function MessagesLayout() {
 		const wide = window.matchMedia("(min-width: 768px)").matches;
 		if (
 			wide &&
+			avsec !== null && // wait for the chat rule, or a hidden station chat could be opened
 			!isLoadingConversations &&
 			conversations.length > 0 &&
 			(location.pathname === "/messages" || location.pathname === "/messages/")
@@ -83,7 +93,7 @@ function MessagesLayout() {
 				navigate({ to: `/messages/${shiftChannel.id}`, replace: true });
 			}
 		}
-	}, [conversations, isLoadingConversations, location.pathname, navigate]);
+	}, [conversations, avsec, isLoadingConversations, location.pathname, navigate]);
 
 	const filteredConversations = conversations.filter((c) => {
 		if (!searchQuery) return true;

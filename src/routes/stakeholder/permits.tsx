@@ -126,6 +126,8 @@ type PermitDraft = {
 		accessLevel: AccessLevel | "";
 	};
 	sponsor: string;
+	/** Pressed "send" while offline: send it as soon as the phone is back online (test pack 53). */
+	queued?: boolean;
 };
 
 function PermitsPage() {
@@ -177,10 +179,15 @@ function PermitsPage() {
 			people.some((p) => p.personName.trim() || p.personDesignation?.trim()) ||
 			Object.values(formData).some(Boolean) ||
 			!!sponsor.trim();
-		if (typed) saveDraft<PermitDraft>(draftId, { people, formData, sponsor });
+		if (typed)
+			saveDraft<PermitDraft>(draftId, {
+				people,
+				formData,
+				sponsor,
+				queued: loadDraft<PermitDraft>(draftId)?.queued,
+			});
 		else clearDraft(draftId);
 	}, [draftId, people, formData, sponsor]);
-	const sponsorName = sponsors.data?.find((d) => d.id === sponsor)?.name ?? sponsor;
 
 	const permits = permitsData?.data ?? [];
 
@@ -225,31 +232,75 @@ function PermitsPage() {
 			return;
 		}
 
+		if (!navigator.onLine) {
+			saveDraft<PermitDraft>(draftId, { people, formData, sponsor, queued: true });
+			setShowCreateDialog(false);
+			toast.info(
+				"You're offline. The application is saved on this phone and will be sent as soon as you're back online.",
+			);
+			return;
+		}
+		await sendApplication({ people, formData, sponsor });
+	};
+
+	// Send an application (typed now, or saved while offline). Anyone the server refuses is kept
+	// in the form so they can be corrected and sent again.
+	const sendApplication = async (d: PermitDraft): Promise<boolean> => {
 		const { failed } = await createPermit.mutateAsync({
 			shared: {
-				permitType: formData.permitType,
-				validFrom: formData.validFrom,
-				validUntil: formData.validUntil,
-				accessLevel: formData.accessLevel,
+				permitType: d.formData.permitType,
+				validFrom: d.formData.validFrom,
+				validUntil: d.formData.validUntil,
+				accessLevel: d.formData.accessLevel as AccessLevel,
 				...(isContractor
 					? sponsors.data
-						? { sponsorDepartmentId: sponsor, sponsorDepartmentName: sponsorName }
-						: { sponsorDepartmentName: sponsor.trim() }
+						? {
+								sponsorDepartmentId: d.sponsor,
+								sponsorDepartmentName:
+									sponsors.data.find((x) => x.id === d.sponsor)?.name ?? d.sponsor,
+							}
+						: { sponsorDepartmentName: d.sponsor.trim() }
 					: {}),
 			},
-			people: named,
+			people: cleanPeople(d.people),
 		});
-		// Keep anyone the server refused, so they can be corrected and sent again.
 		if (failed.length > 0) {
 			setPeople(failed.map((f) => ({ ...f.person, personDesignation: f.person.personDesignation ?? "" })));
-			return;
+			saveDraft<PermitDraft>(draftId, { ...d, queued: false });
+			return false;
 		}
 		setShowCreateDialog(false);
 		setPeople([blankPerson()]);
 		setFormData({ permitType: "", validFrom: "", validUntil: "", accessLevel: "" });
 		setSponsor("");
 		clearDraft(draftId);
+		return true;
 	};
+
+	// An application saved while offline is sent when the connection comes back (or on the next
+	// visit, if the page was closed). The company's details must have loaded first.
+	useEffect(() => {
+		if (!orgId || !company || (isContractor && sponsors.isLoading)) return;
+		let sending = false;
+		const trySend = async () => {
+			const d = loadDraft<PermitDraft>(draftId);
+			if (!d?.queued || sending || !navigator.onLine) return;
+			sending = true;
+			try {
+				if (await sendApplication(d))
+					toast.success("Your permit application, saved while you were offline, has been sent.");
+				else toast.error("Some names in your saved application were refused. Check the form and send again.");
+			} catch {
+				toast.error("Your saved application could not be sent yet. It stays on this phone; we'll try again.");
+			} finally {
+				sending = false;
+			}
+		};
+		trySend();
+		window.addEventListener("online", trySend);
+		return () => window.removeEventListener("online", trySend);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [draftId, orgId, company, isContractor, sponsors.data, sponsors.isLoading]);
 
 	return (
 		<div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 p-6">

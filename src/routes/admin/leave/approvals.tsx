@@ -1,4 +1,4 @@
-import { requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { getRoles, requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { approvalLevelsFor, usePendingApprovals, useProcessApproval } from "@/hooks/leave";
 import { useUsers } from "@/hooks/users";
@@ -24,6 +24,9 @@ export const Route = createFileRoute("/admin/leave/approvals")({
   beforeLoad: requireStaff(ROLE_GROUPS.supervisors),
   component: LeaveApprovalsPage,
 });
+
+const isAdminViewer = (user: Parameters<typeof getRoles>[0]) =>
+  getRoles(user).some((r) => (ROLE_GROUPS.admins as readonly string[]).includes(r));
 
 function LeaveApprovalsPage() {
   const user = useAuthStore((s) => s.user);
@@ -92,12 +95,21 @@ function LeaveApprovalsPage() {
         </p>
       </div>
 
+      {!isAdminViewer(user) && (approvals?.refusedLevels?.length ?? 0) > 0 && (
+        <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+          Your account can't see the {approvals?.refusedLevels?.join(" and ")} approval queue, so requests waiting
+          there are not shown. Ask an administrator to check your role and approval permissions.
+        </div>
+      )}
+
       {approvals?.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-12 border rounded-lg bg-muted/10 dashed">
           <div className="rounded-full bg-muted p-4 mb-4">
             <Check className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium">All caught up!</h3>
+          <h3 className="text-lg font-medium">
+            {approvals?.refusedLevels?.length && !isAdminViewer(user) ? "Nothing in the queues you can see" : "All caught up!"}
+          </h3>
           <p className="text-muted-foreground">
             No pending leave requests at the moment.
           </p>

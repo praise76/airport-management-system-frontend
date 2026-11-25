@@ -124,10 +124,13 @@ export const getMyLeaveBalances = async (): Promise<LeaveBalance[]> => {
 		}));
 };
 
+/** A list of waiting requests, plus any levels the server refused to show. */
+export type PendingApprovals = LeaveApplication[] & { refusedLevels?: ApprovalLevel[] };
+
 /** Requests waiting at each of the given approval levels, newest first. */
 export const getPendingApprovals = async (
 	levels: ApprovalLevel[],
-): Promise<LeaveApplication[]> => {
+): Promise<PendingApprovals> => {
 	const forbidden: ApprovalLevel[] = [];
 	const lists = await Promise.all(
 		levels.map(async (level) => {
@@ -158,7 +161,12 @@ export const getPendingApprovals = async (
 	}
 	const byId = new Map<string, LeaveApplication>();
 	for (const a of lists.flat()) if (!byId.has(a.id)) byId.set(a.id, a);
-	return [...byId.values()].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+	const list: PendingApprovals = [...byId.values()].sort((a, b) =>
+		(b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+	);
+	// Some (not all) levels refused: show what we have, but say which queue is hidden.
+	list.refusedLevels = forbidden;
+	return list;
 };
 
 export const processApproval = async (
