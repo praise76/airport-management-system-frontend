@@ -30,6 +30,10 @@ function target(n: StaffNotification): { to: string; params?: Record<string, str
 			return n.relatedEntityId
 				? { to: "/documents/$docId", params: { docId: n.relatedEntityId } }
 				: { to: "/documents" };
+		case "stakeholder_lease":
+			return n.relatedEntityId
+				? { to: "/stakeholders/$stakeholderId", params: { stakeholderId: n.relatedEntityId } }
+				: { to: "/stakeholders" };
 		case "swap_request":
 			return { to: "/swaps" };
 		case "task":

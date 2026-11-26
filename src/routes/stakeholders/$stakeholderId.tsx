@@ -178,6 +178,7 @@ function StakeholderDetailPage() {
 								</Badge>
 								<StakeholderStatusBadge status={stakeholder.status} />
 								<VerificationBadge status={stakeholder.verificationStatus} />
+                                {stakeholder.leasePastGrace && <Badge variant="destructive">Lease past grace period</Badge>}
 								{stakeholder.isAccredited && stakeholder.accreditationLevel && (
 									<AccreditationBadge level={stakeholder.accreditationLevel} />
 								)}

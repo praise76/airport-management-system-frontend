@@ -1,3 +1,4 @@
+import { ExpiryReminders } from "@/components/stakeholders/ExpiryReminders";
 import { PortalNotifications } from "@/components/stakeholders/PortalNotifications";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -299,6 +300,7 @@ function StakeholderDashboardPage() {
 			</header>
 
 			<main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+                {user?.role === "admin" && <ExpiryReminders organizationId={org.id} />}
 				{/* Welcome Section */}
 				<div
 					className={`bg-linear-to-r ${config.gradient} rounded-2xl p-6 text-white relative overflow-hidden`}

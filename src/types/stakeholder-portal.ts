@@ -124,6 +124,7 @@ export interface StakeholderOrganization {
 	leaseAgreementNumber?: string;
 	leaseStartDate?: string;
 	leaseEndDate?: string;
+	leasePastGrace?: boolean;
 	locationInAirport?: string;
 	monthlyRent?: number;
 
