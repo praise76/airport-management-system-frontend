@@ -41,6 +41,7 @@ import { Route as StakeholdersInvoicesRouteImport } from './routes/stakeholders/
 import { Route as StakeholdersActivitiesRouteImport } from './routes/stakeholders/activities'
 import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
 import { Route as StakeholderUsersRouteImport } from './routes/stakeholder/users'
+import { Route as StakeholderStaffRouteImport } from './routes/stakeholder/staff'
 import { Route as StakeholderResetPasswordRouteImport } from './routes/stakeholder/reset-password'
 import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
 import { Route as StakeholderRegisterRouteImport } from './routes/stakeholder/register'
@@ -248,6 +249,11 @@ const StakeholdersStakeholderIdRoute =
 const StakeholderUsersRoute = StakeholderUsersRouteImport.update({
   id: '/stakeholder/users',
   path: '/stakeholder/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderStaffRoute = StakeholderStaffRouteImport.update({
+  id: '/stakeholder/staff',
+  path: '/stakeholder/staff',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholderResetPasswordRoute =
@@ -521,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
+  '/stakeholder/staff': typeof StakeholderStaffRoute
   '/stakeholder/users': typeof StakeholderUsersRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/activities': typeof StakeholdersActivitiesRoute
@@ -599,6 +606,7 @@ export interface FileRoutesByTo {
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
+  '/stakeholder/staff': typeof StakeholderStaffRoute
   '/stakeholder/users': typeof StakeholderUsersRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/activities': typeof StakeholdersActivitiesRoute
@@ -680,6 +688,7 @@ export interface FileRoutesById {
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
+  '/stakeholder/staff': typeof StakeholderStaffRoute
   '/stakeholder/users': typeof StakeholderUsersRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/activities': typeof StakeholdersActivitiesRoute
@@ -762,6 +771,7 @@ export interface FileRouteTypes {
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholder/reset-password'
+    | '/stakeholder/staff'
     | '/stakeholder/users'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/activities'
@@ -840,6 +850,7 @@ export interface FileRouteTypes {
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholder/reset-password'
+    | '/stakeholder/staff'
     | '/stakeholder/users'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/activities'
@@ -920,6 +931,7 @@ export interface FileRouteTypes {
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
     | '/stakeholder/reset-password'
+    | '/stakeholder/staff'
     | '/stakeholder/users'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/activities'
@@ -999,6 +1011,7 @@ export interface RootRouteChildren {
   StakeholderRegisterRoute: typeof StakeholderRegisterRoute
   StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
   StakeholderResetPasswordRoute: typeof StakeholderResetPasswordRoute
+  StakeholderStaffRoute: typeof StakeholderStaffRoute
   StakeholderUsersRoute: typeof StakeholderUsersRoute
   StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
   StakeholdersActivitiesRoute: typeof StakeholdersActivitiesRoute
@@ -1266,6 +1279,13 @@ declare module '@tanstack/react-router' {
       path: '/stakeholder/users'
       fullPath: '/stakeholder/users'
       preLoaderRoute: typeof StakeholderUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/staff': {
+      id: '/stakeholder/staff'
+      path: '/stakeholder/staff'
+      fullPath: '/stakeholder/staff'
+      preLoaderRoute: typeof StakeholderStaffRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholder/reset-password': {
@@ -1667,6 +1687,7 @@ const rootRouteChildren: RootRouteChildren = {
   StakeholderRegisterRoute: StakeholderRegisterRoute,
   StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
   StakeholderResetPasswordRoute: StakeholderResetPasswordRoute,
+  StakeholderStaffRoute: StakeholderStaffRoute,
   StakeholderUsersRoute: StakeholderUsersRoute,
   StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
   StakeholdersActivitiesRoute: StakeholdersActivitiesRoute,

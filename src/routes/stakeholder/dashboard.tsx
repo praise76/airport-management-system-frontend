@@ -267,6 +267,7 @@ function StakeholderDashboardPage() {
 					</div>
 					<div className="flex items-center gap-3">
 						<PortalNotifications stakeholderOrgId={org.id} />
+            {user?.role === "admin" && <Link to="/stakeholder/staff"><Button variant="ghost" className="text-slate-300">Staff register</Button></Link>}
 						<Link to="/stakeholder/users">
 							<Button
 								variant="ghost"
