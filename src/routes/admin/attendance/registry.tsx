@@ -1,3 +1,4 @@
+import { StationHistory } from "@/features/stations/components/StationHistory";
 import { requireStaff } from "@/lib/access";
 import { attendanceScope } from "@/lib/attendanceScope";
 import { useAuthStore } from "@/stores/auth";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/admin/attendance/registry")({
 
 function AttendanceRegistryPage() {
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [historyPerson, setHistoryPerson] = useState<{ id: string; name: string } | null>(null);
 
   const user = useAuthStore((s) => s.user);
   const { data: deptData } = useDepartments({ limit: 300 });
@@ -90,6 +92,15 @@ function AttendanceRegistryPage() {
          </div>
       </div>
 
+      {historyPerson && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-medium">{historyPerson.name}</p>
+            <button type="button" className="text-sm underline" onClick={() => setHistoryPerson(null)}>Close history</button>
+          </div>
+          <StationHistory key={`${historyPerson.id}-${date}`} userId={historyPerson.id} initialDate={date} />
+        </div>
+      )}
       <div className="border rounded-xl bg-card overflow-hidden">
          <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 text-muted-foreground font-medium">
@@ -126,6 +137,7 @@ function AttendanceRegistryPage() {
                               <div>
                                  <div className="font-medium">{user?.firstName} {user?.lastName}</div>
                                  <div className="text-xs text-muted-foreground">{user?.employeeId || user?.email}</div>
+                                 {(record.staffId || user?.id) && <button type="button" className="mt-1 text-xs text-primary underline" onClick={() => setHistoryPerson({ id: record.staffId || user.id, name: `${user?.firstName || ""} ${user?.lastName || ""}`.trim() })}>Station history</button>}
                               </div>
                            </div>
                         </td>

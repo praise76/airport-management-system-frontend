@@ -37,6 +37,7 @@ export function useCheckIn() {
       checkInStation(stationId, coords),
     onSuccess: (_, { stationId }) => {
       queryClient.invalidateQueries({ queryKey: ["stations", stationId] });
+      queryClient.invalidateQueries({ queryKey: ["station-history"] });
       toast.success("Checked in successfully");
     },
     onError: (error: any) => {
@@ -52,6 +53,7 @@ export function useCheckOut() {
     mutationFn: (stationId: string) => checkOutStation(stationId),
     onSuccess: (_, stationId) => {
       queryClient.invalidateQueries({ queryKey: ["stations", stationId] });
+      queryClient.invalidateQueries({ queryKey: ["station-history"] });
       toast.success("Checked out successfully");
     },
     onError: (error: any) => {

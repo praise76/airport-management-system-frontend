@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { getMyRoster } from "@/api/self-service";
+import { StationHistory } from "@/features/stations/components/StationHistory";
 import { StationCheckIn } from "@/features/stations/components/StationCheckIn";
 import { useAllDepartments } from "@/hooks/departments";
 import { getRoles } from "@/lib/access";
@@ -48,6 +49,8 @@ function Page() {
 						: "Check in at your own unit's stations. A post in another unit appears here only when your roster sends you to cover it today."}
 				</p>
 			</div>
+
+			<StationHistory />
 
 			{isLoading ? (
 				<div className="text-center py-10 opacity-50">Loading stations...</div>
