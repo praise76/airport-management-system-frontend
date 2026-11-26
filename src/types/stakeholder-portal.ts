@@ -574,6 +574,8 @@ export interface StakeholderAuthLoginResponse {
 	organization?: StakeholderOrganization; // Might not be returned if not needed, rely on user.stakeholderOrganizationId
 }
 
+export type StakeholderAuthLoginResult = StakeholderAuthLoginResponse | { otpRequired: true; otpToken: string };
+
 export interface StakeholderRegistrationInput {
 	// Step 1: Type
 	stakeholderType: StakeholderType;

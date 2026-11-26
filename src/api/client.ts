@@ -125,6 +125,10 @@ function createApiClient(): AxiosInstance {
 				return Promise.reject(normalizeError(error));
 			}
 
+			// Sign-in and code-verification failures are not expired sessions.
+			if (status === 401 && /\/stakeholder-orgs\/auth\/(login|verify-otp)$/.test(original?.url ?? "")) {
+				return Promise.reject(normalizeError(error));
+			}
 			if (status === 401 && original && !original._retry) {
 				if (isRefreshing) {
 					try {

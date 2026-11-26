@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useStakeholderLogin } from "@/hooks/stakeholder-portal";
+import { useStakeholderLogin, useStakeholderVerifyOtp } from "@/hooks/stakeholder-portal";
 
 export const Route = createFileRoute("/stakeholder/login")({
 	component: StakeholderLoginPage,
@@ -18,25 +18,33 @@ interface LoginFormData {
 	rememberMe: boolean;
 }
 
-function StakeholderLoginPage() {
+export function StakeholderLoginPage() {
 	const navigate = useNavigate();
 	const [showPassword, setShowPassword] = useState(false);
+	const [otpToken, setOtpToken] = useState("");
+	const [otpCode, setOtpCode] = useState("");
 	const {
 		register,
 		handleSubmit,
 		formState: { errors },
 	} = useForm<LoginFormData>();
 	const loginMutation = useStakeholderLogin();
+	const verifyOtp = useStakeholderVerifyOtp();
 
 	const onSubmit = async (data: LoginFormData) => {
-		const result = await loginMutation.mutateAsync({
-			email: data.email,
-			password: data.password,
-		});
-		if (result) {
-			navigate({ to: "/stakeholder/dashboard" });
-		}
-	};
+    try {
+      const result = await loginMutation.mutateAsync({ email: data.email, password: data.password });
+      if ("otpRequired" in result) setOtpToken(result.otpToken);
+      else navigate({ to: "/stakeholder/dashboard" });
+    } catch { /* The mutation displays the error. */ }
+  };
+  const onVerify = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      await verifyOtp.mutateAsync({ otpToken, code: otpCode });
+      navigate({ to: "/stakeholder/dashboard" });
+    } catch { /* The mutation displays the error. */ }
+  };
 
 	return (
 		<div className="min-h-screen flex">
@@ -105,9 +113,9 @@ function StakeholderLoginPage() {
 
 					<div className="space-y-6">
 						<div>
-							<h2 className="text-2xl font-bold">Sign in to your account</h2>
+							<h2 className="text-2xl font-bold">{otpToken ? "Check your email" : "Sign in to your account"}</h2>
 							<p className="text-muted-foreground mt-2">
-								Enter your credentials to access the stakeholder portal
+								{otpToken ? "Enter the six-digit code sent to your email. It expires after five minutes." : "Enter your credentials to access the stakeholder portal"}
 							</p>
 						</div>
 
@@ -123,7 +131,15 @@ function StakeholderLoginPage() {
 								</div>
 							)}
 
-						<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+						{otpToken ? (
+              <form onSubmit={onVerify} className="space-y-5">
+                <div className="space-y-2"><Label htmlFor="otp">Sign-in code</Label>
+                  <Input id="otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={otpCode} onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))} />
+                </div>
+                <Button type="submit" className="w-full" disabled={verifyOtp.isPending || otpCode.length !== 6}>{verifyOtp.isPending ? "Checking..." : "Verify code"}</Button>
+                <Button type="button" variant="outline" className="w-full" onClick={() => { setOtpToken(""); setOtpCode(""); }}>Back to sign in</Button>
+              </form>
+            ) : (<form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 							<div className="space-y-2">
 								<Label htmlFor="email">Email Address</Label>
 								<Input
@@ -206,7 +222,7 @@ function StakeholderLoginPage() {
 								{loginMutation.isPending ? "Signing in..." : "Sign in"}
 								<ArrowRight className="h-4 w-4" />
 							</Button>
-						</form>
+						</form>)}
 
 						<div className="relative">
 							<div className="absolute inset-0 flex items-center">

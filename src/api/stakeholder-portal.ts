@@ -20,6 +20,7 @@ import type {
 	CreateInvoiceInput,
 	StakeholderAuthLoginInput,
 	StakeholderAuthLoginResponse,
+	StakeholderAuthLoginResult,
 	StakeholderRegistrationInput,
 	StakeholderStats,
 	GlobalPermitListParams,
@@ -977,9 +978,14 @@ export async function markPortalNotificationsRead(stakeholderOrgId: string, ids?
 
 export async function stakeholderLogin(
 	input: StakeholderAuthLoginInput,
-): Promise<StakeholderAuthLoginResponse> {
+): Promise<StakeholderAuthLoginResult> {
 	const res = await api.post("/stakeholder-orgs/auth/login", input);
 	return res.data.data ?? res.data;
+}
+
+export async function verifyStakeholderOtp(otpToken: string, code: string): Promise<StakeholderAuthLoginResponse> {
+  const res = await api.post("/stakeholder-orgs/auth/verify-otp", { otpToken, code });
+  return res.data.data ?? res.data;
 }
 
 export async function refreshStakeholderToken(

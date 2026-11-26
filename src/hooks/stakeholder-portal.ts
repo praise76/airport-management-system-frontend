@@ -12,6 +12,7 @@ import type {
 	CreateFlightInput,
 	CreateInvoiceInput,
 	StakeholderAuthLoginInput,
+	StakeholderAuthLoginResponse,
 	StakeholderRegistrationInput,
 	AccreditationLevel,
 	OfficeType,
@@ -578,39 +579,34 @@ export function useReviewStakeholderInvoice(stakeholderOrgId: string) {
 // STAKEHOLDER AUTH
 // ============================================
 
+function finishStakeholderLogin(data: StakeholderAuthLoginResponse) {
+  localStorage.setItem("stakeholder_token", data.accessToken);
+  localStorage.setItem("stakeholder_user", JSON.stringify(data.user));
+  if (data.organization) localStorage.setItem("stakeholder_org", JSON.stringify(data.organization));
+  useAuthStore.getState().login({
+    accessToken: data.accessToken, refreshToken: data.refreshToken,
+    user: { id: data.user.id, userId: data.user.id, firstName: data.user.firstName, lastName: data.user.lastName,
+      name: `${data.user.firstName} ${data.user.lastName}`, email: data.user.email, role: data.user.role,
+      organizationId: data.organization?.id || data.user.stakeholderOrganizationId,
+      type: (data.user as any).type || "stakeholder" },
+  });
+  toast.success("Login successful");
+}
+
 export function useStakeholderLogin() {
-	return useMutation({
-		mutationFn: (input: StakeholderAuthLoginInput) =>
-			StakeholderPortalApi.stakeholderLogin(input),
-		onSuccess: (data) => {
-			// Save to specific storage keys for persistence specific to stakeholder handling if needed
-			localStorage.setItem("stakeholder_token", data.accessToken);
-			localStorage.setItem("stakeholder_user", JSON.stringify(data.user));
-			if (data.organization) {
-				localStorage.setItem("stakeholder_org", JSON.stringify(data.organization));
-			}
+  return useMutation({
+    mutationFn: (input: StakeholderAuthLoginInput) => StakeholderPortalApi.stakeholderLogin(input),
+    onSuccess: (data) => { if (!("otpRequired" in data)) finishStakeholderLogin(data); },
+    onError: (err: any) => toast.error(err.message || "Login failed"),
+  });
+}
 
-			// Sync with main AuthStore so the UI (Dashboard) knows we are logged in
-			useAuthStore.getState().login({
-				accessToken: data.accessToken,
-				refreshToken: data.refreshToken,
-				user: {
-					id: data.user.id,
-					userId: data.user.id,
-					firstName: data.user.firstName,
-					lastName: data.user.lastName,
-					name: `${data.user.firstName} ${data.user.lastName}`,
-					email: data.user.email,
-					role: data.user.role,
-					organizationId: data.organization?.id || data.user.stakeholderOrganizationId,
-					type: (data.user as any).type || "stakeholder",
-				},
-			});
-
-			toast.success("Login successful");
-		},
-		onError: (err: any) => toast.error(err.message || "Login failed"),
-	});
+export function useStakeholderVerifyOtp() {
+  return useMutation({
+    mutationFn: ({ otpToken, code }: { otpToken: string; code: string }) => StakeholderPortalApi.verifyStakeholderOtp(otpToken, code),
+    onSuccess: finishStakeholderLogin,
+    onError: (err: any) => toast.error(err.message || "Could not verify the code"),
+  });
 }
 
 export function useStakeholderRegister() {
