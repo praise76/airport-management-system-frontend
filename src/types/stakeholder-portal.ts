@@ -125,6 +125,8 @@ export interface StakeholderOrganization {
 	leaseStartDate?: string;
 	leaseEndDate?: string;
 	leasePastGrace?: boolean;
+	requestedStationIds?: string[];
+	requestedStations?: { id: string; name: string; code: string }[];
 	locationInAirport?: string;
 	monthlyRent?: number;
 
@@ -586,6 +588,7 @@ export interface StakeholderRegistrationInput {
 	registrationNumber?: string;
 	tin?: string;
 	officeAddress: string;
+	requestedStationIds?: string[];
 
 	// Type-specific (varies)
 	[key: string]: any;

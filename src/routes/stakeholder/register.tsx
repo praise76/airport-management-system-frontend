@@ -1,3 +1,4 @@
+import { RequestedStations, useRegistrationStations } from "@/components/stakeholders/RequestedStations";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
@@ -120,6 +121,7 @@ function RegisterPage() {
   >({});
   const registerMutation = useStakeholderRegister();
   const [submitErrors, setSubmitErrors] = useState<string[]>([]);
+  const { data: availableStations = [] } = useRegistrationStations(step === 4);
 
   const updateForm = (data: Partial<StakeholderRegistrationInput>) =>
     setFormData((prev) => ({ ...prev, ...data }));
@@ -276,6 +278,7 @@ function RegisterPage() {
                     className="bg-slate-800 text-white border-slate-700 min-h-[80px]"
                   />
                 </div>
+                <RequestedStations value={formData.requestedStationIds ?? []} onChange={(ids) => updateForm({ requestedStationIds: ids })} />
                 {/* Type-specific fields */}
                 {formData.stakeholderType === "airline" && (
                   <div className="grid grid-cols-2 gap-4">
@@ -470,6 +473,7 @@ function RegisterPage() {
                         {formData.officeAddress}
                       </span>
                     </div>
+                    <div className="col-span-2 text-slate-300">Requested stations: {availableStations.filter((station) => formData.requestedStationIds?.includes(station.id)).map((station) => station.name).join(", ") || "None"}</div>
                     {[
                       ["CAC number", formData.registrationNumber],
                       ["TIN", formData.tin],

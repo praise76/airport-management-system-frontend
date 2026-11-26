@@ -187,7 +187,7 @@ function StakeholderDetailPage() {
 					</div>
 				</div>
 
-				{/* Quick Actions */}
+{/* Quick Actions */}
 				<div className="flex flex-wrap gap-2">
 					{canReview && stakeholder.status === "pending_verification" && (
 						<>
@@ -229,6 +229,14 @@ function StakeholderDetailPage() {
 					)}
 				</div>
 			</div>
+
+      {stakeholder.requestedStations?.length ? (
+        <div className="rounded-lg border p-4 text-sm">
+          <p className="font-medium">Requested stations</p>
+          <p className="text-muted-foreground">{stakeholder.requestedStations.map((station) => station.name).join(", ")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Requested access is subject to approval.</p>
+        </div>
+      ) : null}
 
 			{/* Tabs */}
 			<div className="border-b">
