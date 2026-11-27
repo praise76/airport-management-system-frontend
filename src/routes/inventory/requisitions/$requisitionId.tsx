@@ -85,8 +85,9 @@ function RequisitionDetailPage() {
 	}
 
 	const itemById = new Map((items ?? []).map((i) => [i.id, i]));
+	const currentUserId = user?.userId ?? user?.id;
 	const isCurrentApprover =
-		!!user?.userId && requisition.currentApproverUserId === user.userId;
+		!!currentUserId && requisition.currentApproverUserId === currentUserId;
 	// The server says what this person may do: the one it waits for may decide, and Stores (or a
 	// role that issues stock) may issue. The permission checks are only a fallback for an old server.
 	const canDecide =
@@ -96,7 +97,7 @@ function RequisitionDetailPage() {
 		ISSUABLE_STATUSES.has(requisition.status);
 	const canCancel =
 		CANCELLABLE_STATUSES.has(requisition.status) &&
-		(requisition.requestedByUserId === user?.userId ||
+		((!!currentUserId && requisition.requestedByUserId === currentUserId) ||
 			hasPermission("inventory.manage"));
 
 	async function handleDecide(decision: "approved" | "rejected") {

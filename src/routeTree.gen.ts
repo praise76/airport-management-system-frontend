@@ -36,23 +36,33 @@ import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as TerminalsImprestRouteImport } from './routes/terminals/imprest'
 import { Route as StakeholdersVerificationRouteImport } from './routes/stakeholders/verification'
+import { Route as StakeholdersRenewalsRouteImport } from './routes/stakeholders/renewals'
 import { Route as StakeholdersPermitsRouteImport } from './routes/stakeholders/permits'
+import { Route as StakeholdersNoticesRouteImport } from './routes/stakeholders/notices'
 import { Route as StakeholdersInvoicesRouteImport } from './routes/stakeholders/invoices'
+import { Route as StakeholdersGateCheckRouteImport } from './routes/stakeholders/gate-check'
+import { Route as StakeholdersCompanyMessagesRouteImport } from './routes/stakeholders/company-messages'
+import { Route as StakeholdersCardsRouteImport } from './routes/stakeholders/cards'
 import { Route as StakeholdersActivitiesRouteImport } from './routes/stakeholders/activities'
 import { Route as StakeholdersStakeholderIdRouteImport } from './routes/stakeholders/$stakeholderId'
 import { Route as StakeholderUsersRouteImport } from './routes/stakeholder/users'
 import { Route as StakeholderStaffRouteImport } from './routes/stakeholder/staff'
 import { Route as StakeholderResetPasswordRouteImport } from './routes/stakeholder/reset-password'
+import { Route as StakeholderRenewalsRouteImport } from './routes/stakeholder/renewals'
 import { Route as StakeholderRegistrationSuccessRouteImport } from './routes/stakeholder/registration-success'
 import { Route as StakeholderRegisterRouteImport } from './routes/stakeholder/register'
 import { Route as StakeholderProfileRouteImport } from './routes/stakeholder/profile'
 import { Route as StakeholderPermitsRouteImport } from './routes/stakeholder/permits'
+import { Route as StakeholderNoticesRouteImport } from './routes/stakeholder/notices'
+import { Route as StakeholderMessagesRouteImport } from './routes/stakeholder/messages'
 import { Route as StakeholderLoginRouteImport } from './routes/stakeholder/login'
 import { Route as StakeholderInvoicesRouteImport } from './routes/stakeholder/invoices'
 import { Route as StakeholderForgotPasswordRouteImport } from './routes/stakeholder/forgot-password'
 import { Route as StakeholderFlightsRouteImport } from './routes/stakeholder/flights'
 import { Route as StakeholderDocumentsRouteImport } from './routes/stakeholder/documents'
 import { Route as StakeholderDashboardRouteImport } from './routes/stakeholder/dashboard'
+import { Route as StakeholderCardsRouteImport } from './routes/stakeholder/cards'
+import { Route as StakeholderAuditLogRouteImport } from './routes/stakeholder/audit-log'
 import { Route as StakeholderActivitiesRouteImport } from './routes/stakeholder/activities'
 import { Route as RosterMyShiftsRouteImport } from './routes/roster/my-shifts'
 import { Route as RosterGenerateRouteImport } from './routes/roster/generate'
@@ -225,14 +235,40 @@ const StakeholdersVerificationRoute =
     path: '/stakeholders/verification',
     getParentRoute: () => rootRouteImport,
   } as any)
+const StakeholdersRenewalsRoute = StakeholdersRenewalsRouteImport.update({
+  id: '/stakeholders/renewals',
+  path: '/stakeholders/renewals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StakeholdersPermitsRoute = StakeholdersPermitsRouteImport.update({
   id: '/stakeholders/permits',
   path: '/stakeholders/permits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StakeholdersNoticesRoute = StakeholdersNoticesRouteImport.update({
+  id: '/stakeholders/notices',
+  path: '/stakeholders/notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StakeholdersInvoicesRoute = StakeholdersInvoicesRouteImport.update({
   id: '/stakeholders/invoices',
   path: '/stakeholders/invoices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholdersGateCheckRoute = StakeholdersGateCheckRouteImport.update({
+  id: '/stakeholders/gate-check',
+  path: '/stakeholders/gate-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholdersCompanyMessagesRoute =
+  StakeholdersCompanyMessagesRouteImport.update({
+    id: '/stakeholders/company-messages',
+    path: '/stakeholders/company-messages',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const StakeholdersCardsRoute = StakeholdersCardsRouteImport.update({
+  id: '/stakeholders/cards',
+  path: '/stakeholders/cards',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholdersActivitiesRoute = StakeholdersActivitiesRouteImport.update({
@@ -262,6 +298,11 @@ const StakeholderResetPasswordRoute =
     path: '/stakeholder/reset-password',
     getParentRoute: () => rootRouteImport,
   } as any)
+const StakeholderRenewalsRoute = StakeholderRenewalsRouteImport.update({
+  id: '/stakeholder/renewals',
+  path: '/stakeholder/renewals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StakeholderRegistrationSuccessRoute =
   StakeholderRegistrationSuccessRouteImport.update({
     id: '/stakeholder/registration-success',
@@ -281,6 +322,16 @@ const StakeholderProfileRoute = StakeholderProfileRouteImport.update({
 const StakeholderPermitsRoute = StakeholderPermitsRouteImport.update({
   id: '/stakeholder/permits',
   path: '/stakeholder/permits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderNoticesRoute = StakeholderNoticesRouteImport.update({
+  id: '/stakeholder/notices',
+  path: '/stakeholder/notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderMessagesRoute = StakeholderMessagesRouteImport.update({
+  id: '/stakeholder/messages',
+  path: '/stakeholder/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholderLoginRoute = StakeholderLoginRouteImport.update({
@@ -312,6 +363,16 @@ const StakeholderDocumentsRoute = StakeholderDocumentsRouteImport.update({
 const StakeholderDashboardRoute = StakeholderDashboardRouteImport.update({
   id: '/stakeholder/dashboard',
   path: '/stakeholder/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderCardsRoute = StakeholderCardsRouteImport.update({
+  id: '/stakeholder/cards',
+  path: '/stakeholder/cards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StakeholderAuditLogRoute = StakeholderAuditLogRouteImport.update({
+  id: '/stakeholder/audit-log',
+  path: '/stakeholder/audit-log',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StakeholderActivitiesRoute = StakeholderActivitiesRouteImport.update({
@@ -516,23 +577,33 @@ export interface FileRoutesByFullPath {
   '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
+  '/stakeholder/audit-log': typeof StakeholderAuditLogRoute
+  '/stakeholder/cards': typeof StakeholderCardsRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
   '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
   '/stakeholder/forgot-password': typeof StakeholderForgotPasswordRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
+  '/stakeholder/messages': typeof StakeholderMessagesRoute
+  '/stakeholder/notices': typeof StakeholderNoticesRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
   '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholder/renewals': typeof StakeholderRenewalsRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholder/staff': typeof StakeholderStaffRoute
   '/stakeholder/users': typeof StakeholderUsersRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/activities': typeof StakeholdersActivitiesRoute
+  '/stakeholders/cards': typeof StakeholdersCardsRoute
+  '/stakeholders/company-messages': typeof StakeholdersCompanyMessagesRoute
+  '/stakeholders/gate-check': typeof StakeholdersGateCheckRoute
   '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
+  '/stakeholders/notices': typeof StakeholdersNoticesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
+  '/stakeholders/renewals': typeof StakeholdersRenewalsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/terminals/imprest': typeof TerminalsImprestRoute
   '/admin': typeof AdminIndexRoute
@@ -595,23 +666,33 @@ export interface FileRoutesByTo {
   '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
+  '/stakeholder/audit-log': typeof StakeholderAuditLogRoute
+  '/stakeholder/cards': typeof StakeholderCardsRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
   '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
   '/stakeholder/forgot-password': typeof StakeholderForgotPasswordRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
+  '/stakeholder/messages': typeof StakeholderMessagesRoute
+  '/stakeholder/notices': typeof StakeholderNoticesRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
   '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholder/renewals': typeof StakeholderRenewalsRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholder/staff': typeof StakeholderStaffRoute
   '/stakeholder/users': typeof StakeholderUsersRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/activities': typeof StakeholdersActivitiesRoute
+  '/stakeholders/cards': typeof StakeholdersCardsRoute
+  '/stakeholders/company-messages': typeof StakeholdersCompanyMessagesRoute
+  '/stakeholders/gate-check': typeof StakeholdersGateCheckRoute
   '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
+  '/stakeholders/notices': typeof StakeholdersNoticesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
+  '/stakeholders/renewals': typeof StakeholdersRenewalsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/terminals/imprest': typeof TerminalsImprestRoute
   '/admin': typeof AdminIndexRoute
@@ -677,23 +758,33 @@ export interface FileRoutesById {
   '/roster/generate': typeof RosterGenerateRoute
   '/roster/my-shifts': typeof RosterMyShiftsRoute
   '/stakeholder/activities': typeof StakeholderActivitiesRoute
+  '/stakeholder/audit-log': typeof StakeholderAuditLogRoute
+  '/stakeholder/cards': typeof StakeholderCardsRoute
   '/stakeholder/dashboard': typeof StakeholderDashboardRoute
   '/stakeholder/documents': typeof StakeholderDocumentsRoute
   '/stakeholder/flights': typeof StakeholderFlightsRoute
   '/stakeholder/forgot-password': typeof StakeholderForgotPasswordRoute
   '/stakeholder/invoices': typeof StakeholderInvoicesRoute
   '/stakeholder/login': typeof StakeholderLoginRoute
+  '/stakeholder/messages': typeof StakeholderMessagesRoute
+  '/stakeholder/notices': typeof StakeholderNoticesRoute
   '/stakeholder/permits': typeof StakeholderPermitsRoute
   '/stakeholder/profile': typeof StakeholderProfileRoute
   '/stakeholder/register': typeof StakeholderRegisterRoute
   '/stakeholder/registration-success': typeof StakeholderRegistrationSuccessRoute
+  '/stakeholder/renewals': typeof StakeholderRenewalsRoute
   '/stakeholder/reset-password': typeof StakeholderResetPasswordRoute
   '/stakeholder/staff': typeof StakeholderStaffRoute
   '/stakeholder/users': typeof StakeholderUsersRoute
   '/stakeholders/$stakeholderId': typeof StakeholdersStakeholderIdRoute
   '/stakeholders/activities': typeof StakeholdersActivitiesRoute
+  '/stakeholders/cards': typeof StakeholdersCardsRoute
+  '/stakeholders/company-messages': typeof StakeholdersCompanyMessagesRoute
+  '/stakeholders/gate-check': typeof StakeholdersGateCheckRoute
   '/stakeholders/invoices': typeof StakeholdersInvoicesRoute
+  '/stakeholders/notices': typeof StakeholdersNoticesRoute
   '/stakeholders/permits': typeof StakeholdersPermitsRoute
+  '/stakeholders/renewals': typeof StakeholdersRenewalsRoute
   '/stakeholders/verification': typeof StakeholdersVerificationRoute
   '/terminals/imprest': typeof TerminalsImprestRoute
   '/admin/': typeof AdminIndexRoute
@@ -760,23 +851,33 @@ export interface FileRouteTypes {
     | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
+    | '/stakeholder/audit-log'
+    | '/stakeholder/cards'
     | '/stakeholder/dashboard'
     | '/stakeholder/documents'
     | '/stakeholder/flights'
     | '/stakeholder/forgot-password'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
+    | '/stakeholder/messages'
+    | '/stakeholder/notices'
     | '/stakeholder/permits'
     | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
+    | '/stakeholder/renewals'
     | '/stakeholder/reset-password'
     | '/stakeholder/staff'
     | '/stakeholder/users'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/activities'
+    | '/stakeholders/cards'
+    | '/stakeholders/company-messages'
+    | '/stakeholders/gate-check'
     | '/stakeholders/invoices'
+    | '/stakeholders/notices'
     | '/stakeholders/permits'
+    | '/stakeholders/renewals'
     | '/stakeholders/verification'
     | '/terminals/imprest'
     | '/admin'
@@ -839,23 +940,33 @@ export interface FileRouteTypes {
     | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
+    | '/stakeholder/audit-log'
+    | '/stakeholder/cards'
     | '/stakeholder/dashboard'
     | '/stakeholder/documents'
     | '/stakeholder/flights'
     | '/stakeholder/forgot-password'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
+    | '/stakeholder/messages'
+    | '/stakeholder/notices'
     | '/stakeholder/permits'
     | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
+    | '/stakeholder/renewals'
     | '/stakeholder/reset-password'
     | '/stakeholder/staff'
     | '/stakeholder/users'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/activities'
+    | '/stakeholders/cards'
+    | '/stakeholders/company-messages'
+    | '/stakeholders/gate-check'
     | '/stakeholders/invoices'
+    | '/stakeholders/notices'
     | '/stakeholders/permits'
+    | '/stakeholders/renewals'
     | '/stakeholders/verification'
     | '/terminals/imprest'
     | '/admin'
@@ -920,23 +1031,33 @@ export interface FileRouteTypes {
     | '/roster/generate'
     | '/roster/my-shifts'
     | '/stakeholder/activities'
+    | '/stakeholder/audit-log'
+    | '/stakeholder/cards'
     | '/stakeholder/dashboard'
     | '/stakeholder/documents'
     | '/stakeholder/flights'
     | '/stakeholder/forgot-password'
     | '/stakeholder/invoices'
     | '/stakeholder/login'
+    | '/stakeholder/messages'
+    | '/stakeholder/notices'
     | '/stakeholder/permits'
     | '/stakeholder/profile'
     | '/stakeholder/register'
     | '/stakeholder/registration-success'
+    | '/stakeholder/renewals'
     | '/stakeholder/reset-password'
     | '/stakeholder/staff'
     | '/stakeholder/users'
     | '/stakeholders/$stakeholderId'
     | '/stakeholders/activities'
+    | '/stakeholders/cards'
+    | '/stakeholders/company-messages'
+    | '/stakeholders/gate-check'
     | '/stakeholders/invoices'
+    | '/stakeholders/notices'
     | '/stakeholders/permits'
+    | '/stakeholders/renewals'
     | '/stakeholders/verification'
     | '/terminals/imprest'
     | '/admin/'
@@ -1000,23 +1121,33 @@ export interface RootRouteChildren {
   RosterGenerateRoute: typeof RosterGenerateRoute
   RosterMyShiftsRoute: typeof RosterMyShiftsRoute
   StakeholderActivitiesRoute: typeof StakeholderActivitiesRoute
+  StakeholderAuditLogRoute: typeof StakeholderAuditLogRoute
+  StakeholderCardsRoute: typeof StakeholderCardsRoute
   StakeholderDashboardRoute: typeof StakeholderDashboardRoute
   StakeholderDocumentsRoute: typeof StakeholderDocumentsRoute
   StakeholderFlightsRoute: typeof StakeholderFlightsRoute
   StakeholderForgotPasswordRoute: typeof StakeholderForgotPasswordRoute
   StakeholderInvoicesRoute: typeof StakeholderInvoicesRoute
   StakeholderLoginRoute: typeof StakeholderLoginRoute
+  StakeholderMessagesRoute: typeof StakeholderMessagesRoute
+  StakeholderNoticesRoute: typeof StakeholderNoticesRoute
   StakeholderPermitsRoute: typeof StakeholderPermitsRoute
   StakeholderProfileRoute: typeof StakeholderProfileRoute
   StakeholderRegisterRoute: typeof StakeholderRegisterRoute
   StakeholderRegistrationSuccessRoute: typeof StakeholderRegistrationSuccessRoute
+  StakeholderRenewalsRoute: typeof StakeholderRenewalsRoute
   StakeholderResetPasswordRoute: typeof StakeholderResetPasswordRoute
   StakeholderStaffRoute: typeof StakeholderStaffRoute
   StakeholderUsersRoute: typeof StakeholderUsersRoute
   StakeholdersStakeholderIdRoute: typeof StakeholdersStakeholderIdRoute
   StakeholdersActivitiesRoute: typeof StakeholdersActivitiesRoute
+  StakeholdersCardsRoute: typeof StakeholdersCardsRoute
+  StakeholdersCompanyMessagesRoute: typeof StakeholdersCompanyMessagesRoute
+  StakeholdersGateCheckRoute: typeof StakeholdersGateCheckRoute
   StakeholdersInvoicesRoute: typeof StakeholdersInvoicesRoute
+  StakeholdersNoticesRoute: typeof StakeholdersNoticesRoute
   StakeholdersPermitsRoute: typeof StakeholdersPermitsRoute
+  StakeholdersRenewalsRoute: typeof StakeholdersRenewalsRoute
   StakeholdersVerificationRoute: typeof StakeholdersVerificationRoute
   TerminalsImprestRoute: typeof TerminalsImprestRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -1246,6 +1377,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholdersVerificationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholders/renewals': {
+      id: '/stakeholders/renewals'
+      path: '/stakeholders/renewals'
+      fullPath: '/stakeholders/renewals'
+      preLoaderRoute: typeof StakeholdersRenewalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stakeholders/permits': {
       id: '/stakeholders/permits'
       path: '/stakeholders/permits'
@@ -1253,11 +1391,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholdersPermitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholders/notices': {
+      id: '/stakeholders/notices'
+      path: '/stakeholders/notices'
+      fullPath: '/stakeholders/notices'
+      preLoaderRoute: typeof StakeholdersNoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stakeholders/invoices': {
       id: '/stakeholders/invoices'
       path: '/stakeholders/invoices'
       fullPath: '/stakeholders/invoices'
       preLoaderRoute: typeof StakeholdersInvoicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/gate-check': {
+      id: '/stakeholders/gate-check'
+      path: '/stakeholders/gate-check'
+      fullPath: '/stakeholders/gate-check'
+      preLoaderRoute: typeof StakeholdersGateCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/company-messages': {
+      id: '/stakeholders/company-messages'
+      path: '/stakeholders/company-messages'
+      fullPath: '/stakeholders/company-messages'
+      preLoaderRoute: typeof StakeholdersCompanyMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholders/cards': {
+      id: '/stakeholders/cards'
+      path: '/stakeholders/cards'
+      fullPath: '/stakeholders/cards'
+      preLoaderRoute: typeof StakeholdersCardsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholders/activities': {
@@ -1295,6 +1461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StakeholderResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stakeholder/renewals': {
+      id: '/stakeholder/renewals'
+      path: '/stakeholder/renewals'
+      fullPath: '/stakeholder/renewals'
+      preLoaderRoute: typeof StakeholderRenewalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stakeholder/registration-success': {
       id: '/stakeholder/registration-success'
       path: '/stakeholder/registration-success'
@@ -1321,6 +1494,20 @@ declare module '@tanstack/react-router' {
       path: '/stakeholder/permits'
       fullPath: '/stakeholder/permits'
       preLoaderRoute: typeof StakeholderPermitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/notices': {
+      id: '/stakeholder/notices'
+      path: '/stakeholder/notices'
+      fullPath: '/stakeholder/notices'
+      preLoaderRoute: typeof StakeholderNoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/messages': {
+      id: '/stakeholder/messages'
+      path: '/stakeholder/messages'
+      fullPath: '/stakeholder/messages'
+      preLoaderRoute: typeof StakeholderMessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholder/login': {
@@ -1363,6 +1550,20 @@ declare module '@tanstack/react-router' {
       path: '/stakeholder/dashboard'
       fullPath: '/stakeholder/dashboard'
       preLoaderRoute: typeof StakeholderDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/cards': {
+      id: '/stakeholder/cards'
+      path: '/stakeholder/cards'
+      fullPath: '/stakeholder/cards'
+      preLoaderRoute: typeof StakeholderCardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stakeholder/audit-log': {
+      id: '/stakeholder/audit-log'
+      path: '/stakeholder/audit-log'
+      fullPath: '/stakeholder/audit-log'
+      preLoaderRoute: typeof StakeholderAuditLogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stakeholder/activities': {
@@ -1676,23 +1877,33 @@ const rootRouteChildren: RootRouteChildren = {
   RosterGenerateRoute: RosterGenerateRoute,
   RosterMyShiftsRoute: RosterMyShiftsRoute,
   StakeholderActivitiesRoute: StakeholderActivitiesRoute,
+  StakeholderAuditLogRoute: StakeholderAuditLogRoute,
+  StakeholderCardsRoute: StakeholderCardsRoute,
   StakeholderDashboardRoute: StakeholderDashboardRoute,
   StakeholderDocumentsRoute: StakeholderDocumentsRoute,
   StakeholderFlightsRoute: StakeholderFlightsRoute,
   StakeholderForgotPasswordRoute: StakeholderForgotPasswordRoute,
   StakeholderInvoicesRoute: StakeholderInvoicesRoute,
   StakeholderLoginRoute: StakeholderLoginRoute,
+  StakeholderMessagesRoute: StakeholderMessagesRoute,
+  StakeholderNoticesRoute: StakeholderNoticesRoute,
   StakeholderPermitsRoute: StakeholderPermitsRoute,
   StakeholderProfileRoute: StakeholderProfileRoute,
   StakeholderRegisterRoute: StakeholderRegisterRoute,
   StakeholderRegistrationSuccessRoute: StakeholderRegistrationSuccessRoute,
+  StakeholderRenewalsRoute: StakeholderRenewalsRoute,
   StakeholderResetPasswordRoute: StakeholderResetPasswordRoute,
   StakeholderStaffRoute: StakeholderStaffRoute,
   StakeholderUsersRoute: StakeholderUsersRoute,
   StakeholdersStakeholderIdRoute: StakeholdersStakeholderIdRoute,
   StakeholdersActivitiesRoute: StakeholdersActivitiesRoute,
+  StakeholdersCardsRoute: StakeholdersCardsRoute,
+  StakeholdersCompanyMessagesRoute: StakeholdersCompanyMessagesRoute,
+  StakeholdersGateCheckRoute: StakeholdersGateCheckRoute,
   StakeholdersInvoicesRoute: StakeholdersInvoicesRoute,
+  StakeholdersNoticesRoute: StakeholdersNoticesRoute,
   StakeholdersPermitsRoute: StakeholdersPermitsRoute,
+  StakeholdersRenewalsRoute: StakeholdersRenewalsRoute,
   StakeholdersVerificationRoute: StakeholdersVerificationRoute,
   TerminalsImprestRoute: TerminalsImprestRoute,
   AdminIndexRoute: AdminIndexRoute,

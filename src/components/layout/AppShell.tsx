@@ -107,6 +107,15 @@ const navGroups: NavGroup[] = [
 				roles: [...ROLE_GROUPS.registry],
 			},
 			{
+                label: "Staff renewals",
+                to: "/stakeholders/renewals",
+                icon: FileText,
+            },
+            { label: "Company notices", to: "/stakeholders/notices", icon: FileText },
+            { label: "Company messages", to: "/stakeholders/company-messages", icon: FileText },
+            { label: "On-duty cards", to: "/stakeholders/cards", icon: FileText },
+            { label: "Gate card check", to: "/stakeholders/gate-check", icon: FileText },
+			{
 				label: "Tasks",
 				to: "/tasks",
 				icon: ClipboardList,

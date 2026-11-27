@@ -1,0 +1,7 @@
+import { createFileRoute,Link } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { QRCodeSVG } from 'qrcode.react';
+import { companyCards } from '@/api/stakeholder-cards';
+import { useAuthStore } from '@/stores/auth';
+export const Route=createFileRoute('/stakeholder/cards')({component:Cards});
+function Cards(){const user=useAuthStore(s=>s.user),org=user?.organizationId||'';const q=useQuery({queryKey:['company-cards',org],queryFn:()=>companyCards(org),enabled:!!org&&user?.role==='admin'});return <main className="mx-auto max-w-4xl space-y-4 p-6 text-slate-100"><Link to="/stakeholder/dashboard">Back to dashboard</Link><h1 className="text-2xl">On-duty cards</h1>{user?.role!=='admin'?<p>Only company administrators can view cards.</p>:q.isLoading?<p>Loading…</p>:q.isError?<p>Could not load cards.</p>:!q.data?.length?<p>No cards yet.</p>:q.data.map(c=><article key={c.id} className="rounded border border-slate-700 p-4 space-y-2"><strong>{c.firstName} {c.lastName}</strong><p>{c.cardNumber} · {c.stage.replaceAll('_',' ')}</p>{c.daysUntilExpiry!=null&&c.daysUntilExpiry<=90&&<p className="font-semibold text-amber-400">{c.daysUntilExpiry<0?'Expired':c.daysUntilExpiry===0?'Expires today':`Expires in ${c.daysUntilExpiry} days`}</p>}{c.expiresAt&&<p>Expires {new Date(c.expiresAt).toLocaleDateString()}</p>}{c.stage==='issued'&&<div className="inline-block bg-white p-2"><QRCodeSVG value={c.cardNumber} size={128}/></div>}</article>)}</main>}

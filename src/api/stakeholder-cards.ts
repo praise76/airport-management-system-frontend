@@ -1,0 +1,11 @@
+import { api } from './client';
+export type Card={id:string;cardNumber:string;stage:string;issuedAt:string|null;expiresAt:string|null;firstName:string;lastName:string;companyName:string;daysUntilExpiry?:number|null};
+export type Eligible={id:string;firstName:string;lastName:string;companyName:string};
+export type GateResult={allowed:boolean;status?:string;cardNumber?:string;stage?:string;expiresAt?:string;firstName?:string;lastName?:string;company?:string;stations?:{id:string;name:string}[]};
+export const cardQueue=async():Promise<Card[]> => (await api.get('/stakeholder-orgs/cards/pass-office')).data.data;
+export const eligibleCards=async():Promise<Eligible[]> => (await api.get('/stakeholder-orgs/cards/pass-office/eligible')).data.data;
+export const createCard=async(renewalPersonId:string)=>api.post('/stakeholder-orgs/cards/pass-office',{renewalPersonId});
+export const advanceCard=async(id:string,stage:string)=>api.post(`/stakeholder-orgs/cards/pass-office/${id}/stage`,{stage});
+export const companyCards=async(org:string):Promise<Card[]> => (await api.get(`/stakeholder-orgs/${org}/cards`)).data.data;
+export const gateStations=async():Promise<{id:string;name:string}[]> => (await api.get('/stakeholder-orgs/cards/gate-stations')).data.data;
+export const checkCard=async(number:string,stationId:string):Promise<GateResult> => (await api.get(`/stakeholder-orgs/cards/gate/${encodeURIComponent(number)}`,{params:{stationId}})).data.data;

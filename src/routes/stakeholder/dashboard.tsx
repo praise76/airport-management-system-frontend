@@ -267,7 +267,7 @@ function StakeholderDashboardPage() {
 					</div>
 					<div className="flex items-center gap-3">
 						<PortalNotifications stakeholderOrgId={org.id} />
-            {user?.role === "admin" && <Link to="/stakeholder/staff"><Button variant="ghost" className="text-slate-300">Staff register</Button></Link>}
+            <Link to="/stakeholder/messages"><Button variant="ghost" className="text-slate-300">Messages</Button></Link><Link to="/stakeholder/notices"><Button variant="ghost" className="text-slate-300">Notices</Button></Link>{user?.role === "admin" && <><Link to="/stakeholder/staff"><Button variant="ghost" className="text-slate-300">Staff register</Button></Link><Link to="/stakeholder/cards"><Button variant="ghost" className="text-slate-300">Cards</Button></Link><Link to="/stakeholder/renewals"><Button variant="ghost" className="text-slate-300">Renewals</Button></Link><Link to="/stakeholder/audit-log"><Button variant="ghost" className="text-slate-300">Audit log</Button></Link></>}
 						<Link to="/stakeholder/users">
 							<Button
 								variant="ghost"
