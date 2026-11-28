@@ -136,7 +136,7 @@ export const useAddRosterEntry = () => {
 			);
 			return data.data;
 		},
-		onSuccess: (data, variables) => {
+		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: ["roster", variables.rosterId],
 			});
@@ -162,7 +162,7 @@ export const useUpdateRosterEntry = () => {
 			);
 			return data.data;
 		},
-		onSuccess: (data, variables) => {
+		onSuccess: (_data, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: ["roster", variables.rosterId],
 			});
@@ -431,3 +431,9 @@ export const useAssignShiftPattern = () => {
 		},
 	});
 };
+
+export type RosterScopeTarget={id:string;name:string;level:number;unitId:string;departmentId:string};
+export const useRosterWorkflowScope=()=>useQuery({queryKey:['roster-workflow-scope'],queryFn:async():Promise<RosterScopeTarget[]> => (await api.get('/roster/workflow-scope')).data.data});
+export const useRosterReviewAction=()=>{const qc=useQueryClient();return useMutation({mutationFn:async(input:{id:string;action:'submit'|'return';comment?:string})=>(await api.post(`/roster/${input.id}/${input.action}`,{comment:input.comment})).data.data,onSuccess:()=>{void qc.invalidateQueries({queryKey:['rosters']});void qc.invalidateQueries({queryKey:['roster']});}})};
+
+export const useRosterEligibleStaff=(id:string)=>useQuery({queryKey:['roster-eligible-staff',id],queryFn:async()=>({data:(await api.get(`/roster/${id}/eligible-staff`)).data.data as Array<{id:string;firstName:string;lastName:string;departmentId:string|null}>}),enabled:!!id});

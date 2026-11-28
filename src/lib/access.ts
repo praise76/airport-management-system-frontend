@@ -11,7 +11,7 @@ export const ROLE_GROUPS = {
 	admins: ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN"],
 	staffAdmins: ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN", "HR"],
 	management: ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN", "RGM", "ACOS", "HOD"],
-	rosterPlanners: ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN", "HOD", "HOU"],
+	rosterPlanners: ["SUPER_ADMIN", "ORG_ADMIN", "ADMIN", "HOD", "HOU", "SUPERVISOR"],
 	supervisors: [
 		"SUPER_ADMIN",
 		"ORG_ADMIN",

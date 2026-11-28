@@ -64,6 +64,7 @@ describe("dailyTotals", () => {
 			[
 				{
 					unitDepartmentId: "u",
+					approvalStatus: "approved",
 					entries: [
 						{ staffId: "x", dutyDate: "2026-11-23", shift: "morning" },
 						{ staffId: "x", dutyDate: "2026-11-23", shift: "night" },
@@ -90,3 +91,5 @@ describe("weekOf", () => {
 		expect(weekOf("2026-11-29")[0]).toBe("2026-11-23");
 	});
 });
+
+it('excludes rosters awaiting HOU review from published totals',()=>{const totals=dailyTotals([{unitDepartmentId:'u',approvalStatus:'pending_approval',entries:[{staffId:'x',dutyDate:'2026-11-23',shift:'day'}]}],['2026-11-23']);expect(totals.size).toBe(0);});

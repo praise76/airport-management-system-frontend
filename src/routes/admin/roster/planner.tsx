@@ -1,11 +1,11 @@
-import { hasAnyRole, requireStaff, ROLE_GROUPS } from "@/lib/access";
+import { RosterWorkflowActions } from '@/features/roster/components/RosterWorkflowActions';
+import { requireStaff } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
   ArrowLeft,
-  CheckCircle,
   Trash2,
   Users,
   CalendarDays,
@@ -17,6 +17,8 @@ import {
   useGetRosters,
   useGetRoster,
   useApproveRoster,
+  useRosterWorkflowScope,
+  useRosterEligibleStaff,
   useDeleteRoster,
   useGetShiftPatterns,
   useGetShiftDefinitions,
@@ -28,12 +30,10 @@ import { ShiftManager } from "@/features/roster/components/ShiftManager";
 import { ShiftGrid } from "@/features/roster/components/ShiftGrid";
 import { RotationCycleTable } from "@/features/roster/components/RotationCycleTable";
 import { ManageShiftStaffModal } from "@/features/roster/components/ManageShiftStaffModal";
-import { useUsers } from "@/hooks/users";
 
-import { useAuthStore } from "@/stores/auth";
 import { checkRoster } from "@/features/roster/rosterChecks";
 import { RosterWarnings } from "@/features/roster/components/RosterWarnings";
-import { staffForUnit, type RosterPerson } from "@/features/roster/staffForUnit";
+import { type RosterPerson } from "@/features/roster/staffForUnit";
 import {
   Dialog,
   DialogContent,
@@ -52,7 +52,7 @@ import { RosterSectionNav } from "@/features/roster/components/RosterSectionNav"
 import { CoverForToday } from "@/features/roster/cover/CoverForToday";
 
 export const Route = createFileRoute("/admin/roster/planner")({
-  beforeLoad: requireStaff(ROLE_GROUPS.rosterPlanners),
+  beforeLoad: requireStaff(),
   component: RosterPlannerPage,
 });
 
@@ -90,18 +90,16 @@ function RosterPlannerPage() {
   const { data: shiftPatterns, isError: patternsFailed, isLoading: patternsLoading } = useGetShiftPatterns();
 
   // Staff for the selected roster's unit (filtered again below, in case the API ignores the filter).
-  const { data: usersData } = useUsers({
-    limit: 500,
-    departmentId: selectedRoster?.unitDepartmentId || undefined,
-  });
+  const { data: usersData } = useRosterEligibleStaff(selectedRosterId||"");
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const approveMutation = useApproveRoster();
   const deleteMutation = useDeleteRoster();
 
-  const user = useAuthStore((s) => s.user);
-  const canCreateRoster = hasAnyRole(user, ROLE_GROUPS.rosterPlanners);
+  const workflowScope=useRosterWorkflowScope();
+  const canCreateRoster=!!workflowScope.data?.length;
+  const [reviewOnly,setReviewOnly]=useState(false);
 
   // Label entries and people with their crew (QA, 10 Nov: cells said "3 Staff", rows said "Staff").
   const crewOf = useCrewMap(selectedRoster?.unitDepartmentId);
@@ -120,13 +118,10 @@ function RosterPlannerPage() {
 
   const rosterStaff = useMemo(() => {
     const fromEntries = (selectedRoster?.entries ?? [])
-      .map((e: any) => (e.user ? { ...e.user, id: e.user.id ?? e.staffId } : null))
+      .map((e: any) => ((e.staff||e.user) ? { ...(e.staff||e.user), id: e.staffId } : null))
       .filter(Boolean) as RosterPerson[];
-    return staffForUnit((usersData?.data ?? []) as unknown as RosterPerson[], {
-      unitId: selectedRoster?.unitDepartmentId,
-      departmentId: selectedRoster?.departmentId,
-      alreadyRostered: fromEntries,
-    });
+    const byId=new Map([...fromEntries,...(usersData?.data||[])].map(p=>[p.id,p]));
+    return {staff:[...byId.values()] as RosterPerson[],filtered:true};
   }, [usersData, selectedRoster]);
 
   const rosterDates = useMemo(() => {
@@ -163,6 +158,7 @@ function RosterPlannerPage() {
   };
 
   const handleCellClick = (userId: string, date: Date, entry?: RosterEntry) => {
+    if(!selectedRoster?.canEdit)return;
     setSelectedUserForEntry(userId);
     setSelectedDateForEntry(date);
     setEditingEntry(entry);
@@ -175,6 +171,7 @@ function RosterPlannerPage() {
     entries: RosterEntry[],
     shiftType?: string,
   ) => {
+    if(!selectedRoster?.canEdit)return;
     const effectiveShift = shiftDef || {
       id: shiftType || "custom",
       name: shiftType
@@ -276,8 +273,8 @@ function RosterPlannerPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <ShiftManager unitDepartmentId={selectedRoster.unitDepartmentId} />
-            {selectedRoster.approvalStatus !== "draft" && (
+            {selectedRoster.canEdit && <ShiftManager unitDepartmentId={selectedRoster.unitDepartmentId} />}
+            {["approved","active"].includes(selectedRoster.approvalStatus) && (
               <CoverForToday
                 rosterId={selectedRoster.id}
                 entries={(selectedRoster.entries ?? []) as RosterEntry[]}
@@ -288,19 +285,11 @@ function RosterPlannerPage() {
               />
             )}
 
-            {selectedRoster.approvalStatus === "draft" && (
-              <Button
-                onClick={handleApprove}
-                disabled={approveMutation.isPending}
-                className="gap-2"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Publish Roster
-              </Button>
-            )}
+            <RosterWorkflowActions roster={selectedRoster} onPublish={handleApprove} publishing={approveMutation.isPending}/>
           </div>
         </div>
 
+        {selectedRoster.returnComment && <p className="rounded border p-3">Returned for changes: {selectedRoster.returnComment}</p>}
         {selectedRoster.approvalStatus === "draft" && <RosterWarnings warnings={warnings} />}
 
         <div className="flex-1 min-h-0 overflow-auto space-y-4">
@@ -436,6 +425,7 @@ function RosterPlannerPage() {
             Manage duty rosters and shift assignments
           </p>
         </div>
+        <Button variant={reviewOnly?"default":"outline"} onClick={()=>setReviewOnly(!reviewOnly)}>Awaiting review</Button>
         {canCreateRoster && (
           <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
@@ -446,7 +436,7 @@ function RosterPlannerPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {rostersLoading && <p>Loading rosters...</p>}
-        {(Array.isArray(rosters) ? rosters : (rosters as any)?.data || []).map(
+        {(Array.isArray(rosters) ? rosters : (rosters as any)?.data || []).filter((r:any)=>!reviewOnly||r.approvalStatus==='pending_approval'||r.approvalStatus==='pending').map(
           (roster: any) => (
             <div
               key={roster.id}
@@ -465,7 +455,7 @@ function RosterPlannerPage() {
                   {/* Placeholder for stats */}
                   Select to view details
                 </div>
-                {roster.approvalStatus === "draft" && (
+                {roster.canDelete && (
                   <Button
                     variant="ghost"
                     size="icon"

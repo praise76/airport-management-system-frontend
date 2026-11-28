@@ -13,6 +13,8 @@ export interface Roster {
   departmentId: string;
 
   approvalStatus: RosterStatus;
+  canEdit?: boolean; canSubmit?: boolean; canPublish?: boolean; canReturn?: boolean; canDelete?: boolean;
+  returnComment?: string | null; submittedAt?: string | null;
   notes?: string;
 }
 

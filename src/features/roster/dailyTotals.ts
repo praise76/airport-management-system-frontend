@@ -33,7 +33,7 @@ export function dailyTotals(
 	const out = new Map<string, Map<string, DayTotal>>();
 	const seen = new Set<string>();
 	for (const r of rosters) {
-		if (r.approvalStatus === "draft") continue;
+		if (!["approved", "active"].includes(r.approvalStatus ?? "")) continue;
 		for (const e of r.entries ?? []) {
 			const d = day(e.dutyDate);
 			const unit = e.unitDepartmentId ?? r.unitDepartmentId;

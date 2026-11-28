@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useUsers } from "@/hooks/users";
+import { useRosterEligibleStaff } from "../api";
 import { useAddRosterEntry, useDeleteRosterEntry } from "../api";
 import { RosterEntry, ShiftDefinition } from "../types";
 import { format } from "date-fns";
@@ -48,7 +48,7 @@ export function ManageShiftStaffModal({
   const [position, setPosition] = useState<string>("");
   const [isAdding, setIsAdding] = useState(false);
 
-  const { data: usersData } = useUsers({ limit: 100 });
+  const { data: usersData } = useRosterEligibleStaff(rosterId);
   const addMutation = useAddRosterEntry();
   const deleteMutation = useDeleteRosterEntry();
 

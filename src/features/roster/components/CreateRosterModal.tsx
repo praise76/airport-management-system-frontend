@@ -1,3 +1,4 @@
+import { useRosterWorkflowScope } from '../api';
 import { useCallback, useState } from "react";
 import { api } from "@/api/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -59,6 +60,7 @@ export function CreateRosterModal({
 
   const { mutateAsync, isPending } = useCreateRoster();
   const qc = useQueryClient();
+  const scope=useRosterWorkflowScope();
   const [patternTeams, setPatternTeams] = useState<PatternTeamsValue>({ patternId: "", starts: {} });
   const [plan, setPlan] = useState<{ teams: (TeamPlan & { id: string })[]; shifts: ReturnType<typeof planShifts> }>({ teams: [], shifts: [] });
   const onPlan = useCallback((p: typeof plan) => setPlan(p), []);
@@ -77,6 +79,7 @@ export function CreateRosterModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if(!scope.data?.some(t=>t.id===(stationId||unitId))){toast.error("Select a unit or terminal you may draft for");return;}
     // QA finding RST-01: a roster from 21 Nov to 8 Nov was accepted.
     if (startDate && endDate && endDate < startDate) {
       toast.error("The end date must be on or after the start date.");
@@ -194,7 +197,7 @@ export function CreateRosterModal({
               </SelectTrigger>
               <SelectContent>
                 {departments?.data
-                  ?.filter((d) => d.departmentLevel === 1)
+                  ?.filter((d) => d.departmentLevel === 1 && scope.data?.some(t=>t.departmentId===d.id))
                   .map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -205,7 +208,7 @@ export function CreateRosterModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Unit (Optional)</Label>
+            <Label>Unit</Label>
             <Select
               value={unitId}
               onValueChange={handleUnitChange}
@@ -223,7 +226,7 @@ export function CreateRosterModal({
                 />
               </SelectTrigger>
               <SelectContent>
-                {units?.data?.map((unit: any) => (
+                {units?.data?.filter((unit:any)=>scope.data?.some(t=>t.unitId===unit.id)).map((unit: any) => (
                   <SelectItem key={unit.id} value={unit.id}>
                     {unit.name}
                   </SelectItem>
@@ -251,7 +254,7 @@ export function CreateRosterModal({
                 />
               </SelectTrigger>
               <SelectContent>
-                {stations?.data?.map((station: any) => (
+                {stations?.data?.filter((station:any)=>scope.data?.some(t=>t.id===station.id)).map((station: any) => (
                   <SelectItem key={station.id} value={station.id}>
                     {station.name}
                   </SelectItem>
@@ -278,7 +281,7 @@ export function CreateRosterModal({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || !!progress}>
+            <Button type="submit" disabled={isPending || !!progress || !scope.data?.some(t=>t.id===(stationId||unitId))}>
               {(isPending || progress) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {progress ?? (plan.shifts.length ? `Create roster with ${plan.shifts.length} shifts` : "Create Roster")}
             </Button>
