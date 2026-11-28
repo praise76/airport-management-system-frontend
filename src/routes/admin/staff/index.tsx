@@ -40,9 +40,9 @@ function StaffListPage() {
   const { data: staff, isLoading } = useStaff();
   const { data: allDepts } = useAllDepartments();
   // The department is always the top-level one; a unit or station is shown in its own column.
-  const placeOf = (m: { departmentId?: string | null; department?: { name?: string } | null }) => {
+  const placeOf = (m: { departmentId?: string | null; department?: { name?: string } | null; secondaryDepartments?: Array<{name:string}> }) => {
     const p = orgPlace(m.departmentId, allDepts);
-    return { department: p.department ?? m.department?.name, rest: unitAndStation(p) };
+    return { department: p.department ?? m.department?.name, rest: [unitAndStation(p), ...(m.secondaryDepartments ?? []).map(d=>`${d.name} (additional duty)`)].filter(Boolean).join(" · ") };
   };
   const deactivateMutation = useDeactivateStaff();
   const [showImport, setShowImport] = useState(false);
@@ -67,7 +67,7 @@ function StaffListPage() {
         (showInactive || m.isActive) &&
         (!dept || placeOf(m).department === dept) &&
         (!needle ||
-          `${m.firstName} ${m.lastName} ${m.email} ${m.employeeId ?? ""}`
+          `${m.firstName} ${m.lastName} ${m.email} ${m.employeeId ?? ""} ${(m.secondaryDepartments ?? []).map(d=>d.name).join(" ")}`
             .toLowerCase()
             .includes(needle)),
     );

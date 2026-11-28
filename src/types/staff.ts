@@ -5,6 +5,7 @@ export interface Role {
 }
 
 export interface StaffMember {
+  secondaryDepartments?: Array<{id:string;name:string;code:string}>;
   id: string;
   organizationId: string;
   department: {
