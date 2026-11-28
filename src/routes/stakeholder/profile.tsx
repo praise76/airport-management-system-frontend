@@ -109,6 +109,7 @@ function StakeholderProfilePage() {
               <p className="text-slate-400 text-sm mb-4">
                 {org.organizationName}
               </p>
+{org.concessionaireCode && <p className="text-sm text-slate-400">{org.concessionaireCode}</p>}
               <div className="flex flex-wrap justify-center gap-2">
                 <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 capitalize">
                   {user?.role?.replace("_", " ") || "Member"}

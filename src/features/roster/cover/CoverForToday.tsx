@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { ArrowRightLeft, Undo2 } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -20,15 +21,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useUpdateRosterEntry } from "@/features/roster/api";
+import { useCoverRosterEntry } from "@/features/roster/api";
 import type { RosterEntry } from "@/features/roster/types";
 import { useAllDepartments } from "@/hooks/departments";
 import { useTerminals } from "@/hooks/terminals";
 import {
-	coverPosition,
 	isCovering,
-	stationTerminal,
 	usualPostOf,
+	stationTerminal,
 } from "./cover";
 
 const lagosToday = () =>
@@ -52,9 +52,10 @@ export function CoverForToday({ rosterId, entries, nameOf }: Props) {
 	const whereId = useId();
 	const [entryId, setEntryId] = useState("");
 	const [stationId, setStationId] = useState("");
+	const [reason, setReason] = useState("");
 	const { data: departments } = useAllDepartments();
 	const { data: terminals } = useTerminals();
-	const update = useUpdateRosterEntry();
+	const update = useCoverRosterEntry();
 	const today = lagosToday();
 
 	const todays = useMemo(
@@ -93,18 +94,19 @@ export function CoverForToday({ rosterId, entries, nameOf }: Props) {
 
 	const send = () => {
 		if (!entry || !station) return;
-		const usual = usualPostOf(entry.dutyPosition) ?? entry.dutyLocation ?? null;
+
 		update.mutate(
 			{
 				rosterId,
 				entryId: entry.id,
 				updates: {
 					dutyLocation: station.name,
-					dutyPosition: coverPosition(station.name, usual),
+					stationId: station.id,
+					reason,
 					...(terminalId(stationTerminal(station.terminalCodes))
 						? { terminalId: terminalId(stationTerminal(station.terminalCodes)) }
 						: {}),
-				} as Partial<RosterEntry>,
+				},
 			},
 			{
 				onSuccess: () => {
@@ -121,24 +123,17 @@ export function CoverForToday({ rosterId, entries, nameOf }: Props) {
 	};
 
 	const undo = (e: RosterEntry) => {
-		const usual = usualPostOf(e.dutyPosition);
-		const back = groups.flatMap(([, l]) => l).find((s) => s.name === usual);
+
 		update.mutate(
 			{
 				rosterId,
 				entryId: e.id,
-				updates: {
-					dutyLocation: usual ?? e.dutyLocation,
-					dutyPosition: "",
-					...(back && terminalId(stationTerminal(back.terminalCodes))
-						? { terminalId: terminalId(stationTerminal(back.terminalCodes)) }
-						: {}),
-				} as Partial<RosterEntry>,
+				updates: null,
 			},
 			{
 				onSuccess: () =>
 					toast.success(
-						`${nameOf(e.staffId)} is back on ${usual ?? "their post"}.`,
+						`${nameOf(e.staffId)} is back on their normal post.`,
 					),
 			},
 		);
@@ -220,7 +215,7 @@ export function CoverForToday({ rosterId, entries, nameOf }: Props) {
 										>
 											<span>
 												{nameOf(e.staffId)}: {e.dutyLocation} (normally{" "}
-												{usualPostOf(e.dutyPosition) ?? "another post"})
+												{e.coverFromLocation ?? usualPostOf(e.dutyPosition) ?? "another post"})
 											</span>
 											<Button
 												size="sm"
@@ -236,13 +231,15 @@ export function CoverForToday({ rosterId, entries, nameOf }: Props) {
 							</div>
 						)}
 					</div>
+					<Label htmlFor="cover-reason">Reason for cover</Label>
+					<Input id="cover-reason" value={reason} onChange={e=>setReason(e.target.value)} maxLength={2000} placeholder="Why is this cover needed?"/>
 					<DialogFooter>
 						<Button variant="outline" onClick={() => setOpen(false)}>
 							Close
 						</Button>
 						<Button
 							onClick={send}
-							disabled={!entry || !station || update.isPending}
+							disabled={!entry || !station || !reason.trim() || update.isPending}
 						>
 							Send to cover
 						</Button>

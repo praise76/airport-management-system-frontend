@@ -437,3 +437,13 @@ export const useRosterWorkflowScope=()=>useQuery({queryKey:['roster-workflow-sco
 export const useRosterReviewAction=()=>{const qc=useQueryClient();return useMutation({mutationFn:async(input:{id:string;action:'submit'|'return';comment?:string})=>(await api.post(`/roster/${input.id}/${input.action}`,{comment:input.comment})).data.data,onSuccess:()=>{void qc.invalidateQueries({queryKey:['rosters']});void qc.invalidateQueries({queryKey:['roster']});}})};
 
 export const useRosterEligibleStaff=(id:string)=>useQuery({queryKey:['roster-eligible-staff',id],queryFn:async()=>({data:(await api.get(`/roster/${id}/eligible-staff`)).data.data as Array<{id:string;firstName:string;lastName:string;departmentId:string|null}>}),enabled:!!id});
+
+/** Operational cover is independent of editing a draft roster. */
+export const useCoverRosterEntry = () => {
+ const client = useQueryClient();
+ return useMutation({mutationFn: async ({rosterId,entryId,updates}:{rosterId:string;entryId:string;updates:{dutyLocation:string;stationId:string;terminalId?:string;reason:string}|null}) => {
+  const path=`/roster/${rosterId}/entries/${entryId}/cover`;
+  const {data}=updates ? await api.post(path,updates) : await api.delete(path);
+  return data.data as RosterEntry;
+ },onSuccess:(_data,v)=>{client.invalidateQueries({queryKey:['roster',v.rosterId]});client.invalidateQueries({queryKey:['my-roster']});}});
+};

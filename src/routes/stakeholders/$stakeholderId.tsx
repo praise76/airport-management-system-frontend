@@ -171,7 +171,7 @@ function StakeholderDetailPage() {
 					<div className="flex items-start gap-4">
 						<StakeholderTypeIcon type={stakeholder.stakeholderType} size="lg" />
 						<div>
-							<h1 className="text-2xl font-bold">{stakeholder.organizationName}</h1>
+							<h1 className="text-2xl font-bold">{stakeholder.organizationName}</h1>{stakeholder.concessionaireCode && <p className="text-muted-foreground">{stakeholder.concessionaireCode}</p>}
 							<div className="flex items-center gap-2 mt-1 flex-wrap">
 								<Badge variant="outline">
 									{getStakeholderTypeLabel(stakeholder.stakeholderType)}

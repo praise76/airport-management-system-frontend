@@ -1,7 +1,7 @@
 import { api } from './client';
-export type Card={id:string;cardNumber:string;stage:string;issuedAt:string|null;expiresAt:string|null;firstName:string;lastName:string;companyName:string;daysUntilExpiry?:number|null};
+export type Card={concessionaireCode?:string|null;id:string;cardNumber:string;stage:string;issuedAt:string|null;expiresAt:string|null;firstName:string;lastName:string;companyName:string;daysUntilExpiry?:number|null};
 export type Eligible={id:string;firstName:string;lastName:string;companyName:string};
-export type GateResult={allowed:boolean;status?:string;cardNumber?:string;stage?:string;expiresAt?:string;firstName?:string;lastName?:string;company?:string;stations?:{id:string;name:string}[]};
+export type GateResult={reason?:string|null;concessionaireCode?:string|null;allowed:boolean;status?:string;cardNumber?:string;stage?:string;expiresAt?:string;firstName?:string;lastName?:string;company?:string;stations?:{id:string;name:string}[]};
 export const cardQueue=async():Promise<Card[]> => (await api.get('/stakeholder-orgs/cards/pass-office')).data.data;
 export const eligibleCards=async():Promise<Eligible[]> => (await api.get('/stakeholder-orgs/cards/pass-office/eligible')).data.data;
 export const createCard=async(renewalPersonId:string)=>api.post('/stakeholder-orgs/cards/pass-office',{renewalPersonId});

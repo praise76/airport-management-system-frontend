@@ -108,10 +108,10 @@ export function MyApplicationsTable({
                 </div>
               </TableCell>
               <TableCell>{app.days}</TableCell>
-              <TableCell>{getStatusBadge(app.status)}</TableCell>
+              <TableCell>{getStatusBadge(app.status)}{app.hodApprovalLabel && <p className="mt-1 text-xs text-muted-foreground">Approved by {app.hodApprovalLabel}</p>}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
-                  {app.status === "pending" && (
+                  {["pending", "approved"].includes(app.status) && (
                     <Button
                       variant="ghost"
                       size="sm"

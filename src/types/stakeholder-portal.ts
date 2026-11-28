@@ -73,6 +73,7 @@ export interface StakeholderStats {
 // ============================================
 
 export interface StakeholderOrganization {
+  concessionaireCode?: string | null;
 	id: string;
 	organizationId: string; // FAAN organization
 
@@ -358,6 +359,7 @@ export interface StakeholderActivity extends RoutingFields {
 // ============================================
 
 export interface StakeholderPermit extends RoutingFields {
+  concessionaireCode?: string | null;
 	/** Contractors: the department the contractor works for, whose HOD confirms it. */
 	sponsorDepartmentId?: string | null;
 	sponsorDepartmentName?: string | null;
@@ -576,7 +578,7 @@ export interface StakeholderAuthLoginResponse {
 	organization?: StakeholderOrganization; // Might not be returned if not needed, rely on user.stakeholderOrganizationId
 }
 
-export type StakeholderAuthLoginResult = StakeholderAuthLoginResponse | { otpRequired: true; otpToken: string };
+export type StakeholderAuthLoginResult = StakeholderAuthLoginResponse | { otpRequired: true; otpToken: string; otpDelivery?: "temporary" | "email" };
 
 export interface StakeholderRegistrationInput {
 	// Step 1: Type

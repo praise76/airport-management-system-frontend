@@ -260,6 +260,7 @@ function StakeholderDashboardPage() {
 							<h1 className="text-xl font-bold text-white">
 								{org.organizationName}
 							</h1>
+{org.concessionaireCode && <p className="text-sm text-slate-400">{org.concessionaireCode}</p>}
 							<p className="text-sm text-slate-400 capitalize">
 								{org.stakeholderType.replace("_", " ")}
 							</p>

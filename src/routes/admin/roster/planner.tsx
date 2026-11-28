@@ -274,7 +274,7 @@ function RosterPlannerPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {selectedRoster.canEdit && <ShiftManager unitDepartmentId={selectedRoster.unitDepartmentId} />}
-            {["approved","active"].includes(selectedRoster.approvalStatus) && (
+            {selectedRoster.canCover && (
               <CoverForToday
                 rosterId={selectedRoster.id}
                 entries={(selectedRoster.entries ?? []) as RosterEntry[]}

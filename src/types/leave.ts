@@ -21,6 +21,7 @@ export interface LeaveBalance {
 }
 
 export interface LeaveApplication {
+    hodApprovalLabel?: string | null;
     id: string;
     applicationNumber: string;
     leaveType: LeaveType;

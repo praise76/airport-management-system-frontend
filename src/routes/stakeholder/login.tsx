@@ -23,6 +23,7 @@ export function StakeholderLoginPage() {
 	const [showPassword, setShowPassword] = useState(false);
 	const [otpToken, setOtpToken] = useState("");
 	const [otpCode, setOtpCode] = useState("");
+	const [temporaryOtp, setTemporaryOtp] = useState(false);
 	const {
 		register,
 		handleSubmit,
@@ -34,7 +35,7 @@ export function StakeholderLoginPage() {
 	const onSubmit = async (data: LoginFormData) => {
     try {
       const result = await loginMutation.mutateAsync({ email: data.email, password: data.password });
-      if ("otpRequired" in result) setOtpToken(result.otpToken);
+      if ("otpRequired" in result) { setOtpToken(result.otpToken); setTemporaryOtp(result.otpDelivery === "temporary"); }
       else navigate({ to: "/stakeholder/dashboard" });
     } catch { /* The mutation displays the error. */ }
   };
@@ -115,7 +116,7 @@ export function StakeholderLoginPage() {
 						<div>
 							<h2 className="text-2xl font-bold">{otpToken ? "Check your email" : "Sign in to your account"}</h2>
 							<p className="text-muted-foreground mt-2">
-								{otpToken ? "Enter the six-digit code sent to your email. It expires after five minutes." : "Enter your credentials to access the stakeholder portal"}
+								{otpToken ? (temporaryOtp ? "Use temporary sign-in code 123456. It expires after five minutes." : "Enter the six-digit code sent to your email. It expires after five minutes.") : "Enter your credentials to access the stakeholder portal"}
 							</p>
 						</div>
 

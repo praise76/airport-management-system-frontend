@@ -13,7 +13,7 @@ export interface Roster {
   departmentId: string;
 
   approvalStatus: RosterStatus;
-  canEdit?: boolean; canSubmit?: boolean; canPublish?: boolean; canReturn?: boolean; canDelete?: boolean;
+  canCover?: boolean; canEdit?: boolean; canSubmit?: boolean; canPublish?: boolean; canReturn?: boolean; canDelete?: boolean;
   returnComment?: string | null; submittedAt?: string | null;
   notes?: string;
 }
@@ -45,6 +45,8 @@ export interface RosterEntry {
   shiftStartTime: string; // "08:00:00"
   shiftEndTime: string; // "16:00:00"
   dutyPosition?: string; // "Gate 1 Supervisor"
+  coverFromLocation?: string | null;
+  coverDetails?: {reason:string;assignedBy:string;assignedAt:string;stationId:string} | null;
   dutyLocation?: string; // "Terminal 1"
   shiftGroup?: string; // "Team 1", "Group A"
 

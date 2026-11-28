@@ -54,6 +54,7 @@ function toApplication(r: any, level?: ApprovalLevel): LeaveApplication {
 	const last = person?.lastName ?? r.lastName ?? r.userLastName;
 	return {
 		id: r.id,
+		hodApprovalLabel: r.hodApprovalLabel,
 		applicationNumber: r.applicationNumber ?? r.requestNumber ?? `LV-${String(r.id).slice(0, 8).toUpperCase()}`,
 		leaveType: TYPE_LABEL[String(r.leaveType).toLowerCase()] ?? r.leaveType,
 		startDate: r.startDate,

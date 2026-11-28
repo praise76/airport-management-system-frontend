@@ -300,7 +300,7 @@ export function PermitBadge({
 								)}
 								<div style={{ fontSize: '10px', fontWeight: 600, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px' }}>
 									<Building2 size={10} />
-									{orgName}
+									{orgName}{permit.concessionaireCode && <span className="block text-xs">{permit.concessionaireCode}</span>}
 								</div>
 								<div style={{ fontSize: '9px', fontFamily: 'monospace', color: '#94a3b8', marginTop: '4px' }}>
 									{permit.permitNumber}

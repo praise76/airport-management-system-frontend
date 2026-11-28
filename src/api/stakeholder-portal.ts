@@ -406,6 +406,7 @@ export async function listGlobalActivities(params: { heldByMyOffice?: boolean; s
 
 /** A permit exactly as the server stores and returns it. */
 interface PermitRow {
+	concessionaireCode?: string | null;
 	id: string;
 	stakeholderOrganizationId: string;
 	permitNumber: string | null;
@@ -438,6 +439,7 @@ function toPermit<T extends StakeholderPermit = StakeholderPermit>(row: PermitRo
 	const today = new Date().toISOString().slice(0, 10);
 	return {
 		id: row.id,
+		...(row.concessionaireCode ? { concessionaireCode: row.concessionaireCode } : {}),
 		stakeholderOrganizationId: row.stakeholderOrganizationId,
 		permitType: row.permitType,
 		permitNumber: row.permitNumber ?? "",
