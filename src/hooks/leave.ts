@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMyLeaveBalances, getMyApplications, applyForLeave, getPendingApprovals, processApproval } from "@/api/leave";
 import type { ApprovalLevel, CreateLeaveRequest } from "@/types/leave";
@@ -38,10 +39,11 @@ export function useApplyForLeave() {
 // Manager Hooks
 
 /** Approval levels this user can act at, from their roles. */
-export function approvalLevelsFor(user: Parameters<typeof getRoles>[0]): ApprovalLevel[] {
+export function approvalLevelsFor(user: Parameters<typeof getRoles>[0], serverLevels?: ApprovalLevel[]): ApprovalLevel[] {
+    if (serverLevels) return serverLevels;
     const roles = getRoles(user);
     const levels: ApprovalLevel[] = [];
-    if (roles.some((r) => ["SUPERVISOR", "HOU"].includes(r))) levels.push("supervisor");
+    if (roles.some((r) => ["SUPERVISOR", "HOU", "MANAGER"].includes(r))) levels.push("supervisor");
     if (roles.some((r) => ["HOD", "ACOS", "RGM"].includes(r))) levels.push("hod");
     if (roles.some((r) => ["HR"].includes(r))) levels.push("hr");
     // Administrators can see and act at every level.
@@ -51,12 +53,14 @@ export function approvalLevelsFor(user: Parameters<typeof getRoles>[0]): Approva
 
 export function usePendingApprovals() {
     const user = useAuthStore((s) => s.user);
-    const levels = approvalLevelsFor(user);
-    return useQuery({
-        queryKey: ["pending-approvals", levels],
+    const permissions = usePermissions();
+    const levels = approvalLevelsFor(user, permissions.leaveApprovalLevels);
+    const query = useQuery({
+        queryKey: ["pending-approvals", user?.userId, levels],
         queryFn: () => getPendingApprovals(levels),
-        enabled: levels.length > 0,
+        enabled: !permissions.isLoading && levels.length > 0,
     });
+    return { ...query, levels, isLoading: permissions.isLoading || query.isLoading, isError: !!permissions.error || query.isError, error: permissions.error ?? query.error };
 }
 
 export function useProcessApproval() {

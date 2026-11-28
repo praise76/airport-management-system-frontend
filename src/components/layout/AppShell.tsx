@@ -1,3 +1,4 @@
+import { usePermissions } from "@/hooks/usePermissions";
 import { ATTENDANCE_VIEWERS } from "@/lib/attendanceScope";
 import { useRunsTerminal } from "@/hooks/runsTerminal";
 import {
@@ -69,6 +70,7 @@ type NavItem = {
 	roles?: string[]; // if provided, only these roles can see
 	allowIf?: (user: Parameters<typeof canReviewStakeholders>[0]) => boolean; // ...or anyone this says yes to
 	whenRunsTerminal?: boolean; // ...or an officer who runs a terminal
+	whenApprovesLeave?: boolean;
 	/** Other pages that belong to this item, so it stays highlighted on them (e.g. a tab of the same area). */
 	match?: string[];
 };
@@ -174,6 +176,7 @@ const navGroups: NavGroup[] = [
 			{
 				label: "Leave approvals",
 				to: "/admin/leave/approvals",
+				whenApprovesLeave: true,
 				icon: CalendarCheck,
 				roles: [...ROLE_GROUPS.supervisors],
 			},
@@ -296,6 +299,7 @@ export function AppShell(props: AppShellProps) {
 	};
 
 	const runsTerminal = useRunsTerminal();
+	const { leaveApprovalLevels } = usePermissions();
 	const visibleGroups = useMemo(() => {
 		let userRoles: string[] = [];
 		if (user?.role) userRoles.push(user.role.toUpperCase());
@@ -310,11 +314,11 @@ export function AppShell(props: AppShellProps) {
 				...group,
 				items: group.items.filter((item) => {
 					if (!item.roles || item.roles.length === 0) return true;
-					return item.roles.some((r) => userRoles.includes(r)) || !!item.allowIf?.(user) || (!!item.whenRunsTerminal && !!runsTerminal);
+					return item.roles.some((r) => userRoles.includes(r)) || !!item.allowIf?.(user) || (!!item.whenRunsTerminal && !!runsTerminal) || (!!item.whenApprovesLeave && !!leaveApprovalLevels?.length);
 				}),
 			}))
 			.filter((group) => group.items.length > 0);
-	}, [user, runsTerminal]);
+	}, [user, runsTerminal, leaveApprovalLevels]);
 
 	// The short menu for this person, with everything else they may open under "More".
 	const { shortGroups, moreGroups } = useMemo(() => {

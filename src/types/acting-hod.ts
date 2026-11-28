@@ -1,6 +1,7 @@
 export type ActingStatus = 'draft' | 'pending_approval' | 'approved' | 'scheduled' | 'active' | 'completed' | 'cancelled' | 'revoked' | 'expired' | 'terminated';
 
 export interface EffectivePermissions {
+  leaveApprovalLevels?: import("@/types/leave").ApprovalLevel[];
   role: string;
   permissions: string[];
   isActing: boolean;

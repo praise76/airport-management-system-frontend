@@ -1,6 +1,6 @@
 import { getRoles, requireStaff, ROLE_GROUPS } from "@/lib/access";
 import { createFileRoute } from "@tanstack/react-router";
-import { approvalLevelsFor, usePendingApprovals, useProcessApproval } from "@/hooks/leave";
+import { usePendingApprovals, useProcessApproval } from "@/hooks/leave";
 import { useUsers } from "@/hooks/users";
 import { useAuthStore } from "@/stores/auth";
 import { label } from "@/lib/labels";
@@ -21,7 +21,7 @@ import { ApprovalActionModal } from "@/components/leave/ApprovalActionModal";
 import { LeaveApplication } from "@/types/leave";
 
 export const Route = createFileRoute("/admin/leave/approvals")({
-  beforeLoad: requireStaff(ROLE_GROUPS.supervisors),
+  beforeLoad: requireStaff(),
   component: LeaveApprovalsPage,
 });
 
@@ -30,8 +30,7 @@ const isAdminViewer = (user: Parameters<typeof getRoles>[0]) =>
 
 function LeaveApprovalsPage() {
   const user = useAuthStore((s) => s.user);
-  const levels = approvalLevelsFor(user);
-  const { data: approvals, isLoading, isError, error } = usePendingApprovals();
+  const { data: approvals, levels, isLoading, isError, error } = usePendingApprovals();
   const processMutation = useProcessApproval();
   const { data: staff } = useUsers({ limit: 500 });
   const nameOf = (id?: string) => {
@@ -66,16 +65,7 @@ function LeaveApprovalsPage() {
     }
   };
 
-  if (levels.length === 0) {
-    return (
-      <div className="p-8 text-muted-foreground">
-        Your role doesn't approve leave. Supervisors, heads of unit or department, and HR do.
-      </div>
-    );
-  }
-  if (isLoading) {
-    return <div className="p-8">Loading approvals…</div>;
-  }
+  if (isLoading) return <div className="p-8">Loading approvals…</div>;
   if (isError) {
     return (
       <div className="p-8 text-destructive" role="alert">
@@ -84,6 +74,9 @@ function LeaveApprovalsPage() {
           : "Couldn't load leave requests. Please refresh the page."}
       </div>
     );
+  }
+  if (levels.length === 0) {
+    return <div className="p-8 text-muted-foreground">You currently have no leave approval queues assigned to you.</div>;
   }
 
   return (
